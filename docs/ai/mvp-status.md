@@ -5,29 +5,28 @@
 - SDD liviano: alcance, sistemas, acceptance gate y dirección visual canónicos.
 - Seis imágenes CONCEPT bajo `docs/art/concepts/`.
 - Código del First Playable: carbón/brasas 8×6, drag, perfiles térmicos por alimento, cocción por zona/cara, bandeja, allocator, score, estrellas, save, menú/intro, tutorial, scale debug, feedback provisional y retry.
-- Pruebas EditMode escritas para fuego/grilla, cocción/flip/punto (incluye perfiles por alimento), asignación, score, estrellas y progreso.
+- Pruebas EditMode escritas para fuego/grilla, cocción/flip/punto (incluye perfiles por alimento), asignación, score, estrellas y progreso. La puntuación por comensal está normalizada a 0–100 y el nivel 1 a 0–200.
 
 ## PROVISIONAL
 
-- Compilación del proyecto y 9 tests EditMode pasan con Unity 6000.6.3f1 en una copia temporal; la instancia abierta y Play Mode aún requieren validación.
-- Presentación Canvas 2D; arte/animación, humo y sizzle de runtime son provisionales.
-- Balance térmico/score no se validó con playtest.
+- Canvas 2D, arte/animación, humo y sizzle de runtime son provisionales.
+- Balance térmico y duración requieren otra sesión de playtest; tras corregir el score falta repetir un ciclo completo en el Editor.
 
 ## NO IMPLEMENTADO
 
 - Visual Slice de producción.
-- Niveles 2–5 y configuraciones propias de los seis perfiles; vacío/provoleta con estados de cocción distintos.
-- QA del acceptance gate, test de diversión y build Android.
+- Niveles 2–5 jugables y configuraciones de los seis perfiles; vacío/provoleta con estados de cocción propios.
+- Visual Slice de producción, QA restante del acceptance gate, test de diversión y build Android.
 
 ## KNOWN ISSUES
 
-- Unity MCP registra la instancia pero las operaciones de Editor fallan con `ping not answered`.
-- Playtest sigue pendiente; el push requiere completar el inicio de sesión de GitHub CLI.
+- GitHub CLI no está autenticado; el push sigue pendiente.
 
 ## TESTS
 
-- Suite EditMode: 9/9 Passed en copia temporal (`/tmp/asadito-first-playable-validation-results.xml`).
-- Compilación Unity del proyecto en la copia: OK; importación de la instancia abierta y prueba de juego en Editor: pendientes.
+- Unity Editor abierto: compilación OK; EditMode 9/9 Passed.
+- Playtest MCP: flujo del nivel 1 y retry completados. La primera corrida detectó total fuera de rango; el código se corrigió y el resultado actualizado dio 193/200 en una verificación rápida del evaluador. Falta repetir el ciclo completo en el código corregido.
+- MCP: HTTP registrado en Codex, Editor conectado; escena `SampleScene`. Consola sin errores de juego; quedó un warning del WebSocket MCP (`WebSocket is not initialised`) tras refrescar assets.
 - Producto, workflow, setup Git/Engram y estado guardados en Engram; tres chunks exportados por Git Sync.
 
 ## BUILD
@@ -36,4 +35,4 @@
 
 ## NEXT
 
-- Restaurar la conexión del Editor; confirmar compilación, ejecutar la suite y probar el acceptance del nivel 1. Completar autenticación de GitHub CLI y subir commits locales. No iniciar Visual Slice hasta cerrar First Playable.
+- Repetir el ciclo completo del nivel 1 con score corregido, validar arrastre táctil y seguir con Visual Slice. Completar login de GitHub CLI para subir los commits a Cuervation/Asadito.

@@ -5,7 +5,7 @@
 | `Assets/Asado/Resources/Art/PatioParrilla.png` | PROVISIONAL | Fondo 2D temporal; reemplazar/adaptar para presentación 3D |
 | `Assets/Asado/Resources/Art/BifeCrudo.png` | PROVISIONAL | Referencia visual previa, fuera del First Playable actual |
 | `Assets/Asado/Resources/Art/TiraAsadoCruda.png` | PROVISIONAL | Sprite 2D temporal; revisar al migrar la presentación a 3D |
-| Chorizo UI de formas | PROVISIONAL | Placeholder geométrico actual |
+| `Assets/Asado/Resources/Art/ChorizoCrudoCutout.png` | PROVISIONAL | Sprite generado para el First Playable; el tinte acompaña la cocción, reemplazar al cerrar Visual Slice |
 | Retrato, plato y bandeja UI | PROVISIONAL | Formas de Canvas temporales |
 | Parrilla/brasas 3D, pinza, madera y patio | TODO | Assets runtime compatibles con la dirección 3D móvil |
 | Tira, chorizo, vacío y provoleta 3D con estados | TODO | Modelos/materiales por alimento y caras |
