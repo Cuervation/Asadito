@@ -1,8 +1,8 @@
 # Estado de Asadito
 
-- **Milestone:** First Playable en integración; scripts de runtime compilan aislados con Roslyn de Unity. Pendientes importación/compilación del Editor, tests y playtest.
+- **Milestone:** First Playable en integración; compilación Unity y 9 tests EditMode pasan en copia temporal del proyecto. Pendientes validación en la instancia abierta y playtest.
 - **Implementado en código:** HeatGrid/carbón, drag de brasas y alimentos, térmica por posición/cara con bandas por alimento, bandeja/servir, allocator/score/estrellas/save/retry, menú/intro, tutorial, debug scale, sizzle/haptic y pruebas EditMode.
-- **Validación:** auditoría estática encontró y corrigió que chorizo heredara las bandas de tira. Roslyn de Unity compiló correctamente los modelos runtime y scripts actuales del juego; las bandas nuevas y sus tests todavía no se ejecutaron. La importación/compilación del Editor no está confirmada. El MCP HTTP registra Asadito, pero llamadas al Editor vencen por timeout o sesión desconectada; escena y consola siguen sin leerse.
+- **Validación:** auditoría estática encontró y corrigió que chorizo heredara las bandas de tira. Unity 6000.6.3f1 compiló el proyecto y ejecutó los 9 tests EditMode con resultado Passed en una copia temporal aislada. La instancia abierta todavía no responde al ping del MCP; escena y consola siguen sin leerse. Falta playtest del loop.
 - **Contrato vigente:** cinco niveles, carbón/HeatGrid, cuatro alimentos, perfiles/allocator, cuatro factores de score, tutorial, progreso/guardado, arte/feedback. Ver specs canónicas.
 - **Visual:** Canvas 2D y sizzle sintético son provisionales; el Visual Slice aún no empezó. La auditoría marcó 3D, estados/animaciones y audio de carbón/metal como trabajo visual pendiente.
 - **Repositorio:** contrato actualizado: repo oficial Cuervation/Asadito, `main`; commits pequeños y push normal autorizados, sin force push. `origin` ya apunta correctamente; el push sigue pendiente de completar inicio de sesión seguro de GitHub CLI.

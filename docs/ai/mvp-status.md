@@ -9,7 +9,7 @@
 
 ## PROVISIONAL
 
-- La compilación aislada de runtime y scripts del juego pasó con Roslyn incluido en Unity 6000.6.3f1; falta confirmar importación/compilación dentro del Editor y Play Mode.
+- Compilación del proyecto y 9 tests EditMode pasan con Unity 6000.6.3f1 en una copia temporal; la instancia abierta y Play Mode aún requieren validación.
 - Presentación Canvas 2D; arte/animación, humo y sizzle de runtime son provisionales.
 - Balance térmico/score no se validó con playtest.
 
@@ -22,12 +22,12 @@
 ## KNOWN ISSUES
 
 - Unity MCP registra la instancia pero las operaciones de Editor fallan con `ping not answered`.
-- Tests y playtest siguen pendientes; el push requiere completar el inicio de sesión de GitHub CLI.
+- Playtest sigue pendiente; el push requiere completar el inicio de sesión de GitHub CLI.
 
 ## TESTS
 
-- Suite EditMode escrita, no ejecutada.
-- Compilación aislada de los scripts del First Playable: OK. Compilación/importación del Editor y tests: pendientes.
+- Suite EditMode: 9/9 Passed en copia temporal (`/tmp/asadito-first-playable-validation-results.xml`).
+- Compilación Unity del proyecto en la copia: OK; importación de la instancia abierta y prueba de juego en Editor: pendientes.
 - Producto, workflow, setup Git/Engram y estado guardados en Engram; tres chunks exportados por Git Sync.
 
 ## BUILD
