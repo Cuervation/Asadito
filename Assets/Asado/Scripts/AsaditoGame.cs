@@ -349,7 +349,7 @@ namespace Asadito
             for (int y = 0; y < 6; y++)
             for (int x = 0; x < 8; x++)
             {
-                Image cell = MakeImage("Brasa " + x + "," + y, root.transform, whiteSprite, new Vector2(.5f, .5f), new Vector2(.5f, .5f), new Vector2(99, 43));
+                Image cell = MakeImage("Brasa " + x + "," + y, root.transform, whiteSprite, new Color(.16f, .14f, .12f, .75f), new Vector2(.5f, .5f), new Vector2(.5f, .5f), new Vector2(99, 43));
                 cell.rectTransform.anchoredPosition = new Vector2((x - 3.5f) * 102f, (y - 2.5f) * 46f);
                 cell.color = new Color(.16f, .14f, .12f, .75f);
                 cell.raycastTarget = true;
@@ -459,7 +459,7 @@ namespace Asadito
                 float ember = Mathf.Clamp01(cell.EmberEnergy);
                 heatCellImages[y * 8 + x].color = grill.IsLit
                     ? Color.Lerp(new Color32(77, 57, 44, 215), new Color32(247, 93, 31, 245), ember)
-                    : new Color32(64, 58, 49, 200);
+                    : (Color)new Color32(64, 58, 49, 200);
             }
         }
 
@@ -518,7 +518,7 @@ namespace Asadito
             AdvanceTutorial(3, "Paso 4: arrastrá la pieza a una zona de calor.");
             Image meat = PortionImage(index);
             meat.gameObject.SetActive(true);
-            meat.color = index == 0 ? Color.white : new Color32(181, 74, 44, 255);
+            meat.color = index == 0 ? Color.white : (Color)new Color32(181, 74, 44, 255);
             meat.rectTransform.position = heatGridRect.TransformPoint(Vector3.zero);
             StartCoroutine(PlaceMeat(meat.rectTransform));
             if (sizzleSource != null && !sizzleSource.isPlaying) sizzleSource.Play();
@@ -743,7 +743,7 @@ namespace Asadito
             PlayablePortion portion = portions[index];
             float charAmount = Mathf.Clamp01(portion.State.CurrentFace.Char);
             float browning = Mathf.Clamp01(portion.State.CurrentFace.Maillard);
-            Color raw = index == 0 ? Color.white : new Color32(181, 74, 44, 255);
+            Color raw = index == 0 ? Color.white : (Color)new Color32(181, 74, 44, 255);
             Color browned = index == 0 ? new Color32(151, 83, 53, 255) : new Color32(116, 55, 36, 255);
             Color burnt = new Color32(46, 36, 31, 255);
             PortionImage(index).color = Color.Lerp(Color.Lerp(raw, browned, browning), burnt, charAmount);

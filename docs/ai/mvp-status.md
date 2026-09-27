@@ -9,7 +9,7 @@
 
 ## PROVISIONAL
 
-- El loop actualizado aún no se importó/compiló en Unity ni pasó Play Mode.
+- La compilación aislada de runtime y scripts del juego pasó con Roslyn incluido en Unity 6000.6.3f1; falta confirmar importación/compilación dentro del Editor y Play Mode.
 - Presentación Canvas 2D; arte/animación, humo y sizzle de runtime son provisionales.
 - Balance térmico/score no se validó con playtest.
 
@@ -22,12 +22,12 @@
 ## KNOWN ISSUES
 
 - Unity MCP registra la instancia pero las operaciones de Editor fallan con `ping not answered`.
-- Compilación, tests y playtest siguen pendientes; el primer push espera autorización de GitHub CLI.
+- Tests y playtest siguen pendientes; el push requiere completar el inicio de sesión de GitHub CLI.
 
 ## TESTS
 
 - Suite EditMode escrita, no ejecutada.
-- Compilación actual no verificada; el último `Tundra build success` es anterior a la integración.
+- Compilación aislada de los scripts del First Playable: OK. Compilación/importación del Editor y tests: pendientes.
 - Producto, workflow, setup Git/Engram y estado guardados en Engram; tres chunks exportados por Git Sync.
 
 ## BUILD
@@ -36,4 +36,4 @@
 
 ## NEXT
 
-- Restaurar la conexión del Editor; compilar, ejecutar la suite y probar el acceptance del nivel 1. No iniciar Visual Slice hasta cerrar First Playable.
+- Restaurar la conexión del Editor; confirmar compilación, ejecutar la suite y probar el acceptance del nivel 1. Completar autenticación de GitHub CLI y subir commits locales. No iniciar Visual Slice hasta cerrar First Playable.
