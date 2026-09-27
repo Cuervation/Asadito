@@ -41,7 +41,7 @@ namespace Asadito
             public PlayablePortion(string foodId, float amount)
             {
                 Amount = amount;
-                Profile = new FoodCookProfile { FoodId = foodId, CoreTransferRate = .003f, CharRate = .003f };
+                Profile = FoodCookingModel.CreateProfile(foodId);
                 Reset();
             }
             public string Point

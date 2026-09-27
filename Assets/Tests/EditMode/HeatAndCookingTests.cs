@@ -75,6 +75,20 @@ namespace Asadito.Tests
             Assert.Less(Asadito.Runtime.FoodCookingModel.EvaluateDonenessMatch(state, profile, Asadito.Runtime.Doneness.Jugoso), 100f);
         }
 
+        [Test]
+        public void FoodProfiles_UseDistinctDonenessBandsForChorizoAndTira()
+        {
+            var chorizo = Asadito.Runtime.FoodCookingModel.CreateProfile("chorizo");
+            var tira = Asadito.Runtime.FoodCookingModel.CreateProfile("tira");
+
+            Assert.AreEqual("chorizo", chorizo.FoodId);
+            Assert.AreEqual("tira", tira.FoodId);
+            Assert.AreNotEqual(tira.DonenessBands[0].MinimumCoreC, chorizo.DonenessBands[0].MinimumCoreC);
+            Assert.AreNotEqual(tira.CoreTransferRate, chorizo.CoreTransferRate);
+            Assert.AreEqual(71f, chorizo.DonenessBands[1].MinimumCoreC);
+            Assert.AreEqual(73f, chorizo.DonenessBands[1].MaximumCoreC);
+        }
+
         private static float SumEmbers(Asadito.Runtime.HeatGrid grid)
         {
             float total = 0f;

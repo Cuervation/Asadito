@@ -44,6 +44,28 @@ namespace Asadito.Runtime
     /// <summary>Lightweight, tunable gameplay thermal model; not a food safety or scientific cooking model.</summary>
     public static class FoodCookingModel
     {
+        public static FoodCookProfile CreateProfile(string foodId)
+        {
+            var profile = new FoodCookProfile { FoodId = foodId, CoreTransferRate = .003f, CharRate = .003f };
+            if (string.Equals(foodId, "chorizo", StringComparison.OrdinalIgnoreCase))
+            {
+                // Chorizo is a smaller sausage cut: it heats and browns faster, with
+                // a higher internal-temperature range than the whole-cut baseline.
+                profile.CoreTransferRate = .0045f;
+                profile.CharRate = .008f;
+                profile.DonenessBands = new[]
+                {
+                    new DonenessBand(Doneness.Jugoso, 68f, 70f),
+                    new DonenessBand(Doneness.A_Punto, 71f, 73f),
+                    new DonenessBand(Doneness.A_PuntoMas, 74f, 76f),
+                    new DonenessBand(Doneness.Cocido, 77f, 80f),
+                    new DonenessBand(Doneness.Bien_Cocido, 81f, 85f)
+                };
+            }
+
+            return profile;
+        }
+
         public static void Step(FoodState food, FoodCookProfile profile, float localHeat, float deltaMinutes, bool onGrill)
         {
             if (food == null || profile == null || deltaMinutes <= 0f) return;
