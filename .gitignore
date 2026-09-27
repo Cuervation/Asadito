@@ -1,0 +1,55 @@
+# Unity generated data
+[Ll]ibrary/
+[Tt]emp/
+[Oo]bj/
+[Ll]ogs/
+[Uu]serSettings/
+[Bb]uild/
+[Bb]uilds/
+[Mm]emoryCaptures/
+[Rr]ecordings/
+
+# IDE and generated project files
+.vs/
+.idea/
+.vscode/*
+!.vscode/extensions.json
+*.csproj
+*.sln
+*.suo
+*.user
+*.userprefs
+*.pidb
+*.booproj
+*.svd
+*.pdb
+*.mdb
+*.opendb
+*.VC.db
+*.VC.VC.opendb
+*.tmp
+*.temp
+*.orig
+*.bak
+*.swp
+*~
+
+# OS metadata
+.DS_Store
+Thumbs.db
+Desktop.ini
+
+# Local databases, credentials, and environment files
+*.db
+*.sqlite
+*.sqlite3
+*.sqlite-*
+*.pem
+*.key
+.env
+.env.*
+!.env.example
+
+# Engram's local database is never shared; its Git Sync manifest and chunks remain trackable.
+engram.db
+.engram/engram.db
