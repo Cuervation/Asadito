@@ -39,6 +39,9 @@ namespace Asadito.Tests
                 FoodPreference = 0f
             };
             Assert.AreEqual(40f, breakdown.Total(config), .01f);
+
+            breakdown.CookingQuality = breakdown.Satiety = breakdown.DonenessMatch = breakdown.FoodPreference = 100f;
+            Assert.AreEqual(100f, breakdown.Total(config), .01f, "One guest's score must not exceed 100.");
         }
 
         [Test]

@@ -99,6 +99,7 @@ namespace Asadito
         private Sprite whiteSprite;
         private Sprite circleSprite;
         private Sprite tiraSprite;
+        private Sprite chorizoSprite;
         private Sprite patioSprite;
         private int totalScore;
         private int totalStars;
@@ -119,6 +120,9 @@ namespace Asadito
             circleSprite = MakeCircleSprite(128);
             tiraSprite = Resources.Load<Sprite>("Art/TiraAsadoCruda");
             patioSprite = Resources.Load<Sprite>("Art/PatioParrilla");
+            Texture2D chorizoTexture = Resources.Load<Texture2D>("Art/ChorizoCrudoCutout");
+            if (chorizoTexture != null)
+                chorizoSprite = Sprite.Create(chorizoTexture, new Rect(0, 0, chorizoTexture.width, chorizoTexture.height), new Vector2(.5f, .5f), 100f);
             BuildSizzleAudio();
             grill.HeatWhenLitC = FireTemperature;
             grill.Reset();
@@ -149,6 +153,7 @@ namespace Asadito
         {
             if (whiteSprite != null) Destroy(whiteSprite);
             if (circleSprite != null) Destroy(circleSprite);
+            if (chorizoSprite != null) Destroy(chorizoSprite);
             if (sizzleClip != null) Destroy(sizzleClip);
         }
 
@@ -642,7 +647,7 @@ namespace Asadito
                     DonenessMatch = FoodCookingModel.EvaluateDonenessMatch(portion.State, portion.Profile, profiles[i].PreferredDoneness),
                     FoodPreference = ServingAllocator.GetFoodPreference(profiles[i], servings[portionIndex].FoodId) * 25f
                 };
-                int points = Mathf.RoundToInt(breakdown.Total(scoreConfig) * 2f);
+                int points = Mathf.RoundToInt(breakdown.Total(scoreConfig));
                 totalScore += points;
                 reactions += profiles[i].Name + ": cocción " + Mathf.RoundToInt(breakdown.CookingQuality) +
                     " · saciedad " + Mathf.RoundToInt(breakdown.Satiety) + " · punto " + Mathf.RoundToInt(breakdown.DonenessMatch) +
@@ -743,7 +748,7 @@ namespace Asadito
             PlayablePortion portion = portions[index];
             float charAmount = Mathf.Clamp01(portion.State.CurrentFace.Char);
             float browning = Mathf.Clamp01(portion.State.CurrentFace.Maillard);
-            Color raw = index == 0 ? Color.white : (Color)new Color32(181, 74, 44, 255);
+            Color raw = index == 1 && chorizoSprite == null ? (Color)new Color32(181, 74, 44, 255) : Color.white;
             Color browned = index == 0 ? new Color32(151, 83, 53, 255) : new Color32(116, 55, 36, 255);
             Color burnt = new Color32(46, 36, 31, 255);
             PortionImage(index).color = Color.Lerp(Color.Lerp(raw, browned, browning), burnt, charAmount);
@@ -806,8 +811,11 @@ namespace Asadito
 
         private Image MakeSausage(Vector2 anchor)
         {
-            Image sausage = MakeImage("Chorizo en parrilla", contentRoot, whiteSprite, new Color32(181, 74, 44, 255), anchor, anchor, new Vector2(240, 70));
+            Image sausage = MakeImage("Chorizo en parrilla", contentRoot, chorizoSprite != null ? chorizoSprite : whiteSprite,
+                chorizoSprite != null ? Color.white : new Color32(181, 74, 44, 255), anchor, anchor, new Vector2(300, 150));
+            sausage.preserveAspect = chorizoSprite != null;
             sausage.rectTransform.localRotation = Quaternion.Euler(0, 0, -5);
+            if (chorizoSprite != null) return sausage;
             var shine = MakeImage("Brillo del chori", sausage.transform, whiteSprite, new Color32(255, 172, 104, 255), new Vector2(.5f, .68f), new Vector2(.5f, .68f), new Vector2(184, 7));
             shine.raycastTarget = false;
             for (int i = -1; i <= 1; i++)
