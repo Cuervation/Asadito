@@ -1,0 +1,15 @@
+{
+  "name": "Asadito.Runtime.Tests",
+  "rootNamespace": "Asadito.Tests",
+  "references": ["Asadito.Runtime"],
+  "includePlatforms": ["Editor"],
+  "excludePlatforms": [],
+  "allowUnsafeCode": false,
+  "overrideReferences": false,
+  "precompiledReferences": [],
+  "autoReferenced": false,
+  "defineConstraints": [],
+  "versionDefines": [],
+  "optionalUnityReferences": ["TestAssemblies"],
+  "noEngineReferences": false
+}
