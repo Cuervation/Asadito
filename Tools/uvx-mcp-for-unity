@@ -1,0 +1,15 @@
+#!/bin/sh
+set -eu
+
+if [ -n "${UVX:-}" ]; then
+    uvx_bin="$UVX"
+elif command -v uvx >/dev/null 2>&1; then
+    uvx_bin="$(command -v uvx)"
+elif [ -x "$HOME/.local/bin/uvx" ]; then
+    uvx_bin="$HOME/.local/bin/uvx"
+else
+    echo "uvx is required; install uv and make uvx available on PATH or set UVX." >&2
+    exit 127
+fi
+
+exec "$uvx_bin" --python 3.12 --with cryptography==45.0.6 "$@"
