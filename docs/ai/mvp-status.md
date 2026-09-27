@@ -4,8 +4,8 @@
 
 - SDD liviano: alcance, sistemas, acceptance gate y dirección visual canónicos.
 - Seis imágenes CONCEPT bajo `docs/art/concepts/`.
-- Código actualizado del First Playable: carbón/brasas 8×6, drag, cocción por zona/cara, bandeja, allocator, score, estrellas, save, menú/intro, tutorial, scale debug, feedback provisional y retry.
-- Pruebas EditMode para fuego/grilla, cocción/flip/punto, asignación, score, estrellas y progreso.
+- Código del First Playable: carbón/brasas 8×6, drag, perfiles térmicos por alimento, cocción por zona/cara, bandeja, allocator, score, estrellas, save, menú/intro, tutorial, scale debug, feedback provisional y retry.
+- Pruebas EditMode escritas para fuego/grilla, cocción/flip/punto (incluye perfiles por alimento), asignación, score, estrellas y progreso.
 
 ## PROVISIONAL
 
@@ -22,13 +22,13 @@
 ## KNOWN ISSUES
 
 - Unity MCP registra la instancia pero las operaciones de Editor fallan con `ping not answered`.
-- El proyecto está en proceso de bootstrap de GitHub; compilación, tests y playtest siguen pendientes.
+- Compilación, tests y playtest siguen pendientes; el primer push espera autorización de GitHub CLI.
 
 ## TESTS
 
 - Suite EditMode escrita, no ejecutada.
 - Compilación actual no verificada; el último `Tundra build success` es anterior a la integración.
-- Contrato y estado del proyecto guardados en Engram y exportados por Git Sync.
+- Producto, workflow, setup Git/Engram y estado guardados en Engram; tres chunks exportados por Git Sync.
 
 ## BUILD
 
@@ -36,4 +36,4 @@
 
 ## NEXT
 
-- Reimportar/compilar y ejecutar la suite y el acceptance del nivel 1. No avanzar milestone hasta cerrar ese gate.
+- Restaurar la conexión del Editor; compilar, ejecutar la suite y probar el acceptance del nivel 1. No iniciar Visual Slice hasta cerrar First Playable.
