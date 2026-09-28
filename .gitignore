@@ -4,8 +4,9 @@
 [Oo]bj/
 [Ll]ogs/
 [Uu]serSettings/
-[Bb]uild/
-[Bb]uilds/
+# Anchor generated build outputs at project root; keep source folders named Build trackable.
+/[Bb]uild/
+/[Bb]uilds/
 .utmp/
 [Mm]emoryCaptures/
 [Rr]ecordings/

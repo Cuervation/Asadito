@@ -3,7 +3,7 @@
 ## IMPLEMENTADO
 
 - PlayMode valida el loop de servicio L1–L5; cada porción llega al punto, se sirve, puntúa/guarda y desbloquea Next; L5 vuelve a selección. Retry/reset está comprobado independientemente en L1.
-- Unity Editor real, tras fixes de caché de sprites en Domain Reload desactivado, teardown de cooking y anclaje de iconos: PlayMode full 6/6 y EditMode 13/13 pasaron; también L1 ×30 y los ciclos L1–L5. Revisión visual de GameView portrait 540×960 cubrió menú, niveles, intro, gameplay y resultados sample. No mide dispositivo/touch/safe area ni deliberación humana.
+- Unity Editor real, tras fixes de caché de sprites en Domain Reload desactivado, teardown de cooking y anclaje de iconos: EditMode 13/13 (job `9842d52e9f9248f8a5458e1b396de811`) y PlayMode 6/6 (job `c7855f2a0d604c4aaf1f2d8b665ce719`) pasan después de restaurar MCP como paquete embedded y resolver Newtonsoft. También L1 ×30 y los ciclos L1–L5 previos. La revisión de GameView portrait 540×960 cubrió menú, niveles, intro, gameplay y resultados sample. No mide dispositivo/touch/safe area ni deliberación humana.
 - SDD liviano: alcance, sistemas, gate de aceptación y dirección visual canónicos.
 - Catálogo de cinco niveles con menú de selección, intro dinámica y composición de botones/porciones variable; seis perfiles de comensal. L1–L5 navegan al gameplay en Editor sin servir.
 - Modelos de fuego/cocción/asignación/evaluación; vacío lento y fases térmicas de provoleta; HUD térmico, movimiento, bandeja, servicio, score, persistencia local, Retry y Next implementados en código.
@@ -30,9 +30,9 @@
 ## TESTS / EDITOR
 
 - Unity Editor `6000.6.3f1`, escena `Assets/Scenes/SampleScene.unity`.
-- Editor conectado actual: PlayMode full suite 6/6 (job `7d2f3e02417249ffb3d29eedf5b949d0`) y EditMode 13/13 (job `afc695658d5845e99c6d85d49ee56ef1`). L1–L5 full cycles a ×1200 sólo aceleran test; prueba L1 ×30 tarda 44s scripted.
+- Editor conectado actual, después de restaurar el paquete MCP embedded y compilarlo: PlayMode 6/6 (job `c7855f2a0d604c4aaf1f2d8b665ce719`) y EditMode 13/13 (job `9842d52e9f9248f8a5458e1b396de811`). L1–L5 full cycles a ×1200 sólo aceleran test; prueba L1 ×30 tarda 44s scripted.
 - Runtime full cycles en batch: L1–L5 con composiciones 2/3/4/4/6 porciones; L4 incluye vacío, L5 provoleta; L1–L4 desbloquean Next, L5 vuelve a selección.
-- Unity MCP: HTTP enumera `Asadito@65a4fad638bbc94c`; `editor/state`, escena activa y jerarquía respondieron. Editor idle, `SampleScene`, no dirty. Suites corrieron en el Editor y se inspeccionó GameView portrait. Consola: warning MCP `WebSocket is not initialised` y warning Android Diagnostics Data/Debug Symbols; 0 errores de app/compilación.
+- Unity MCP: HTTP enumera `Asadito@65a4fad638bbc94c`; `project/info` confirma `/Users/celestino/Asadito`. MCP embedded en `Packages/com.coplaydev.unity-mcp`; resolver recuperó Newtonsoft, `manage_build` leyó settings y las dos suites pasaron en el Editor. Estado final idle en `SampleScene`, no dirty. La importación emitió dos warnings UAC0005 del paquete; la consola terminó con 0 errores/warnings actuales. No confundir con el proyecto local de Codex, registrado en otra ruta y no-Git.
 
 ## BUILD / PUBLICACIÓN
 
