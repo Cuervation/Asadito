@@ -182,7 +182,7 @@ namespace Asadito
             Texture2D chorizoTexture = Resources.Load<Texture2D>("Art/ChorizoCrudoCutout");
             if (chorizoTexture != null)
                 chorizoSprite = Sprite.Create(chorizoTexture, new Rect(0, 0, chorizoTexture.width, chorizoTexture.height), new Vector2(.5f, .5f), 100f);
-            Texture2D foodStateAtlas = Resources.Load<Texture2D>("Art/FoodStateAtlas");
+            Texture2D foodStateAtlas = Resources.Load<Texture2D>("Art/FoodStateAtlas6");
             if (foodStateAtlas != null) foodStateSprites = CreateFoodStateSprites(foodStateAtlas);
             Texture2D guestPortraitAtlas = Resources.Load<Texture2D>("Art/GuestPortraitAtlas");
             if (guestPortraitAtlas != null) guestPortraitSprites = CreateGuestPortraitSprites(guestPortraitAtlas);
@@ -471,7 +471,7 @@ namespace Asadito
                 levelFoodIcons[i] = new Image[foods.Length];
                 for (int foodIndex = 0; foodIndex < foods.Length; foodIndex++)
                 {
-                    Sprite foodSprite = FoodStateSprite(foods[foodIndex], 2) ?? FoodStateSprite(foods[foodIndex], 0);
+                    Sprite foodSprite = FoodStateSprite(foods[foodIndex], 3) ?? FoodStateSprite(foods[foodIndex], 0);
                     Image foodIcon = MakeChildIcon("Icon comida " + foods[foodIndex] + " NIVEL " + levelNumber,
                         levelCards[i].transform, foodSprite, Color.white, Vector2.zero, new Vector2(36f, 36f));
                     foodIcon.preserveAspect = true;
@@ -648,7 +648,7 @@ namespace Asadito
                 bool visible = i < foods.Length;
                 introFoodIcons[i].gameObject.SetActive(visible);
                 if (!visible) continue;
-                introFoodIcons[i].sprite = FoodStateSprite(foods[i], 2) ?? FoodStateSprite(foods[i], 0) ?? whiteSprite;
+                introFoodIcons[i].sprite = FoodStateSprite(foods[i], 3) ?? FoodStateSprite(foods[i], 0) ?? whiteSprite;
                 introFoodIcons[i].name = "Icon comida intro " + FoodDisplayName(foods[i]);
             }
         }
@@ -1384,7 +1384,7 @@ namespace Asadito
             for (int i = 0; i < resultFoods.Length; i++)
             {
                 Image food = MakeImage("Resultado icon comida " + FoodDisplayName(resultFoods[i]), resultContent,
-                    FoodStateSprite(resultFoods[i], 2) ?? FoodStateSprite(resultFoods[i], 0), Color.white,
+                    FoodStateSprite(resultFoods[i], 3) ?? FoodStateSprite(resultFoods[i], 0), Color.white,
                     new Vector2(.5f, .472f), new Vector2(.5f, .472f), new Vector2(42f, 42f));
                 food.rectTransform.anchoredPosition = new Vector2((i - (resultFoods.Length - 1) * .5f) * 54f, 0f);
                 food.preserveAspect = true;
@@ -1545,7 +1545,10 @@ namespace Asadito
             PlayablePortion portion = portions[index];
             FoodFaceState face = portion.State.CurrentFace;
             float charAmount = Mathf.Clamp01(face.Char);
-            int stage = charAmount >= .28f ? 3 : face.Maillard >= .12f ? 2 : face.SurfaceTemperatureC >= 42f ? 1 : 0;
+            int stage = charAmount >= .28f ? 5 :
+                charAmount >= .08f || face.Maillard >= .55f || portion.State.Moisture <= .3f ? 4 :
+                face.Maillard >= .3f ? 3 : face.Maillard >= .015f ? 2 :
+                face.SurfaceTemperatureC >= 42f ? 1 : 0;
             Sprite stateSprite = FoodStateSprite(portion.Profile.FoodId, stage);
             Image image = PortionImage(index);
             if (stateSprite != null)
@@ -1680,26 +1683,23 @@ namespace Asadito
 
         private static Sprite[][] CreateFoodStateSprites(Texture2D atlas)
         {
-            // Generated 4x4 layout with transparent gutters. Bounds are content-tight per column/row,
-            // so food silhouettes retain a useful aspect ratio instead of including empty cell padding.
-            const float sourceSize = 1254f;
-            float scaleX = atlas.width / sourceSize;
-            float scaleY = atlas.height / sourceSize;
-            float[,] xBounds = { { 18f, 305f }, { 309f, 628f }, { 623f, 1000f }, { 1003f, 1248f } };
-            float[,] yBoundsFromTop = { { 62f, 322f }, { 350f, 618f }, { 648f, 922f }, { 952f, 1232f } };
+            // Atlas rows are raw, warming, browning, ideal, overcooked, burnt. Keep a small
+            // transparent gutter when slicing so a neighboring cut cannot bleed into a sprite.
+            const int rows = 6;
+            const float spriteSize = 240f;
+            float cellHeight = atlas.height / (float)rows;
+            float[] xMin = { 42f, 280f, 532f, 762f };
             string[] foodIds = { "chorizo", "tira", "vacio", "provoleta" };
-            string[] stages = { "raw", "warming", "ideal", "burnt" };
+            string[] stages = { "raw", "warming", "browning", "ideal", "overcooked", "burnt" };
             var sprites = new Sprite[foodIds.Length][];
             for (int column = 0; column < foodIds.Length; column++)
             {
                 sprites[column] = new Sprite[stages.Length];
                 for (int row = 0; row < stages.Length; row++)
                 {
-                    float xMin = xBounds[column, 0] * scaleX;
-                    float xMax = xBounds[column, 1] * scaleX;
-                    float yMin = atlas.height - yBoundsFromTop[row, 1] * scaleY;
-                    float yMax = atlas.height - yBoundsFromTop[row, 0] * scaleY;
-                    var rect = new Rect(xMin, yMin, xMax - xMin, yMax - yMin);
+                    float top = row * cellHeight;
+                    float yMin = atlas.height - top - cellHeight + (cellHeight - spriteSize) * .5f;
+                    var rect = new Rect(xMin[column], yMin, spriteSize, spriteSize);
                     Sprite sprite = Sprite.Create(atlas, rect, new Vector2(.5f, .5f), 100f);
                     sprite.name = foodIds[column] + "_" + stages[row];
                     sprites[column][row] = sprite;

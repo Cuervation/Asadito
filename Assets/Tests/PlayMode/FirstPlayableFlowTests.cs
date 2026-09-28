@@ -145,7 +145,7 @@ namespace Asadito.Tests.PlayMode
         }
 
         [UnityTest]
-        public IEnumerator VisualAssets_FourFoodsExposeRawWarmingIdealAndBurntStates()
+        public IEnumerator VisualAssets_FourFoodsExposeSixThermalStatesPerFace()
         {
             ResetSaveCache();
             MvpSave.Save(new MvpSaveData());
@@ -209,7 +209,7 @@ namespace Asadito.Tests.PlayMode
             Sprite[][] sprites = (Sprite[][])GetField(game, "foodStateSprites");
             Assert.NotNull(sprites, "The generated food-state atlas must load in runtime.");
             string[] foodIds = { "chorizo", "tira", "vacio", "provoleta" };
-            string[] stages = { "raw", "warming", "ideal", "burnt" };
+            string[] stages = { "raw", "warming", "browning", "ideal", "overcooked", "burnt" };
             Assert.AreEqual(foodIds.Length, sprites.Length);
             for (int food = 0; food < foodIds.Length; food++)
             {
@@ -218,7 +218,9 @@ namespace Asadito.Tests.PlayMode
                 {
                     Assert.NotNull(sprites[food][stage]);
                     Assert.AreEqual(foodIds[food] + "_" + stages[stage], sprites[food][stage].name);
-                    Assert.AreEqual("FoodStateAtlas", sprites[food][stage].texture.name);
+                    Assert.AreEqual("FoodStateAtlas6", sprites[food][stage].texture.name);
+                    Assert.AreEqual(240f, sprites[food][stage].rect.width);
+                    Assert.AreEqual(240f, sprites[food][stage].rect.height);
                 }
             }
 
@@ -230,7 +232,9 @@ namespace Asadito.Tests.PlayMode
             {
                 new FoodFaceState { SurfaceTemperatureC = 20f },
                 new FoodFaceState { SurfaceTemperatureC = 60f },
-                new FoodFaceState { SurfaceTemperatureC = 140f, Maillard = .2f },
+                new FoodFaceState { SurfaceTemperatureC = 140f, Maillard = .12f },
+                new FoodFaceState { SurfaceTemperatureC = 160f, Maillard = .36f },
+                new FoodFaceState { SurfaceTemperatureC = 190f, Maillard = .6f, Char = .12f },
                 new FoodFaceState { SurfaceTemperatureC = 220f, Maillard = .8f, Char = .35f }
             };
             for (int index = 0; index < portions.Length; index++)
@@ -244,6 +248,19 @@ namespace Asadito.Tests.PlayMode
                     Assert.AreEqual(foodId + "_" + stages[stage], images[index].sprite.name,
                         foodId + " should swap to the matching cooking illustration.");
                 }
+
+                state.Reset();
+                state.SetCurrentFace(cookingFaces[3]);
+                refreshVisual.Invoke(game, new object[] { index });
+                Assert.AreEqual(foodId + "_ideal", images[index].sprite.name);
+                state.Flip();
+                refreshVisual.Invoke(game, new object[] { index });
+                Assert.AreEqual(foodId + "_raw", images[index].sprite.name,
+                    "The unexposed side must retain its own uncooked visual state.");
+                state.Flip();
+                refreshVisual.Invoke(game, new object[] { index });
+                Assert.AreEqual(foodId + "_ideal", images[index].sprite.name,
+                    "Flipping back must restore the first face's cooked visual state.");
                 state.Reset();
                 refreshVisual.Invoke(game, new object[] { index });
             }
