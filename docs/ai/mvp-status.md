@@ -35,6 +35,6 @@
 ## BUILD / PUBLICACIÓN
 
 - Unity Android build aislado con el nuevo arte completó `Succeeded` (0 errores, 1 warning); APK de 46 MB en output temporal, AAPT confirma icono adaptive en densidades y `apksigner` verifica firma debug. No se instaló/probó en teléfono; `Builds/Android/Asadito.apk` no se reemplazó (artefacto ignorado y anterior) y el package ID `com.DefaultCompany.Asadito` sigue provisional.
-- HEAD local `90e39a3` (`Integrate five-level MVP and Android build support`) en `main`; cambios intencionales en gameplay/arte/tests/docs siguen sin commit. El remoto público está vacío (sin refs); `gh auth status` confirma sin sesión. El commit local no pudo subirse hasta hacer login seguro; nunca force push.
+- HEAD local `5bb029c` (`Polish Asadito visual identity slice`) en `main`; commit local completado. El push `origin/main` falló porque no hay credenciales HTTPS disponibles (`gh auth status` sin sesión). Tras `gh auth login`, reintentar push normal; nunca force push.
 
 Ver [matriz integral](mvp-audit.md) para acceptance, evidencia y próximos bloqueantes.

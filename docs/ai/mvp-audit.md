@@ -14,7 +14,7 @@
 | Audio, animación, VFX | PARTIAL | Sizzle sintético, humo, glow, flip/plate/reaction y háptica básica; falta producción y QA. |
 | Icono de app | PARTIAL | PNG 1254×1254 actualizado a pictograma propio y GUID adaptativo conservado en 6 densidades/12 capas; el APK de validación temporal sí contiene el icono actualizado; falta launcher/device QA y publicar build desde checkout oficial. |
 | Android build | PASS (aislado) | Unity Android CLI build actualizado en copia aislada: 46 MB, 0 errors/1 warning; AAPT confirma icon adaptive y apksigner Debug válido. No instalado/probado en teléfono ni copiado a `Builds/Android` ignorado. |
-| GitHub push | BLOCKED | El remoto oficial público está vacío (sin refs); `gh auth status` da `You are not logged into any GitHub hosts`. Commit local se puede hacer; para publicar hace falta login seguro y push normal a `main`. |
+| GitHub push | BLOCKED | Commit local `5bb029c` creado en `main`; push normal intentado y bloqueado: `fatal: could not read Username for 'https://github.com': terminal prompts disabled`. Hace falta login seguro de GitHub (`gh auth login`) antes de reintentar; remoto no se modifica y no se hizo force push. |
 | Unity MCP | UNVERIFIED | HTTP enumera `Asadito@65a4fad638bbc94c`, versión/proyecto correctos, pero `editor/state` y `read_console` devuelven `Unity session not ready (ping not answered)` incluso luego de encolar telemetry ping; no se pudo revisar consola/scene/render. El proceso Unity sigue abierto y no se reinició para preservar posible estado. |
 
 **Resultado:** `MVP PARTIAL`. Los cinco loops completos ahora pasan automáticamente, pero siguen pendientes asset gate visual comercial, review del Editor GUI, build Android actualizado y device QA. Los tests capturan/restauran `PlayerPrefs`; el ciclo L1–L5 usa ×1200 solo para acelerar test. Capturas/Builds y copia temporal son artefactos locales ignorados.
@@ -22,4 +22,4 @@
 ## Próximas prioridades (máximo 3)
 1. Reconnectar la instancia del Editor MCP, revisar consola/jerarquía/render y aprobar o corregir portada y layouts responsive.
 2. Completar motion/VFX/audio, revisar safe areas/touch/performance y generar/probar Android en dispositivo.
-3. Commit/push al remoto oficial al poder comparar y autenticar, sin force push.
+3. Tras el login autenticado de GitHub, subir `main` mediante push normal (sin force push).
