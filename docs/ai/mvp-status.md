@@ -36,6 +36,6 @@
 ## BUILD / PUBLICACIÓN
 
 - Unity Android rebuild aislado posterior a UI/motion completó `Succeeded` (0 errores, 1 warning C++ no bloqueante); APK temporal 47 MB en `/tmp/AsaditoFinalVisualUI.apk`, firma Debug v2 verificada. No se instaló/probó en teléfono; `Builds/Android/Asadito.apk` no se reemplazó y `com.DefaultCompany.Asadito` sigue provisional.
-- Último commit local de implementación/corrección visual `45f5984` (`art: integrate MVP UI icons and feedback motion`); incluye iconografía UI y motion core. El remoto no expone refs; push normal debe reintentarse tras cierre docs y fallará sin credenciales HTTPS (`gh auth status` sin sesión). Requiere `gh auth login`; nunca force push.
+- Último commit local de implementación/corrección visual `45f5984` (`art: integrate MVP UI icons and feedback motion`); incluye iconografía UI y motion core. Push normal reintentado tras el commit de docs y bloqueado por falta de credenciales HTTPS (`gh auth status` sin sesión). Requiere `gh auth login`; nunca force push.
 
 Ver [matriz integral](mvp-audit.md) para acceptance, evidencia y próximos bloqueantes.
