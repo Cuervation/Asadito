@@ -1,6 +1,6 @@
 # Animation Manifest — Asadito
 
-Inventario runtime. Estados: `FINAL`, `PROVISIONAL`, `CONCEPT`, `TODO`. Las animaciones son corutinas/procedurales en el Canvas; no hay biblioteca final de clips `Animator`. `PROVISIONAL` indica que funciona en batch/Editor donde se detalla, pero falta revisión visual/táctil en dispositivo.
+Inventario runtime. Estados: `FINAL`, `PROVISIONAL`, `BLOCKED`. Las animaciones son corutinas/procedurales en el Canvas; no hay biblioteca final de clips `Animator`. `PROVISIONAL` indica que funciona en batch/Editor donde se detalla, pero falta revisión visual/táctil en dispositivo.
 
 | AnimationId | Target | Trigger | Implementation | RuntimePath | Status | Validation |
 |---|---|---|---|---|---|---|
@@ -23,4 +23,4 @@ Inventario runtime. Estados: `FINAL`, `PROVISIONAL`, `CONCEPT`, `TODO`. Las anim
 | `results.portraits` | Retratos de resultados | Se muestra resultado | Grupo activo recibe sprite con su expresión de evaluación | `BuildResultGuestPortraits` | PROVISIONAL | Presencia, expresión y limpieza al avanzar comprobadas en PlayMode L1–L5 |
 | `audio.sizzle.haptic` | Audio/háptica opcional | Inicio de cocción / acciones | Sizzle sintético en memoria; háptica condicional de plataforma | `BuildSizzleAudio` / `VibrateFeedback` | PROVISIONAL | El audio/haptic requiere validación física, mezcla/settings y build móvil |
 
-Toda animación debe confirmar acción/estado sin tapar parrilla, porción, pedidos ni estado térmico. El contenido debe respetar safe area, pausa, accesibilidad y rendimiento móvil. Lo que aún necesite VFX dedicado, blending de material, clips/sonido o device QA sigue `PROVISIONAL` o `TODO`, no `FINAL`.
+Toda animación debe confirmar acción/estado sin tapar parrilla, porción, pedidos ni estado térmico. El contenido debe respetar safe area, pausa, accesibilidad y rendimiento móvil. Lo que aún necesite VFX dedicado, blending de material, clips/sonido o device QA sigue `PROVISIONAL` o `BLOCKED`, no `FINAL`.
