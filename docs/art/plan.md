@@ -15,12 +15,12 @@ Fuente de dirección/gates: [Visual Bible](../../specs/visual/art-direction.md),
 1. Reconnectar el Editor MCP sin cerrar la instancia abierta; revisar portada/scene/console, encuadres y botones en layout portrait. El MCP HTTP reporta la sesión pero falla ping y consola (`Unity session not ready`).
 2. Inspeccionar en GUI el nuevo key art top-down ya revisado como PNG, wordmark/icono a tamaño real, CTA/SALIR, safe-area y crops Android; ajustar solo si el render lo requiere.
 3. Revisión de pantallas: level cards con jerarquía/info legible, iconos propios de comidas/navegación/estrellas/locks, HUD sin tapar parrilla, intro, score y feedback individual. Corregir layouts solo con evidencia de render, no reescribir gameplay.
-4. Elevar atlas de comida de cuatro intercambios visuales a estados intermedios/por cara y ampliar fuego/brasa/tray/pinzas/VFX; conservar el modelo térmico/scoring y mostrar claramente su estado real.
+4. Cerrar motion dedicado de ignition/brasa/lift-contact/serve transition, elevar atlas de comida de cuatro intercambios a estados intermedios/por cara y ampliar fuego/tray/pinzas/VFX; conservar modelo térmico/scoring y mostrar claramente estado real.
 5. Medir build/dispositivo (resoluciones, touch, rendimiento/transparencias, audio/haptics); completar arte/animaciones solo tras aprobar lectura y balance de feedback.
 
 ## Validación actual
 
-Unity 6000.6.3f1, copia aislada del proyecto: PlayMode full L1–L5 con portada y Renderer2D limpio 6/6 Passed (`/tmp/AsaditoPlayTests.final2.xml`); EditMode 13/13 (`/tmp/AsaditoEditTests.final.xml`); referencia scan: 2 escenas, 0 prefabs, 14 componentes, 0 missing scripts y 0 GUIDs irresolubles. L1 ×30 dura ~44 s scripted, no en playtest humano. MCP del Editor original sigue desconectado, por lo que batch no se presenta como inspección en GUI/device. Rebuild Android posterior a la portada/limpieza: 47 MB, 0 errores/1 warning, AAPT adaptive resource y firma Debug v2; falta launcher/touch QA real y no se reemplazó `Builds/Android`.
+Unity 6000.6.3f1, copia aislada del proyecto: PlayMode full L1–L5 con portada, iconos propios y motion core 6/6 Passed (`/tmp/AsaditoFinalPlayTests.xml`); EditMode 13/13 (`/tmp/AsaditoFinalEditTests.xml`); referencia scan: 2 escenas, 0 prefabs, 14 componentes, 0 missing scripts y 0 GUIDs irresolubles. L1 ×30 dura ~44 s scripted, no en playtest humano. MCP del Editor original recupera información de proyecto/scene pero falla estado/consola/jerarquía, por lo que batch no se presenta como inspección GUI/device. Rebuild Android posterior a UI/motion: APK 47 MB, 0 errores/1 warning C++ no bloqueante, package y firma Debug v2 válidos (`/tmp/AsaditoFinalVisualUI.apk`); falta launcher/touch QA real y no se reemplazó `Builds/Android`.
 
 ## Restricciones
 
