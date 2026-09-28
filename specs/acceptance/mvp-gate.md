@@ -30,8 +30,8 @@
 ## Evidencia de actualización visual (2026-09-28)
 
 - Lilita One + wordmark propio, Baloo 2 cinco pesos estáticos (OFL/licencias), launcher icon, comida UI (atlas) y 11 marcas system/action procedurales ya están integrados; el runtime usa Unity Legacy Text, por eso no se generan TMP Font Assets. La portada actual (941×1672) se generó con el fondo cenital de gameplay como referencia estilística; GuestPortraitAtlas se restilizó manteniendo sus 24 slots. Ambos conservan GUID/dimensiones; PlayMode verifica fuentes, glifos, logo, carga de portada, atlas/expresiones de invitados, iconos y gating de entrada.
-- Después de los fixes visuales y de ciclo, Unity Editor real pasó PlayMode 6/6 y EditMode 13/13. Consola: sin errores de app/compilación; 1 warning de `WebSocketTransportClient` (`WebSocket is not initialised`), mientras HTTP MCP responde. La revisión GameView portrait no es QA de dispositivo. APK Android anterior a los fixes recientes: `Succeeded`, 47 MB, firma Debug v2 (`/tmp/AsaditoFinalVisualUI.apk`), sin instalarse en device. Scan GUID previo: 0 unresolved; batch validó 2 escenas/0 prefabs/14 componentes/0 scripts faltantes. Rebuild Android y safe-area/touch/performance físicos siguen pendientes.
-- Mantener `MVP PARTIAL`: review del Editor completada, falta QA físico en teléfono, audio/VFX/arte final, rebuild y revisión final del Acceptance Gate.
+- Después de los fixes visuales y de ciclo, Unity Editor real pasó PlayMode 6/6 y EditMode 13/13. Build Android del commit `c0a2835`: 0 errores/1 warning no bloqueante de Debug Symbols/Diagnostics Data; APK 52.98 MB, package `com.DefaultCompany.Asadito`, firma Debug v2 verificada (`/tmp/Asadito-MVP-c0a2835.apk`). El SDK integrado provee `adb`, pero no hay teléfono conectado ni Emulator instalado. Scan GUID previo: 0 unresolved; batch validó 2 escenas/0 prefabs/14 componentes/0 scripts faltantes.
+- Mantener `MVP PARTIAL`: faltan instalación y QA físico (safe area/touch/performance/launcher), audio/VFX/arte final, package ID y firma de distribución definitivos, y revisión final del Acceptance Gate.
 
 ## MVP completo: niveles 1–5
 
@@ -55,4 +55,4 @@
 - Un L1 full-cycle (incluye UI, movimiento/flip, cocción por estado, bandeja, resultados/save y Retry) pasa a la escala default ×30 en 44s de acciones scripted; no incluye deliberación humana.
 - Otra prueba completa cooking→serve→results/progression para L1–L5; usa ×1200 solo para acelerar la prueba y no certifica el ritmo normal ni el tacto de dispositivo.
 - El scan de assets detecta 0 GUIDs irresolubles tras limpiar campos URP obsoletos y Unity batch abre 2 escenas/0 prefabs con 0 scripts faltantes; esto no sustituye revisar referencias/render en GUI.
-- El MCP enumera la instancia y responde a estado, escena y jerarquía; `read_console` fue intermitente, con última lectura exitosa de 0 errores/advertencias. No se probó teléfono.
+- El MCP enumera la instancia y responde a estado, escena y jerarquía; `read_console` identifica el warning de build no bloqueante. `adb devices -l` no enumera dispositivos; Android Emulator no está instalado. No se probó teléfono.

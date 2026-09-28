@@ -21,21 +21,22 @@
 
 ## BLOQUEADO / NO VERIFICADO
 
-- MCP vivo del Editor original inestable: en el estado actual HTTP lista la instancia y entrega `project/info`, pero `editor/state`, `get_active` y `read_console` fallan por ping no respondido/sesión desconectada; no hay confirmación de escena/consola/render vivo. Suite corre en copia aislada, no GUI. Se preservó el Editor abierto sin reinicio; falta reconectar para revisar consola, jerarquía y render importado.
+- Push remoto pendiente: `gh` no tiene sesión autenticada. Se necesita `gh auth login` antes del push normal; nunca force push.
 - Sin push: `gh` no tiene sesión GitHub autenticada; se requiere `gh auth login`.
 - Sin prueba de dispositivo, safe areas, rendimiento ni legibilidad portrait final.
-- Android build posterior a los fixes actuales y QA en dispositivo real pendientes; revisión visual final del launcher, arte/VFX/audio de producción y aceptación del gate MVP pendientes.
+- Sin teléfono conectado ni Emulator instalado: QA física de safe areas, touch, launcher y rendimiento pendiente. Requiere conectar/autorizar dispositivo o instalar un Emulator por separado.
+- VFX/audio/arte final y aceptación del gate MVP pendientes; el build actual sí está generado, pero no se instaló.
 
 ## TESTS / EDITOR
 
 - Unity Editor `6000.6.3f1`, escena `Assets/Scenes/SampleScene.unity`.
 - Editor conectado actual: PlayMode full suite 6/6 (job `7d2f3e02417249ffb3d29eedf5b949d0`) y EditMode 13/13 (job `afc695658d5845e99c6d85d49ee56ef1`). L1–L5 full cycles a ×1200 sólo aceleran test; prueba L1 ×30 tarda 44s scripted.
 - Runtime full cycles en batch: L1–L5 con composiciones 2/3/4/4/6 porciones; L4 incluye vacío, L5 provoleta; L1–L4 desbloquean Next, L5 vuelve a selección.
-- Unity MCP: HTTP enumera `Asadito@65a4fad638bbc94c`; `editor/state`, escena activa y jerarquía respondieron. Editor idle, `SampleScene`, no dirty. Consola: 1 warning del `WebSocketTransportClient` (`WebSocket is not initialised`), sin errores de app/compilación; las herramientas HTTP responden. Las suites corrieron en este Editor y se inspeccionó GameView portrait.
+- Unity MCP: HTTP enumera `Asadito@65a4fad638bbc94c`; `editor/state`, escena activa y jerarquía respondieron. Editor idle, `SampleScene`, no dirty. Suites corrieron en el Editor y se inspeccionó GameView portrait. Consola: warning MCP `WebSocket is not initialised` y warning Android Diagnostics Data/Debug Symbols; 0 errores de app/compilación.
 
 ## BUILD / PUBLICACIÓN
 
-- Unity Android rebuild previo a los fixes C# completó `Succeeded` (0 errores, 1 warning C++ no bloqueante); APK temporal 47 MB en `/tmp/AsaditoFinalVisualUI.apk`, firma Debug v2 verificada. Rebuild vigente e instalación/prueba en teléfono pendientes; `Builds/Android/Asadito.apk` no se reemplazó y `com.DefaultCompany.Asadito` sigue provisional.
+- Unity Android build actual del commit `c0a2835` completó `Succeeded` en 421 s, 0 errores/1 warning de Diagnostics Data; APK 52.98 MB, package `com.DefaultCompany.Asadito`, firma Debug v2 verificada. `adb` está disponible desde el SDK integrado, pero no hay dispositivo conectado ni Emulator instalado; instalación/device QA pendientes. `Builds/Android/Asadito.apk` no se reemplazó; package ID sigue provisional.
 - El arte/UI/motion y documentación de estado están versionados localmente en `main`; el push normal sigue bloqueado por falta de credenciales HTTPS (`gh auth status` sin sesión). Requiere `gh auth login`; nunca force push.
 
 Ver [matriz integral](mvp-audit.md) para acceptance, evidencia y próximos bloqueantes.
