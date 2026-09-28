@@ -10,6 +10,7 @@
 ## PROVISIONAL
 
 - Canvas 2D, arte/animación, humo y sizzle de runtime son provisionales.
+- Actualización visual parcial: portada, key art, marca tipográfica Lilita One/Baloo 2, botones feedback/transición y count-up score integrados; propuesta de icono Android creada (todavía no asignada en `ProjectSettings.asset`). Fuentes se marcan `FINAL` por carga/glyph QA en Editor, pero portada/icono no tienen validación final en build/dispositivo.
 - Balance térmico y duración requieren otra sesión de playtest; tras corregir el score falta repetir un ciclo completo en el Editor.
 
 ## NO IMPLEMENTADO
@@ -25,6 +26,7 @@
 ## TESTS
 
 - Unity Editor abierto: compilación OK; EditMode 9/9 Passed.
+- Visual: Play Mode previo verificó portada, intro y carga de las seis fuentes; no se volvió a compilar/probar después del cambio final de arte y código. MCP server detecta Unity pero Editor ping no responde actualmente.
 - Playtest MCP: flujo del nivel 1 y retry completados. La primera corrida detectó total fuera de rango; el código se corrigió y el resultado actualizado dio 193/200 en una verificación rápida del evaluador. Falta repetir el ciclo completo en el código corregido.
 - MCP: HTTP registrado en Codex, Editor conectado; escena `SampleScene`. Consola sin errores de juego; quedó un warning del WebSocket MCP (`WebSocket is not initialised`) tras refrescar assets.
 - Producto, workflow, setup Git/Engram y estado guardados en Engram; tres chunks exportados por Git Sync.

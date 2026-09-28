@@ -73,6 +73,10 @@ namespace Asadito
         private RectTransform contentRoot;
         private GameObject menuRoot;
         private GameObject introRoot;
+        private CanvasGroup menuCanvasGroup;
+        private CanvasGroup introCanvasGroup;
+        private CanvasGroup gameplayCanvasGroup;
+        private bool menuTransitionActive;
         private Text tutorialText;
         private Image background;
         private Image tiraImage;
@@ -101,6 +105,14 @@ namespace Asadito
         private Sprite tiraSprite;
         private Sprite chorizoSprite;
         private Sprite patioSprite;
+        private Sprite titleSprite;
+        private Sprite roundedButtonSprite;
+        private Font displayFont;
+        private Font bodyFont;
+        private Font mediumFont;
+        private Font semiBoldFont;
+        private Font boldFont;
+        private Font extraBoldFont;
         private int totalScore;
         private int totalStars;
         [SerializeField] private StarThresholds starThresholds = new StarThresholds();
@@ -118,8 +130,18 @@ namespace Asadito
             SimulationTimeScale = saveData.Settings.SimulationTimeScale;
             whiteSprite = Sprite.Create(Texture2D.whiteTexture, new Rect(0, 0, 1, 1), new Vector2(.5f, .5f));
             circleSprite = MakeCircleSprite(128);
+            roundedButtonSprite = MakeRoundedRectSprite(128, 34);
+            displayFont = Resources.Load<Font>("Fonts/LilitaOne-Regular");
+            bodyFont = Resources.Load<Font>("Fonts/Baloo2-Regular");
+            mediumFont = Resources.Load<Font>("Fonts/Baloo2-Medium");
+            semiBoldFont = Resources.Load<Font>("Fonts/Baloo2-SemiBold");
+            boldFont = Resources.Load<Font>("Fonts/Baloo2-Bold");
+            extraBoldFont = Resources.Load<Font>("Fonts/Baloo2-ExtraBold");
             tiraSprite = Resources.Load<Sprite>("Art/TiraAsadoCruda");
             patioSprite = Resources.Load<Sprite>("Art/PatioParrilla");
+            Texture2D titleTexture = Resources.Load<Texture2D>("Art/PortadaAsadito");
+            if (titleTexture != null)
+                titleSprite = Sprite.Create(titleTexture, new Rect(0, 0, titleTexture.width, titleTexture.height), new Vector2(.5f, .5f), 100f);
             Texture2D chorizoTexture = Resources.Load<Texture2D>("Art/ChorizoCrudoCutout");
             if (chorizoTexture != null)
                 chorizoSprite = Sprite.Create(chorizoTexture, new Rect(0, 0, chorizoTexture.width, chorizoTexture.height), new Vector2(.5f, .5f), 100f);
@@ -154,6 +176,8 @@ namespace Asadito
             if (whiteSprite != null) Destroy(whiteSprite);
             if (circleSprite != null) Destroy(circleSprite);
             if (chorizoSprite != null) Destroy(chorizoSprite);
+            if (titleSprite != null) Destroy(titleSprite);
+            if (roundedButtonSprite != null) Destroy(roundedButtonSprite);
             if (sizzleClip != null) Destroy(sizzleClip);
         }
 
@@ -179,6 +203,7 @@ namespace Asadito
             background.rectTransform.localScale = patioSprite == null ? Vector3.one : new Vector3((patioSprite.rect.width / patioSprite.rect.height) / (1080f / 1920f), 1f, 1f);
 
             var contentObject = new GameObject("Safe Area", typeof(RectTransform));
+            gameplayCanvasGroup = contentObject.AddComponent<CanvasGroup>();
             contentRoot = contentObject.GetComponent<RectTransform>();
             contentRoot.SetParent(canvas.transform, false);
             Rect safe = Screen.safeArea;
@@ -227,7 +252,7 @@ namespace Asadito
             tiraButton = MakeButton("TIRA DE ASADO", contentRoot, .28f, .245f, 425, 116, new Color32(114, 63, 46, 255), CookTira);
             choriButton = MakeButton("CHORIZO", contentRoot, .72f, .245f, 425, 116, new Color32(156, 79, 48, 255), CookChori);
             flipButton = MakeButton("DAR VUELTA", contentRoot, .28f, .145f, 425, 104, Green, FlipMeat);
-            serveButton = MakeButton("SERVIR BANDEJA", contentRoot, .72f, .145f, 425, 104, new Color32(199, 139, 54, 255), Serve);
+            serveButton = MakeButton("SERVIR", contentRoot, .72f, .145f, 425, 104, new Color32(199, 139, 54, 255), Serve);
             flipButtonText = flipButton.GetComponentInChildren<Text>();
             scoreText = MakeText("Progreso nivel", contentRoot, "NIVEL 1  •  2 COMENSALES", 22, Cream, TextAnchor.MiddleCenter, .5f, .055f, 960, 54, true);
             debugScaleButton = MakeButton("DEBUG ×30", contentRoot, .14f, .855f, 190, 58, new Color32(58, 65, 56, 230), CycleSimulationScale);
@@ -306,17 +331,41 @@ namespace Asadito
         private void BuildFrontEnd()
         {
             menuRoot = CreateFullScreenOverlay("Menu principal");
-            MakePanel("Sombra menu", menuRoot.transform, new Color32(31, 34, 29, 245), .5f, .5f, 1080, 1920);
-            MakeText("Menu marca", menuRoot.transform, "ASADITO", 72, Cream, TextAnchor.MiddleCenter, .5f, .68f, 900, 125, true);
-            MakeText("Menu subtitulo", menuRoot.transform, "MANEJÁ EL FUEGO. COMPARTÍ EL ASADO.", 25, Gold, TextAnchor.MiddleCenter, .5f, .61f, 920, 78, false);
-            MakeText("Menu nivel", menuRoot.transform, "NIVEL 1 · EL DEBUT\nDos comensales · Chorizo y tira", 30, Cream, TextAnchor.MiddleCenter, .5f, .5f, 850, 150, true);
-            MakeButton("EMPEZAR", menuRoot.transform, .5f, .38f, 500, 115, new Color32(199, 139, 54, 255), ShowLevelIntro);
+            menuCanvasGroup = menuRoot.AddComponent<CanvasGroup>();
+            Image cover = MakeImage("Portada ilustrada", menuRoot.transform, titleSprite != null ? titleSprite : patioSprite,
+                titleSprite != null || patioSprite != null ? Color.white : new Color32(31, 34, 29, 255), Vector2.zero, Vector2.one, Vector2.zero);
+            cover.rectTransform.offsetMin = cover.rectTransform.offsetMax = Vector2.zero;
+            cover.transform.SetAsFirstSibling();
+            cover.raycastTarget = false;
+            if (titleSprite != null)
+                cover.rectTransform.localScale = new Vector3((titleSprite.rect.width / titleSprite.rect.height) / (1080f / 1920f), 1f, 1f);
+            Image shade = MakePanel("Velo de contraste portada", menuRoot.transform, new Color32(25, 24, 19, 54), .5f, .5f, 1080, 1920);
+            shade.raycastTarget = false;
+            Text brand = MakeText("Menu marca", menuRoot.transform, "ASADITO", 104, Cream, TextAnchor.MiddleCenter, .5f, .825f, 940, 155, true);
+            var brandOutline = brand.gameObject.AddComponent<Outline>();
+            brandOutline.effectColor = new Color32(79, 39, 29, 245);
+            brandOutline.effectDistance = new Vector2(3, -3);
+            var brandShadow = brand.gameObject.AddComponent<Shadow>();
+            brandShadow.effectColor = new Color(0, 0, 0, .45f);
+            brandShadow.effectDistance = new Vector2(1, -7);
+            MakeText("Menu subtitulo", menuRoot.transform, "EL SABOR DEL PATIO ARGENTINO", 25, Cream, TextAnchor.MiddleCenter, .5f, .755f, 900, 74, true);
+            MakeButton("ENTRAR", menuRoot.transform, .5f, .245f, 560, 118, new Color32(218, 121, 45, 255), ShowLevelIntro);
+            MakeButton("SALIR", menuRoot.transform, .5f, .158f, 420, 92, new Color32(92, 72, 55, 245), ExitGame);
+            Image emberGlow = MakeImage("Resplandor ambiental portada", menuRoot.transform, circleSprite,
+                new Color(1f, .29f, .07f, .055f), new Vector2(.5f, .48f), new Vector2(.5f, .48f), new Vector2(650, 300));
+            emberGlow.transform.SetSiblingIndex(2);
+            emberGlow.raycastTarget = false;
+            StartCoroutine(AnimateTitleGlow(emberGlow));
 
             introRoot = CreateFullScreenOverlay("Intro de nivel");
+            introCanvasGroup = introRoot.AddComponent<CanvasGroup>();
+            introCanvasGroup.alpha = 0f;
             introRoot.SetActive(false);
             MakePanel("Sombra intro", introRoot.transform, new Color32(31, 34, 29, 245), .5f, .5f, 1080, 1920);
             MakeText("Intro título", introRoot.transform, "EL DEBUT", 64, Cream, TextAnchor.MiddleCenter, .5f, .66f, 900, 115, true);
-            MakeText("Intro objetivo", introRoot.transform, "Prendé el carbón, repartí las brasas y cociná una tira y un chorizo.\nRetiralos cuando estén a punto y serví la bandeja.", 29, Cream, TextAnchor.MiddleCenter, .5f, .51f, 860, 220, false);
+            MakeText("Intro comensales", introRoot.transform, "2 COMENSALES", 31, Gold, TextAnchor.MiddleCenter, .5f, .56f, 850, 64, true);
+            MakeText("Intro menu", introRoot.transform, "CHORIZO ×1   ·   TIRA DE ASADO ×1", 27, Cream, TextAnchor.MiddleCenter, .5f, .505f, 880, 72, true);
+            MakeText("Intro objetivo", introRoot.transform, "Prendé el carbón, repartí las brasas y cociná.\nRetirá todo a punto y serví la bandeja.", 25, Cream, TextAnchor.MiddleCenter, .5f, .445f, 850, 118, false);
             MakeButton("IR A LA PARRILLA", introRoot.transform, .5f, .35f, 550, 115, new Color32(199, 139, 54, 255), StartLevel);
             contentRoot.gameObject.SetActive(false);
         }
@@ -334,14 +383,74 @@ namespace Asadito
 
         private void ShowLevelIntro()
         {
-            menuRoot.SetActive(false);
+            if (!menuTransitionActive) StartCoroutine(TransitionToIntro());
+        }
+
+        private IEnumerator TransitionToIntro()
+        {
+            menuTransitionActive = true;
+            foreach (Button button in menuRoot.GetComponentsInChildren<Button>()) button.interactable = false;
             introRoot.SetActive(true);
+            float t = 0f;
+            while (t < .38f)
+            {
+                t += Time.unscaledDeltaTime;
+                float p = Mathf.SmoothStep(0f, 1f, Mathf.Clamp01(t / .38f));
+                menuCanvasGroup.alpha = 1f - p;
+                introCanvasGroup.alpha = p;
+                yield return null;
+            }
+            menuRoot.SetActive(false);
+            menuCanvasGroup.alpha = 1f;
+            introCanvasGroup.alpha = 1f;
+            menuTransitionActive = false;
+        }
+
+        private IEnumerator AnimateTitleGlow(Image glow)
+        {
+            float elapsed = 0f;
+            while (glow != null && menuRoot != null && menuRoot.activeInHierarchy)
+            {
+                elapsed += Time.unscaledDeltaTime;
+                float pulse = (Mathf.Sin(elapsed * 1.8f) + 1f) * .5f;
+                glow.color = new Color(1f, .29f, .07f, Mathf.Lerp(.035f, .075f, pulse));
+                glow.rectTransform.localScale = Vector3.one * Mathf.Lerp(.97f, 1.035f, pulse);
+                yield return null;
+            }
+        }
+
+        private static void ExitGame()
+        {
+#if UNITY_EDITOR
+            UnityEditor.EditorApplication.isPlaying = false;
+#else
+            Application.Quit();
+#endif
         }
 
         private void StartLevel()
         {
-            introRoot.SetActive(false);
+            if (!menuTransitionActive) StartCoroutine(TransitionToGameplay());
+        }
+
+        private IEnumerator TransitionToGameplay()
+        {
+            menuTransitionActive = true;
             contentRoot.gameObject.SetActive(true);
+            gameplayCanvasGroup.alpha = 0f;
+            float t = 0f;
+            while (t < .34f)
+            {
+                t += Time.unscaledDeltaTime;
+                float p = Mathf.SmoothStep(0f, 1f, Mathf.Clamp01(t / .34f));
+                introCanvasGroup.alpha = 1f - p;
+                gameplayCanvasGroup.alpha = p;
+                yield return null;
+            }
+            introRoot.SetActive(false);
+            introCanvasGroup.alpha = 1f;
+            gameplayCanvasGroup.alpha = 1f;
+            menuTransitionActive = false;
             tutorialStep = 0;
             tutorialText.text = saveData.Settings.TutorialCompleted ? "El carbón responde a dónde agrupás las brasas." : "Paso 1: prendé el carbón para empezar.";
         }
@@ -710,11 +819,30 @@ namespace Asadito
         {
             MakePanel("Fin de nivel", contentRoot, new Color32(39, 48, 39, 248), .5f, .54f, 900, 420);
             MakeText("Resultado titulo", contentRoot, "¡ASADO TERMINADO!", 46, Cream, TextAnchor.MiddleCenter, .5f, .625f, 850, 90, true);
-            MakeText("Resultado puntos", contentRoot, totalScore + " / 200 PUNTOS  ·  " + new string('★', totalStars) + new string('☆', 3 - totalStars), 30, Gold, TextAnchor.MiddleCenter, .5f, .555f, 850, 78, true);
+            scoreText = MakeText("Resultado puntos", contentRoot, "0 / 200 PUNTOS", 43, Gold, TextAnchor.MiddleCenter, .5f, .555f, 900, 82, true);
+            StartCoroutine(AnimateResultScore(scoreText));
             MakeText("Resultado detalle", contentRoot, feedbackText.text, 18, Cream, TextAnchor.MiddleCenter, .5f, .49f, 850, 115, false);
             Button replay = MakeButton("OTRO ASADO", contentRoot, .5f, .405f, 470, 100, new Color32(199, 139, 54, 255), Replay);
             replay.interactable = true;
             SetActionButtons(false);
+        }
+
+        private IEnumerator AnimateResultScore(Text label)
+        {
+            float elapsed = 0f;
+            label.rectTransform.localScale = Vector3.one * .82f;
+            while (elapsed < .58f)
+            {
+                elapsed += Time.unscaledDeltaTime;
+                float p = Mathf.Clamp01(elapsed / .58f);
+                float eased = 1f - Mathf.Pow(1f - p, 3f);
+                int points = Mathf.RoundToInt(totalScore * eased);
+                label.text = points + " / 200 PUNTOS";
+                label.rectTransform.localScale = Vector3.one * Mathf.Lerp(.82f, 1f, eased);
+                yield return null;
+            }
+            label.text = totalScore + " / 200 PUNTOS  ·  " + new string('★', totalStars) + new string('☆', 3 - totalStars);
+            label.rectTransform.localScale = Vector3.one;
         }
 
         private void Replay()
@@ -845,7 +973,10 @@ namespace Asadito
 
         private Image MakePanel(string objectName, Transform parent, Color color, float x, float y, float width, float height)
         {
-            return MakeImage(objectName, parent, whiteSprite, color, new Vector2(x, y), new Vector2(x, y), new Vector2(width, height));
+            Image image = MakeImage(objectName, parent, roundedButtonSprite != null ? roundedButtonSprite : whiteSprite, color,
+                new Vector2(x, y), new Vector2(x, y), new Vector2(width, height));
+            if (roundedButtonSprite != null) image.type = Image.Type.Sliced;
+            return image;
         }
 
         private Image MakeImage(string objectName, Transform parent, Sprite sprite, Color color, Vector2 min, Vector2 max, Vector2 size)
@@ -873,9 +1004,13 @@ namespace Asadito
             SetRect(rect, x, y, width, height);
             var text = go.GetComponent<Text>();
             text.text = value;
-            text.font = Resources.GetBuiltinResource<Font>("LegacyRuntime.ttf");
+            bool isBrand = objectName == "Menu marca";
+            bool isButtonLabel = objectName.StartsWith("Texto ");
+            Font preferredFont = isBrand ? displayFont
+                : (isButtonLabel ? boldFont : (bold ? (size >= 42 ? extraBoldFont : semiBoldFont) : (size <= 20 ? mediumFont : bodyFont)));
+            text.font = preferredFont != null ? preferredFont : Resources.GetBuiltinResource<Font>("LegacyRuntime.ttf");
             text.fontSize = size;
-            text.fontStyle = bold ? FontStyle.Bold : FontStyle.Normal;
+            text.fontStyle = preferredFont != null ? FontStyle.Normal : (bold ? FontStyle.Bold : FontStyle.Normal);
             text.alignment = align;
             text.color = color;
             text.horizontalOverflow = HorizontalWrapMode.Wrap;
@@ -887,6 +1022,11 @@ namespace Asadito
         private Button MakeButton(string label, Transform parent, float x, float y, float width, float height, Color color, UnityEngine.Events.UnityAction onClick)
         {
             Image image = MakeImage(label, parent, whiteSprite, color, new Vector2(x, y), new Vector2(x, y), new Vector2(width, height));
+            if (roundedButtonSprite != null)
+            {
+                image.sprite = roundedButtonSprite;
+                image.type = Image.Type.Sliced;
+            }
             image.raycastTarget = true;
             Button button = image.gameObject.AddComponent<Button>();
             button.targetGraphic = image;
@@ -896,6 +1036,11 @@ namespace Asadito
             colors.pressedColor = Color.Lerp(color, Color.black, .17f);
             colors.disabledColor = new Color(color.r * .45f, color.g * .45f, color.b * .45f, .75f);
             button.colors = colors;
+            var shadow = image.gameObject.AddComponent<Shadow>();
+            shadow.effectColor = new Color(0, 0, 0, .35f);
+            shadow.effectDistance = new Vector2(0, -5);
+            AsaditoButtonFeedback buttonFeedback = image.gameObject.AddComponent<AsaditoButtonFeedback>();
+            buttonFeedback.PulseWhenInteractable = label == "SERVIR";
             button.onClick.AddListener(onClick);
             Text labelText = MakeText("Texto " + label, image.transform, label, 27, Cream, TextAnchor.MiddleCenter, .5f, .5f, width - 24, height - 16, true);
             labelText.rectTransform.anchorMin = Vector2.zero;
@@ -903,6 +1048,26 @@ namespace Asadito
             labelText.rectTransform.offsetMin = new Vector2(12, 8);
             labelText.rectTransform.offsetMax = new Vector2(-12, -8);
             return button;
+        }
+
+        private static Sprite MakeRoundedRectSprite(int size, int radius)
+        {
+            var texture = new Texture2D(size, size, TextureFormat.RGBA32, false) { name = "Runtime Rounded Button" };
+            texture.filterMode = FilterMode.Bilinear;
+            var pixels = new Color[size * size];
+            float r = Mathf.Clamp(radius, 1, size / 2 - 1);
+            for (int y = 0; y < size; y++)
+            for (int x = 0; x < size; x++)
+            {
+                float cx = Mathf.Clamp(x, r, size - 1 - r);
+                float cy = Mathf.Clamp(y, r, size - 1 - r);
+                float distance = Vector2.Distance(new Vector2(x, y), new Vector2(cx, cy));
+                pixels[y * size + x] = new Color(1, 1, 1, Mathf.Clamp01(r + .75f - distance));
+            }
+            texture.SetPixels(pixels);
+            texture.Apply();
+            return Sprite.Create(texture, new Rect(0, 0, size, size), new Vector2(.5f, .5f), 100f,
+                0, SpriteMeshType.FullRect, new Vector4(r, r, r, r));
         }
 
         private static void SetRect(RectTransform rect, float x, float y, float width, float height)

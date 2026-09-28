@@ -1,21 +1,49 @@
-# Dirección visual — Asadito
+# Asadito — Visual Bible
 
-## Norte
+## Norte de arte
 
-Juego 3D estilizado semirrealista, cálido y apetitoso, con identidad de patio/quincho argentino. La comida debe sentirse reconocible y sabrosa, no infantil ni fotorealista costosa. Cámara fija en tres cuartos, composición vertical para móvil y parrilla siempre legible.
+Asadito es un juego argentino de cocina casual premium: patio/quincho cálido, comida protagonista y lectura instantánea en móvil. Usar escenarios y comida 3D estilizados de formas suaves, materiales pintados/simplificados y luz de atardecer; no foto-realismo, ni caricatura infantil. Identidad propia: ritual compartido del asado, hierro y madera de patio, vocabulario rioplatense y pequeños acentos celeste/verde solo cuando ayuden a orientar.
 
-## Paleta y materiales
+**Regla de producción:** la acción y el estado de cocción siempre ganan a la decoración. Cámara fija, composición vertical, siluetas limpias y contraste suficiente. Mantener Canvas UI mientras la transición visual sea incremental; no rehacer el gameplay ni el alcance del MVP para acomodar arte.
 
-Carbón oscuro y hierro gastado para la parrilla; brasas naranja/rojo; madera cálida; vegetación y patio discretos; carne con rojos, dorados y tostados naturales; UI crema de alto contraste. Materiales simples con silueta y valores claros. La lectura del calor y punto tiene prioridad sobre detalle decorativo.
+## Paleta de trabajo
 
-## Escena y rendimiento
+| Rol | Color de referencia | Uso |
+|---|---|---|
+| Tinta carbón | `#25221C` | contornos, texto oscuro, parrilla |
+| Crema | `#FFF0D1` | texto claro, paneles y fondos de UI |
+| Brasa | `#E95B32` | fuego, acción primaria y alerta |
+| Dorado | `#F3AE48` | foco perfecto, acento y premio |
+| Madera | `#8A5234` | parrilla, superficies y bandeja |
+| Verde salvia | `#66815D` | estado positivo, hierbas y apoyo |
+| Carne cruda | `#B94F46` | estado crudo; nunca usar el color como único indicador |
 
-URP móvil, cámara ortográfica o perspectiva suave fija, una luz principal, sombras limitadas y pocas partículas. Mantener UI Canvas para legibilidad mientras se migra gradualmente la escena de 2D a 3D. No exigir postprocesado, múltiples luces en tiempo real ni personajes animados complejos.
+Usar colores cálidos con saturación moderada; fondo más oscuro y suave que la comida. Contraste de texto mínimo de lectura sobre móvil. Error no se codifica solo en rojo: añadir palabra/ícono/animación.
 
-## Concepts
+## UI, marca y navegación
 
-Las seis imágenes de [`../../docs/art/concepts/`](../../docs/art/concepts/) son referencias CONCEPT; no son assets integrados ni criterios de aprobación visual final. El [manifest de assets](../../docs/art/asset-manifest.md) registra estado y uso.
+- **Portada:** key art vertical con parrilla/comida como héroe, título legible arriba, CTA `ENTRAR` dominante y `SALIR` secundario. Entrar conserva el flujo existente de introducción/tutorial. `Application.Quit()` en Player; salir de Play Mode en Unity Editor.
+- **Tipografía:** sans redondeada, de alta x-height y compatible con acentos españoles. El prototipo usa LegacyRuntime; reemplazarla cuando se agregue una fuente con licencia/distribución clara. Evitar textos largos, versales compactas y tipografías display para instrucciones.
+- **Botones:** grandes, con esquinas suaves, un verbo, estado normal/hover/tap/deshabilitado; primaria naranja/dorada, secundaria madera/crema. Feedback de color/escala corto y accesible.
+- **Tarjetas/paneles:** crema o carbón con radio amable, agrupación y encabezado inequívoco. HUD no debe tapar parrilla, alimento ni bandeja; safe area en contenido de juego.
+- **Marca:** lettering de `ASADITO` tipográfico y propio; sin calcar logo, disposición, íconos o forma de botones de otra obra. Tono cercano, rioplatense y apetitoso.
 
-## DONE visual
+## Mundo, fuego y comida
 
-Cada estado comunica acción y resultado a tamaño de teléfono; alimento y fuego se distinguen sin depender solo del color; UI respeta safe areas; la escena mantiene rendimiento móvil estable y unidad de estilo. Ver [estados](food-states.md), [fuego](fire-states.md), [animaciones](animation.md) y [gate](../acceptance/mvp-gate.md).
+- Patio/quincho: señales argentinas sutiles y cálidas (hierbas, madera, faroles, hierro); fondo en profundidad con detalle limitado. La parrilla debe contrastar del patio y conservar lectura en pantallas pequeñas.
+- Parrilla: geometría simple de hierro, rejilla y brasero; brasas con núcleo dorado y borde naranja/rojo. Humo/chispas escasos y ligeros por rendimiento. Distribución de calor y estado deben seguir legibles incluso sin partículas.
+- Comida: silueta reconocible primero; jugosidad/brillo y textura pintada simplificada. Tira, chorizo, vacío y provoleta deben distinguirse por forma, no solo por color. Estados crudo, cocción, punto ideal y quemado cambian valores/superficie y tienen señal visual distinta por cara.
+- Comensales: retratos expresivos y memorables, caricatura suave sin realismo facial; perfiles, gustos y satisfacción en tarjetas simples con texto/íconos accesibles. En el First Playable los avatares son UI geométrica provisional.
+- Bandeja, pinza y superficies: madera/metal coherentes con parrilla; utilería mínima y funcional. Feedback `PERFECTO`, advertencia, estrellas y puntaje con animación breve, sin cubrir alimento/órdenes.
+
+## Motion, sonido y rendimiento
+
+Animar únicamente para confirmar entrada, volteo, retiro, servicio, cambio térmico y reacción: movimiento corto, asentamiento elástico moderado, brillo pulsado suave; respetar pausa/legibilidad. No usar cámara movediza, partículas densas ni efectos que oculten el estado. Mantener URP móvil, luz controlada, transparencias reducidas y texturas comprimibles; probar vertical y safe areas.
+
+## Portabilidad de la inspiración
+
+La referencia es solo calidad/claridad de juegos casuales de cocina. No reproducir assets, logo, personajes, layout, iconografía ni composición identificable de Pocket Chef ni de terceros. La identidad de Asadito proviene del quincho, el asado compartido y tono argentino.
+
+## Estado visual MVP al 2026-09-27
+
+El First Playable continúa en Canvas/2D procedural y no es aún el objetivo 3D estilizado final. La nueva imagen `PortadaAsadito.png` es key art provisional para dar personalidad a la pantalla inicial, no modelo/runtime 3D ni prueba de aprobación visual. `PatioParrilla.png` queda provisional y separado de la portada. Comida individual, guest portraits, escenas y pantallas secundarias aún requieren producción visual dedicada; ver [plan](../../docs/art/plan.md) y [manifest](../../docs/art/asset-manifest.md).

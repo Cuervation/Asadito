@@ -1,13 +1,10 @@
 fileFormatVersion: 2
-guid: 44572f578f5dd460f87ba7962ff28e41
+guid: 105283ec17d1147c3a9608b0297ed0ba
 TextureImporter:
   internalIDToNameTable:
   - first:
-      213: -2544858816605125926
-    second: BifeCrudo_0
-  - first:
-      213: -1862069487170004054
-    second: BifeCrudo_1
+      213: -3165924753437935463
+    second: PortadaAsadito_0
   externalObjects: {}
   serializedVersion: 13
   mipmaps:
@@ -118,13 +115,13 @@ TextureImporter:
     serializedVersion: 2
     sprites:
     - serializedVersion: 2
-      name: BifeCrudo_0
+      name: PortadaAsadito_0
       rect:
         serializedVersion: 2
         x: 0
         y: 0
-        width: 1523
-        height: 997
+        width: 941
+        height: 1672
       alignment: 0
       pivot: {x: 0, y: 0}
       border: {x: 0, y: 0, z: 0, w: 0}
@@ -133,30 +130,8 @@ TextureImporter:
       physicsShape: []
       tessellationDetail: -1
       bones: []
-      spriteID: ad20bb8b368deacd0800000000000000
-      internalID: -2544858816605125926
-      vertices: []
-      indices:
-      edges: []
-      weights: []
-    - serializedVersion: 2
-      name: BifeCrudo_1
-      rect:
-        serializedVersion: 2
-        x: 1334
-        y: 983
-        width: 11
-        height: 11
-      alignment: 0
-      pivot: {x: 0, y: 0}
-      border: {x: 0, y: 0, z: 0, w: 0}
-      customData:
-      outline: []
-      physicsShape: []
-      tessellationDetail: -1
-      bones: []
-      spriteID: aab5326caa99826e0800000000000000
-      internalID: -1862069487170004054
+      spriteID: 99837b5e5306014d0800000000000000
+      internalID: -3165924753437935463
       vertices: []
       indices:
       edges: []
@@ -175,8 +150,7 @@ TextureImporter:
     spriteCustomMetadata:
       entries: []
     nameFileIdTable:
-      BifeCrudo_0: -2544858816605125926
-      BifeCrudo_1: -1862069487170004054
+      PortadaAsadito_0: -3165924753437935463
   mipmapLimitGroupName:
   pSDRemoveMatte: 0
   userData:
