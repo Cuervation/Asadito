@@ -88,6 +88,14 @@
       "sessions": 1,
       "memories": 2,
       "prompts": 0
+    },
+    {
+      "id": "b9c452a0",
+      "created_by": "celestino",
+      "created_at": "2026-09-28T11:39:35.459205Z",
+      "sessions": 2,
+      "memories": 5,
+      "prompts": 0
     }
   ]
 }
