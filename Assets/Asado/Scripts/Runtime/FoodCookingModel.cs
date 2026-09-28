@@ -48,12 +48,12 @@ namespace Asadito.Runtime
     {
         public static FoodCookProfile CreateProfile(string foodId)
         {
-            var profile = new FoodCookProfile { FoodId = foodId, CoreTransferRate = .003f, CharRate = .003f };
+            var profile = new FoodCookProfile { FoodId = foodId, CoreTransferRate = .025f, CharRate = .003f };
             if (string.Equals(foodId, "chorizo", StringComparison.OrdinalIgnoreCase))
             {
                 // Chorizo is a smaller sausage cut: it heats and browns faster, with
                 // a higher internal-temperature range than the whole-cut baseline.
-                profile.CoreTransferRate = .007f;
+                profile.CoreTransferRate = .055f;
                 profile.CharRate = .008f;
                 profile.DonenessBands = new[]
                 {
@@ -67,7 +67,7 @@ namespace Asadito.Runtime
             else if (string.Equals(foodId, "vacio", StringComparison.OrdinalIgnoreCase))
             {
                 // Vacio is a thick, broad cut: the surface responds to the grate but its core moves slowly.
-                profile.CoreTransferRate = .0015f;
+                profile.CoreTransferRate = .012f;
                 profile.SurfaceTransferRate = .52f;
                 profile.MoistureLossRate = .006f;
                 profile.MaillardRate = .018f;
@@ -84,7 +84,7 @@ namespace Asadito.Runtime
             else if (string.Equals(foodId, "provoleta", StringComparison.OrdinalIgnoreCase))
             {
                 // Cheese warms and browns quickly; the UI can expose its named phases through GetProvoletaStage.
-                profile.CoreTransferRate = .012f;
+                profile.CoreTransferRate = .09f;
                 profile.SurfaceTransferRate = 1.1f;
                 profile.MoistureLossRate = .004f;
                 profile.MaillardRate = .032f;

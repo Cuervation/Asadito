@@ -3,7 +3,7 @@
 ## Product and validation
 
 - Treat `specs/` as the source of truth for scope, systems, and acceptance criteria. Keep the SDD concise and update it when a product decision changes.
-- The active milestone is First Playable. Do not move to Visual Slice until its acceptance gate passes in Unity.
+- The active milestone is Visual Slice: the First Playable level-1 loop has passed automated PlayMode in Unity. Do not move to MVP Content until the visual-slice art and motion gate is reviewed in Editor; broader L2–L5 end-to-end, normal pacing, and device QA remain later MVP gates.
 - Keep the MVP visual first: prioritize the grill, food states, and readable animation/feedback. Avoid adding content outside the five-level MVP.
 - Unity MCP, EditMode tests, and an actual Editor playtest provide validation. Report clearly when a check could not run; old build logs do not validate changed code.
 

@@ -20,20 +20,32 @@ Asadito es un juego argentino de cocina casual premium: patio/quincho cálido, c
 
 Usar colores cálidos con saturación moderada; fondo más oscuro y suave que la comida. Contraste de texto mínimo de lectura sobre móvil. Error no se codifica solo en rojo: añadir palabra/ícono/animación.
 
-## UI, marca y navegación
+## Brand
+
+- Wordmark propio `ASADITO`: Lilita One con crema, contorno carbón, extrusión terracota/sombra y acento pequeño de brasa; el lettering se mantiene legible en tamaño chico.
+- Icono de launcher: símbolo original simple de chorizo sobre parrilla, medallón crema/rojo y glow de brasa; sin texto ni escena completa. El icono adaptativo usa el mismo asset en los slots Android existentes.
+- No tomar formas, composición, personajes, lettering o íconos identificables de Pocket Chef ni de otro juego.
+
+## UI / tipografía
 
 - **Portada:** key art vertical con parrilla/comida como héroe, título legible arriba, CTA `ENTRAR` dominante y `SALIR` secundario. Entrar conserva el flujo existente de introducción/tutorial. `Application.Quit()` en Player; salir de Play Mode en Unity Editor.
-- **Tipografía:** Lilita One para marca/display y Baloo 2 para UI, ambas OFL con licencias incluidas y tildes/números comprobados; el Canvas Legacy carga TTF desde `Resources` (no TMP). Evitar textos largos, versales compactas y tipografías display para instrucciones.
+- **Tipografía:** Lilita One Regular se reserva para wordmark y display; Baloo 2 se usa en UI con pesos instalados 400/500/600/700/800. Las licencias OFL están dentro del proyecto. Canvas Legacy carga TTF desde `Resources` (no TMP); no se generan TMP assets mientras no se use TextMeshPro. Nunito queda como fallback futuro, no instalado sin evidencia de legibilidad insuficiente. Revisar ñ, tildes, números y tamaños mínimos en teléfono.
 - **Botones:** grandes, con esquinas suaves, un verbo, estado normal/hover/tap/deshabilitado; primaria naranja/dorada, secundaria madera/crema. Feedback de color/escala corto y accesible.
 - **Tarjetas/paneles:** crema o carbón con radio amable, agrupación y encabezado inequívoco. HUD no debe tapar parrilla, alimento ni bandeja; safe area en contenido de juego.
-- **Marca:** lettering de `ASADITO` tipográfico y propio; sin calcar logo, disposición, íconos o forma de botones de otra obra. Tono cercano, rioplatense y apetitoso.
 
-## Mundo, fuego y comida
+## Style, color y formas
+
+- Casual premium con mundo 3D estilizado/semi-cartoon, materiales pintados simples, siluetas claras y luz cálida; nunca hiperrealismo fotográfico ni infantilización.
+- Paleta: tinta carbón `#25221C`, crema `#FFF0D1`, brasa `#E95B32`, dorado `#F3AE48`, madera `#8A5234`, salvia `#66815D` y carne cruda `#B94F46`. Escenario menos contrastado que comida/UI.
+- Botones, bandejas, platos y tarjetas usan radios amplios, volumen/sombra suave y contraste alto; evitar detalles muy finos, exceso de brillo y saturación.
+
+## Food, mundo, fuego y guests
 
 - Patio/quincho: señales argentinas sutiles y cálidas (hierbas, madera, faroles, hierro); fondo en profundidad con detalle limitado. La parrilla debe contrastar del patio y conservar lectura en pantallas pequeñas.
 - Parrilla: geometría simple de hierro, rejilla y brasero; brasas con núcleo dorado y borde naranja/rojo. Humo/chispas escasos y ligeros por rendimiento. Distribución de calor y estado deben seguir legibles incluso sin partículas.
-- Comida: silueta reconocible primero; jugosidad/brillo y textura pintada simplificada. Tira, chorizo, vacío y provoleta deben distinguirse por forma, no solo por color. Estados crudo, cocción, punto ideal y quemado cambian valores/superficie y tienen señal visual distinta por cara.
-- Comensales: retratos expresivos y memorables, caricatura suave sin realismo facial; perfiles, gustos y satisfacción en tarjetas simples con texto/íconos accesibles. En el First Playable los avatares son UI geométrica provisional.
+- **Food:** silueta reconocible primero; jugosidad, brillo y textura pintada simplificada. Tira, chorizo, vacío y provoleta se distinguen por forma, no solo color. `FoodStateAtlas.png` contiene 4 etapas ilustradas por producto (16 sprites), seleccionadas gradualmente por umbral térmico; todavía no es blend de material ni seis estados/caras independientes.
+- **Guests:** caricatura suave casual premium, identidad y expresión legibles; texto/ícono acompaña la reacción. `GuestPortraitAtlas.png` aporta seis perfiles por cuatro expresiones; el runtime cambia retrato individual en reacción/resultados, validado por PlayMode, aún sin aprobación de recorte en Editor/teléfono.
+- **VFX:** pulso de brasas/color ligado a energía; humo ligero de círculos Canvas y glow de portada. Son recursos baratos/provisionales, no humo volumétrico ni sistema final de partículas; evaluar legibilidad/rendimiento móvil antes de sumar efectos.
 - Bandeja, pinza y superficies: madera/metal coherentes con parrilla; utilería mínima y funcional. Feedback `PERFECTO`, advertencia, estrellas y puntaje con animación breve, sin cubrir alimento/órdenes.
 
 ## Motion, sonido y rendimiento
@@ -44,6 +56,6 @@ Animar únicamente para confirmar entrada, volteo, retiro, servicio, cambio tér
 
 La referencia es solo calidad/claridad de juegos casuales de cocina. No reproducir assets, logo, personajes, layout, iconografía ni composición identificable de Pocket Chef ni de terceros. La identidad de Asadito proviene del quincho, el asado compartido y tono argentino.
 
-## Estado visual MVP al 2026-09-27
+## Estado visual MVP al 2026-09-28
 
-El runtime continúa en Canvas/2D procedural y no es aún el objetivo casual-premium estilizado. `ParrillaTopDownGameplay.png` (941×1672) ya se carga como fondo cenital en gameplay; es fotográfica, por lo que sirve como integración técnica temporal, no como arte aprobado. `PortadaAsadito.png` permanece provisional y `PatioParrilla.png` separado como fallback. Las porciones usan sprites de una sola etapa, tinte procedural o formas geométricas; el vacío reutiliza un bife genérico, la provoleta es geométrica y los seis perfiles no tienen retratos propios. Humo, brasa, sizzle y movimiento son prototipos procedurales. No hubo QA en teléfono ni validación portrait de la captura Game View vigente. Ver [plan](../../docs/art/plan.md) y [manifest](../../docs/art/asset-manifest.md).
+El runtime continúa en Canvas/2D procedural y aún no satisface el norte casual-premium completo. `ParrillaTopDownStylized.png` (941×1672) es ilustración cenital original; `FoodStateAtlas.png` aporta 16 cortes (4 comidas × 4 etapas) y `GuestPortraitAtlas.png` 24 cortes (6 identidades × 4 expresiones), activos en runtime. `AsaditoLogo.png` usa Lilita One tratada como wordmark original; `AsaditoAppIcon.png` actualiza la insignia Android sin cambiar sus GUID slots. `PortadaAsadito.png` ahora comparte el patio cálido, grill, comida y estilo 3D pintado de la parrilla de gameplay, con zona tranquila para logo y madera libre para CTA; todavía falta inspección del crop/contraste en GUI/teléfono. PlayMode valida carga/uso y flujos, pero no reemplaza inspección visual, safe-area/touch QA ni aprobación en teléfono. El fondo fotográfico anterior de gameplay queda como fallback. UI, humo/brasa, sonido, food-state transitions y motion siguen provisionales. Ver [plan](../../docs/art/plan.md) y [manifest](../../docs/art/asset-manifest.md).

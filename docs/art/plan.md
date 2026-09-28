@@ -1,25 +1,30 @@
 # Plan visual MVP — Asadito
 
-Fuente de dirección y gates: [Visual Bible](../../specs/visual/art-direction.md), [estados de comida](../../specs/visual/food-states.md), [estados de fuego](../../specs/visual/fire-states.md) y [animación](../../specs/visual/animation.md). Una imagen/concepto no se considera integrado ni `FINAL` hasta import, validación en Editor y legibilidad portrait.
+Fuente de dirección/gates: [Visual Bible](../../specs/visual/art-direction.md), [estados de comida](../../specs/visual/food-states.md), [estados de fuego](../../specs/visual/fire-states.md) y [animación](../../specs/visual/animation.md). Concepto o asset integrado no equivale a `FINAL`: debe pasar import, inspección visual, responsive/táctil y device QA.
 
-## Auditoría breve
+## Slice visual ya integrado
 
-- **Se conserva por ahora:** key art del patio `PatioParrilla.png` (tiene buena atmósfera y ya sirve de fondo gameplay, pero su tratamiento pictórico no termina de alcanzar el norte 3D casual); estados/tokens térmicos y la arquitectura runtime del First Playable.
-- **Rehacer al avanzar el slice:** portada oscura genérica sin Salir; UI rectangular y tipografía de sistema; retratos geométricos; tira y chorizo planos; parrilla/brasas como rejilla UI; feedback sin assets cohesivos.
-- **Nuevos básicos:** imagen hero propia para portada, botón de entrada/salida funcional, sistema de componentes de UI redondeados, key art 3D estilizado/lighting coherente.
+- Fuentes estáticas Lilita One y Baloo 2 400/500/600/700/800, con licencias OFL; Canvas runtime usa Unity Legacy Text, no TMP.
+- Portada vertical atmosférica con logo propio Lilita One, botones `ENTRAR`/`SALIR`, estado de espera accesible durante la animación escalonada, botones redondeados/feedback, brillo ambiental y transición a selección.
+- Icono adaptativo Android rediseñado como chorizo sobre parrilla; se conservó GUID y configuración de las seis densidades/12 capas.
+- Parrilla cenital ilustrada de gameplay, 16 estados de comida por atlas y 24 retratos de seis identidades/cuatro expresiones; atlas activos en runtime.
+- Level select, intro, HUD, resultados, score/estrellas/reacciones y navegación L1–L5 continúan sobre Canvas procedural; se verifican loops automáticos sin alterar sistemas de juego durante el polish visual.
 
-## Orden de actualización
+## Plan restante (prioridad MVP)
 
-1. Portada y marca: usar `PortadaAsadito.png`; titular real y botones UI (no texto horneado en bitmap), Entrar al flujo de intro, Salir por plataforma.
-2. Sistema UI reusable: forma/redondeo, paleta, tamaños, feedback, safe area y tipografía con soporte español.
-3. Gameplay HUD + resultado: jerarquía, estados accesibles, tarjetas, score/estrellas; no cambiar reglas de juego.
-4. Parrilla/brasas: plano cenital legible, gradiente térmico, animación de brasa/humo económica.
-5. Chorizo y tira: sprites/modelos por estado y cara; aprovechar `ChorizoCrudoCutout.png` solo mientras siga provisional.
-6. Bandeja/pinza/madera y fondo quincho estilizado; después retratos y expresiones.
-7. Provoleta, vacío y level select cuando correspondan al scope; no crear contenido de niveles futuros dentro del MVP.
+1. Reconnectar el Editor MCP sin cerrar la instancia abierta; revisar portada/scene/console, encuadres y botones en layout portrait. El MCP HTTP reporta la sesión pero falla ping y consola (`Unity session not ready`).
+2. Inspeccionar en GUI el nuevo key art (derivado del estilo de parrilla gameplay), wordmark/icono a tamaño real, CTA/SALIR, safe-area y crops Android; ajustar solo si el render lo requiere.
+3. Revisión de pantallas: level cards con jerarquía/info legible, HUD sin tapar parrilla, pantalla intro, score/estrellas/feedback individual. Corregir layouts solo con evidencia de render, no reescribir gameplay.
+4. Elevar atlas de comida de cuatro intercambios visuales a estados intermedios/por cara y ampliar fuego/brasa/tray/pinzas/VFX; conservar el modelo térmico/scoring y mostrar claramente su estado real.
+5. Medir build/dispositivo (resoluciones, touch, rendimiento/transparencias, audio/haptics); completar arte/animaciones solo tras aprobar lectura y balance de feedback.
 
-**Dependencias:** escoger fuente licenciada antes del polish final; componentes UI y guías portrait antes de rehacer pantallas; silueta/material de cada comida antes de estados de cocción; la parrilla visual debe respetar la lectura del `HeatGrid` existente. No importar un paquete gráfico genérico sin revisar licencias/peso.
+## Validación actual
 
-## Estado/alcance de esta actualización
+Unity 6000.6.3f1, copia aislada del proyecto: PlayMode full L1–L5 6/6 Passed; prueba enfocada de logo/icono/fuentes/CTA y glifos españoles 1/1 Passed; EditMode 13/13 Passed (`/tmp/AsaditoEditTests.current.xml`). L1 ×30 dura ~43,8 s en interacción scripted, no en playtest humano. MCP del Editor original sigue no-ready, por lo que ningún resultado de batch se presenta como inspección visual en GUI/device. El APK de validación Android aislado compila el key art/icono nuevos (46 MB, AAPT adaptive resource, firma debug); `Builds/Android` no se reemplazó y falta launcher/touch QA real.
 
-Implementación incremental sobre `AsaditoGame`/`SampleScene`: portada nueva con key art, título de marca, acciones `ENTRAR`/`SALIR`, botones redondeados/feedback, transición, fuentes OFL y app icon Android; se sumó count-up de score y feedback de botones manteniendo la simulación. La carga tipográfica y portada/intro se revisaron en Play Mode, pero el bridge MCP dejó de responder tras recompilar y el intercambio final de arte no está revalidado; las pruebas 9/9 son anteriores a la última pasada. Comida, fuego, guest cards, level select y Results siguen pendientes/provisionales. Ver [manifest de assets](asset-manifest.md) para estados; no declarar lo no probado como final.
+## Restricciones
+
+- No crear niveles, escenas, GameObjects ni contenido gameplay fuera del MVP ni variar simulación, scoring, allocator, guests o progression por motivo visual.
+- No copiar Pocket Chef ni juegos/artistas de referencia; usar solo el estándar de calidad/claridad casual mobile.
+- No importar paquetes visuales grandes ni fuentes/familias adicionales sin justificación y licencia. Nunito no se instala salvo que legibilidad móvil demuestre que Baloo 2 no alcanza.
+- Consultar [Asset Manifest](asset-manifest.md) y [Animation Manifest](animation-manifest.md); los estados no validados permanecen `PROVISIONAL`, `CONCEPT` o `TODO`.

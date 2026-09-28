@@ -85,7 +85,8 @@ namespace Asadito.Tests
             Assert.AreEqual("tira", tira.FoodId);
             Assert.AreNotEqual(tira.DonenessBands[0].MinimumCoreC, chorizo.DonenessBands[0].MinimumCoreC);
             Assert.AreNotEqual(tira.CoreTransferRate, chorizo.CoreTransferRate);
-            Assert.AreEqual(.007f, chorizo.CoreTransferRate, .0001f);
+            Assert.AreEqual(.025f, tira.CoreTransferRate, .0001f);
+            Assert.AreEqual(.055f, chorizo.CoreTransferRate, .0001f);
             Assert.AreEqual(71f, chorizo.DonenessBands[1].MinimumCoreC);
             Assert.AreEqual(73f, chorizo.DonenessBands[1].MaximumCoreC);
         }
@@ -97,6 +98,8 @@ namespace Asadito.Tests
             var tira = Asadito.Runtime.FoodCookingModel.CreateProfile("tira");
             var cheese = Asadito.Runtime.FoodCookingModel.CreateProfile("provoleta");
             Assert.Less(vacio.CoreTransferRate, tira.CoreTransferRate);
+            Assert.Less(tira.CoreTransferRate, Asadito.Runtime.FoodCookingModel.CreateProfile("chorizo").CoreTransferRate);
+            Assert.Greater(cheese.CoreTransferRate, tira.CoreTransferRate);
             Assert.AreEqual(Asadito.Runtime.ProvoletaCookingStage.Cold, Asadito.Runtime.FoodCookingModel.GetProvoletaStage(new Asadito.Runtime.FoodState { CoreTemperatureC = 20f }));
             Assert.AreEqual(Asadito.Runtime.ProvoletaCookingStage.Softening, Asadito.Runtime.FoodCookingModel.GetProvoletaStage(new Asadito.Runtime.FoodState { CoreTemperatureC = 40f }));
             Assert.AreEqual(Asadito.Runtime.ProvoletaCookingStage.Browning, Asadito.Runtime.FoodCookingModel.GetProvoletaStage(new Asadito.Runtime.FoodState { CoreTemperatureC = 50f, Maillard = .1f }));

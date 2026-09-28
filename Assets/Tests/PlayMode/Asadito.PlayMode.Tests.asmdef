@@ -1,0 +1,15 @@
+{
+  "name": "Asadito.PlayMode.Tests",
+  "rootNamespace": "Asadito.Tests.PlayMode",
+  "references": ["Asadito.Runtime"],
+  "includePlatforms": [],
+  "excludePlatforms": [],
+  "allowUnsafeCode": false,
+  "overrideReferences": false,
+  "precompiledReferences": [],
+  "autoReferenced": false,
+  "defineConstraints": [],
+  "versionDefines": [],
+  "optionalUnityReferences": ["TestAssemblies"],
+  "noEngineReferences": false
+}

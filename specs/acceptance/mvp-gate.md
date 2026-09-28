@@ -18,12 +18,18 @@
 
 ## Gate visual y audio
 
-- Dirección 3D estilizada semirrealista coherente en patio/parrilla/comida/UI, composición vertical, legible en teléfono y con rendimiento móvil objetivo.
+- Dirección 3D estilizada/semi-cartoon casual premium coherente en patio/parrilla/comida/UI, composición vertical y legible en teléfono; el key art de portada actual no alcanza aún este estilo y safe area/performance requieren mobile QA.
 - Comida distingue estados crudo, calentando, dorando, punto objetivo, pasado y quemado; las caras mantienen progreso propio al voltear.
 - Fuego comunica estados y variación regional del `HeatGrid`; feedback de colocar, mover, voltear, retirar, servir y reacción de comensales.
 - Sizzle, humo y señal háptica (cuando la plataforma lo soporta y el setting está activo) acompañan interacciones sin tapar la lectura térmica.
 - Resultado comunica score, estrellas y un motivo entendible. Audio básico de carbón/sizzle/metal y háptica optativa cuando sea viable.
 - Concepts no cuentan como assets de runtime ni como verificación visual aprobada. Estados vigentes en [`../visual/`](../visual/art-direction.md) y manifests en [`../../docs/art/`](../../docs/art/asset-manifest.md).
+
+## Evidencia de actualización visual (2026-09-28)
+
+- Lilita One + wordmark propio, Baloo 2 cinco pesos estáticos (OFL/licencias) y launcher icon original ya están integrados; el runtime usa Unity Legacy Text, por eso no se generan TMP Font Assets. PlayMode verifica fuentes, glifos españoles (ñ, tildes, signos, ×, · y números), loading de logo/icono y gating de entrada durante animación.
+- El full-cycle batch PlayMode L1–L5 pasa 6/6 y el EditMode 13/13; se prueban carga/intercambio del atlas de 16 comidas, 24 portraits/result expression, resultados y navegación. Esto no valida composición visual de GUI, contraste mínimo por device, input táctil físico ni build Android posterior al rediseño del icono.
+- Mantener milestone Visual Slice / `MVP PARTIAL` hasta revisar Editor GUI, portada, safe areas, performance y arte en dispositivo.
 
 ## MVP completo: niveles 1–5
 
@@ -40,3 +46,10 @@
 - Duraciones y escalas son metas/configuración de ritmo, no condiciones de victoria ni timers de punto.
 - Los rangos de doneness se calibran por alimento y deben ser distinguibles en juego; valores finales se ajustan mediante balance.
 - Las cuatro dimensiones de score y prioridades del allocator son observables/reproducibles con iguales entradas.
+
+## Evidencia automatizada (2026-09-28)
+
+- PlayMode batch 6/6 y EditMode batch 13/13 en copia Unity temporal `/tmp/AsaditoValidation.QP0xpX`.
+- Un L1 full-cycle (incluye UI, movimiento/flip, cocción por estado, bandeja, resultados/save y Retry) pasa a la escala default ×30 en 43.2s de acciones scripted; no incluye deliberación humana.
+- Otra prueba completa cooking→serve→results/progression para L1–L5; usa ×1200 solo para acelerar la prueba y no certifica el ritmo normal ni el tacto de dispositivo.
+- El MCP GUI del Editor original dejó de responder tras un warning WebSocket; no se verificó su consola/jerarquía/render posterior ni se probó teléfono.
