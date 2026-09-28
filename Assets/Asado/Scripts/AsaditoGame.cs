@@ -220,8 +220,8 @@ namespace Asadito
             var avatarRect = avatar.GetComponent<RectTransform>();
             avatarRect.SetParent(contentRoot, false);
             SetRect(avatarRect, .17f, .795f, 110, 110);
-            guestName = MakeText("Nombre comensal", contentRoot, "", 30, Cream, TextAnchor.MiddleLeft, .31f, .818f, 650, 50, true);
-            guestOrder = MakeText("Pedido de carne", contentRoot, "", 25, new Color32(243, 197, 121, 255), TextAnchor.MiddleLeft, .31f, .773f, 650, 46, true);
+            guestName = MakeText("Nombre comensal", contentRoot, "", 30, Cream, TextAnchor.MiddleLeft, .49f, .818f, 490, 50, true);
+            guestOrder = MakeText("Pedido de carne", contentRoot, "", 25, new Color32(243, 197, 121, 255), TextAnchor.MiddleLeft, .49f, .773f, 490, 46, true);
 
             fireGlow = MakeImage("Resplandor de brasas", contentRoot, circleSprite, new Color(1f, .35f, .07f, .16f), new Vector2(.5f, .57f), new Vector2(.5f, .57f), new Vector2(330, 170));
             fireGlow.raycastTarget = false;

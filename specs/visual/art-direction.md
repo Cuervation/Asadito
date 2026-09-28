@@ -23,7 +23,7 @@ Usar colores cálidos con saturación moderada; fondo más oscuro y suave que la
 ## UI, marca y navegación
 
 - **Portada:** key art vertical con parrilla/comida como héroe, título legible arriba, CTA `ENTRAR` dominante y `SALIR` secundario. Entrar conserva el flujo existente de introducción/tutorial. `Application.Quit()` en Player; salir de Play Mode en Unity Editor.
-- **Tipografía:** sans redondeada, de alta x-height y compatible con acentos españoles. El prototipo usa LegacyRuntime; reemplazarla cuando se agregue una fuente con licencia/distribución clara. Evitar textos largos, versales compactas y tipografías display para instrucciones.
+- **Tipografía:** Lilita One para marca/display y Baloo 2 para UI, ambas OFL con licencias incluidas y tildes/números comprobados; el Canvas Legacy carga TTF desde `Resources` (no TMP). Evitar textos largos, versales compactas y tipografías display para instrucciones.
 - **Botones:** grandes, con esquinas suaves, un verbo, estado normal/hover/tap/deshabilitado; primaria naranja/dorada, secundaria madera/crema. Feedback de color/escala corto y accesible.
 - **Tarjetas/paneles:** crema o carbón con radio amable, agrupación y encabezado inequívoco. HUD no debe tapar parrilla, alimento ni bandeja; safe area en contenido de juego.
 - **Marca:** lettering de `ASADITO` tipográfico y propio; sin calcar logo, disposición, íconos o forma de botones de otra obra. Tono cercano, rioplatense y apetitoso.

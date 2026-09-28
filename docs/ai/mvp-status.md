@@ -26,7 +26,7 @@
 ## TESTS
 
 - Unity Editor abierto: compilación OK; EditMode 9/9 Passed.
-- Visual: Play Mode previo verificó portada, intro y carga de las seis fuentes; no se volvió a compilar/probar después del cambio final de arte y código. MCP server detecta Unity pero Editor ping no responde actualmente.
+- Visual: Play Mode actual verificó portada, intro, transición a gameplay y botón Salir; EditMode pasó 9/9 después del ajuste de tarjeta para portrait. El Editor MCP respondió durante estas pruebas; consola conserva un warning WebSocket del bridge, no hay errores C# reportados. Gameplay sigue visualmente provisional y falta device/touch QA.
 - Playtest MCP: flujo del nivel 1 y retry completados. La primera corrida detectó total fuera de rango; el código se corrigió y el resultado actualizado dio 193/200 en una verificación rápida del evaluador. Falta repetir el ciclo completo en el código corregido.
 - MCP: HTTP registrado en Codex, Editor conectado; escena `SampleScene`. Consola sin errores de juego; quedó un warning del WebSocket MCP (`WebSocket is not initialised`) tras refrescar assets.
 - Producto, workflow, setup Git/Engram y estado guardados en Engram; tres chunks exportados por Git Sync.

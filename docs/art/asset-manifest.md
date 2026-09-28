@@ -11,7 +11,7 @@
 | `Assets/Asado/Resources/Fonts/LilitaOne-Regular.ttf` | FINAL | Fuente display para marca/títulos en Canvas legacy; recursos Unity y tildes/números revisados visualmente |
 | `Assets/Asado/Resources/Fonts/Baloo2-{Regular,Medium,SemiBold,Bold,ExtraBold}.ttf` | FINAL | Familia UI de cinco pesos estáticos para Canvas legacy; cargas y texto español revisados en Editor |
 | Retrato, plato y bandeja UI | PROVISIONAL | Formas de Canvas temporales; retratos no tienen ilustración de personaje todavía |
-| UI runtime de portada | PROVISIONAL | `ENTRAR`/`SALIR`, título Lilita One con contorno/sombra, botones redondeados y transición; captura portrait previa, pendiente reimport y QA final/device |
+| UI runtime de portada/gameplay | PROVISIONAL | `ENTRAR`/`SALIR`, título Lilita One con contorno/sombra, botones redondeados, transición y HUD mobile-first; captura portrait del Editor comprobó legibilidad/posición, faltan device QA, tutorial de todas las acciones y polish visual |
 | Parrilla/brasas 3D, pinza, madera y patio | TODO | Assets runtime compatibles con la dirección 3D móvil |
 | Tira, chorizo, vacío y provoleta 3D con estados | TODO | Modelos/materiales por alimento y caras |
 | UI de menú, tutorial, niveles, estrellas y resultado | TODO | UI vertical con safe areas |
