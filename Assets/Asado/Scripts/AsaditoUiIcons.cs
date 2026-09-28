@@ -28,9 +28,16 @@ namespace Asadito
         private static readonly Vector2[] WarningTriangle = { new Vector2(0f, .83f), new Vector2(.84f, -.67f), new Vector2(-.84f, -.67f) };
         private static readonly Vector2[] WarningInner = { new Vector2(0f, .52f), new Vector2(.62f, -.4f), new Vector2(-.62f, -.4f) };
 
+        // This project disables domain reload on Play. Clear cached Unity objects on
+        // every runtime start because Unity destroys generated sprites on Play exit
+        // while this static dictionary otherwise survives and returns stale objects.
+        [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.SubsystemRegistration)]
+        private static void ResetCache() => Cache.Clear();
+
         public static Sprite Get(AsaditoUiIcon icon)
         {
-            if (Cache.TryGetValue(icon, out Sprite sprite)) return sprite;
+            if (Cache.TryGetValue(icon, out Sprite sprite) && sprite != null && sprite.texture != null) return sprite;
+            Cache.Remove(icon);
             var pixels = new Color32[Resolution * Resolution];
             int sampleCount = SamplesPerAxis * SamplesPerAxis;
             for (int py = 0; py < Resolution; py++)

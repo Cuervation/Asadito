@@ -3,11 +3,11 @@
 ## IMPLEMENTADO
 
 - PlayMode valida el loop de servicio L1–L5; cada porción llega al punto, se sirve, puntúa/guarda y desbloquea Next; L5 vuelve a selección. Retry/reset está comprobado independientemente en L1.
-- Unity batch aislado tras integrar iconografía y motion procedurales: PlayMode full 6/6 Passed (`/tmp/AsaditoFinalPlayTests.xml`) y EditMode 13/13 (`/tmp/AsaditoFinalEditTests.xml`). Un L1 full-cycle al ×30 tardó 44s scripted, bajo el límite de tuning de 180s; no mide deliberación humana ni device. Auditoría cargó dos escenas, cero prefabs, revisó 14 componentes (0 scripts faltantes) y encontró 0 GUIDs serializados irresolubles. MCP enumera proyecto/instancia y recuperó `SampleScene`, pero no responde estable para estado/consola/jerarquía.
+- Unity Editor real, tras fixes de caché de sprites en Domain Reload desactivado, teardown de cooking y anclaje de iconos: PlayMode full 6/6 y EditMode 13/13 pasaron; también L1 ×30 y los ciclos L1–L5. Revisión visual de GameView portrait 540×960 cubrió menú, niveles, intro, gameplay y resultados sample. No mide dispositivo/touch/safe area ni deliberación humana.
 - SDD liviano: alcance, sistemas, gate de aceptación y dirección visual canónicos.
 - Catálogo de cinco niveles con menú de selección, intro dinámica y composición de botones/porciones variable; seis perfiles de comensal. L1–L5 navegan al gameplay en Editor sin servir.
 - Modelos de fuego/cocción/asignación/evaluación; vacío lento y fases térmicas de provoleta; HUD térmico, movimiento, bandeja, servicio, score, persistencia local, Retry y Next implementados en código.
-- Fondo cenital, atlas térmico (16 cortes), retratos (24 cortes), wordmark Lilita One, launcher icon, food icons y set propio de system/action icons están integrados. PlayMode valida sprites, cinco flujos, iconos de comida en Level Select/Intro/Results, glifos y movimiento básico. Arte/íconos siguen PROVISIONALES hasta review en GUI/device; UI responsive, VFX/audio de producción y touch/performance siguen pendientes.
+- Fondo cenital ilustrado y portada semi-cartoon top-down coherente; retratos 6×4 mantienen identidades y expresiones. Portada y atlas conservan tamaño/GUID; PlayMode pasa con assets actuales. Preview del Editor en vertical inspeccionado; todo sigue PROVISIONAL hasta dispositivo real: safe area, responsive, VFX/audio final y touch/performance pendientes.
 - Pruebas EditMode actuales: 13/13 pasaron en Unity batch aislado; PlayMode actual 6/6.
 
 ## PROVISIONAL
@@ -21,21 +21,21 @@
 
 ## BLOQUEADO / NO VERIFICADO
 
-- MCP vivo del Editor original inestable: refresh recuperó el servidor y `get_active` devolvió `SampleScene`, pero `editor/state`/consola fallaron y `get_hierarchy` se desconectó. Suite corrió en copia aislada, no GUI. Se preservó el Editor abierto sin reinicio; falta reabrir/reconectar para leer consola, jerarquía y render importado.
+- MCP vivo del Editor original inestable: en el estado actual HTTP lista la instancia y entrega `project/info`, pero `editor/state`, `get_active` y `read_console` fallan por ping no respondido/sesión desconectada; no hay confirmación de escena/consola/render vivo. Suite corre en copia aislada, no GUI. Se preservó el Editor abierto sin reinicio; falta reconectar para revisar consola, jerarquía y render importado.
 - Sin push: `gh` no tiene sesión GitHub autenticada; se requiere `gh auth login`.
 - Sin prueba de dispositivo, safe areas, rendimiento ni legibilidad portrait final.
-- Arte final, VFX/sonido dedicados, revisión visual de portada/logo/icono, responsive/safe areas, perf y revisión final de Acceptance Gate pendientes.
+- Android build posterior a los fixes actuales y QA en dispositivo real pendientes; revisión visual final del launcher, arte/VFX/audio de producción y aceptación del gate MVP pendientes.
 
 ## TESTS / EDITOR
 
 - Unity Editor `6000.6.3f1`, escena `Assets/Scenes/SampleScene.unity`.
-- Compilación/batch actual: PlayMode full suite 6/6 (`/tmp/AsaditoFinalPlayTests.xml`) y EditMode 13/13 (`/tmp/AsaditoFinalEditTests.xml`). L1–L5 full cycles a ×1200 sólo como aceleración de test; prueba L1 independiente a ×30 default tarda 44s scripted.
+- Editor conectado actual: PlayMode full suite 6/6 (job `7d2f3e02417249ffb3d29eedf5b949d0`) y EditMode 13/13 (job `afc695658d5845e99c6d85d49ee56ef1`). L1–L5 full cycles a ×1200 sólo aceleran test; prueba L1 ×30 tarda 44s scripted.
 - Runtime full cycles en batch: L1–L5 con composiciones 2/3/4/4/6 porciones; L4 incluye vacío, L5 provoleta; L1–L4 desbloquean Next, L5 vuelve a selección.
-- Unity MCP: HTTP enumera `Asadito@65a4fad638bbc94c` y project/info confirma proyecto/versión; active scene `SampleScene` sí leyó, pero state/read_console/hierarchy/windows/cameras siguen fallando con timeout/desconexión. No se terminó el Editor para no arriesgar estado; no se pudo inspeccionar consola, jerarquía ni render.
+- Unity MCP: HTTP enumera `Asadito@65a4fad638bbc94c`; `editor/state`, escena activa y jerarquía respondieron. Editor idle, `SampleScene`, no dirty. Consola: 1 warning del `WebSocketTransportClient` (`WebSocket is not initialised`), sin errores de app/compilación; las herramientas HTTP responden. Las suites corrieron en este Editor y se inspeccionó GameView portrait.
 
 ## BUILD / PUBLICACIÓN
 
-- Unity Android rebuild aislado posterior a UI/motion completó `Succeeded` (0 errores, 1 warning C++ no bloqueante); APK temporal 47 MB en `/tmp/AsaditoFinalVisualUI.apk`, firma Debug v2 verificada. No se instaló/probó en teléfono; `Builds/Android/Asadito.apk` no se reemplazó y `com.DefaultCompany.Asadito` sigue provisional.
-- Último commit local de implementación/corrección visual `45f5984` (`art: integrate MVP UI icons and feedback motion`); incluye iconografía UI y motion core. Push normal reintentado tras el commit de docs y bloqueado por falta de credenciales HTTPS (`gh auth status` sin sesión). Requiere `gh auth login`; nunca force push.
+- Unity Android rebuild previo a los fixes C# completó `Succeeded` (0 errores, 1 warning C++ no bloqueante); APK temporal 47 MB en `/tmp/AsaditoFinalVisualUI.apk`, firma Debug v2 verificada. Rebuild vigente e instalación/prueba en teléfono pendientes; `Builds/Android/Asadito.apk` no se reemplazó y `com.DefaultCompany.Asadito` sigue provisional.
+- El arte/UI/motion y documentación de estado están versionados localmente en `main`; el push normal sigue bloqueado por falta de credenciales HTTPS (`gh auth status` sin sesión). Requiere `gh auth login`; nunca force push.
 
 Ver [matriz integral](mvp-audit.md) para acceptance, evidencia y próximos bloqueantes.

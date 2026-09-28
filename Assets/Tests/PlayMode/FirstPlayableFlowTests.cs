@@ -179,6 +179,7 @@ namespace Asadito.Tests.PlayMode
             Assert.NotNull(appIcon, "The authored Asadito launcher icon must be included as a runtime resource.");
             Assert.AreEqual(appIcon.width, appIcon.height, "The mobile launcher icon must remain square.");
             Button menuEnter = FindButton("ENTRAR");
+            AssertActionIconInsideButton(menuEnter, "ENTRAR");
             Assert.IsFalse(menuEnter.IsInteractable(), "The Enter CTA must not be clickable while its entrance animation is still hidden.");
             yield return new WaitForSecondsRealtime(.6f);
             Assert.IsTrue(menuEnter.IsInteractable(), "The Enter CTA must become interactable after its entrance animation.");
@@ -201,7 +202,9 @@ namespace Asadito.Tests.PlayMode
             Assert.AreEqual("Asadito UI Icon Guest", GameObject.Find("Icon comensales intro").GetComponent<Image>().sprite.name);
             Assert.AreEqual("tira_ideal", GameObject.Find("Icon comida intro TIRA DE ASADO").GetComponent<Image>().sprite.name);
             Assert.AreEqual("chorizo_ideal", GameObject.Find("Icon comida intro CHORIZO").GetComponent<Image>().sprite.name);
-            Assert.AreEqual("Asadito UI Icon Next", FindButton("IR A LA PARRILLA").transform.Find("Icono accion IR A LA PARRILLA").GetComponent<Image>().sprite.name);
+            Button introStart = FindButton("IR A LA PARRILLA");
+            Assert.AreEqual("Asadito UI Icon Next", introStart.transform.Find("Icono accion IR A LA PARRILLA").GetComponent<Image>().sprite.name);
+            AssertActionIconInsideButton(introStart, "IR A LA PARRILLA");
 
             Sprite[][] sprites = (Sprite[][])GetField(game, "foodStateSprites");
             Assert.NotNull(sprites, "The generated food-state atlas must load in runtime.");
@@ -552,6 +555,17 @@ namespace Asadito.Tests.PlayMode
             Assert.NotNull(button, "Expected Button component: " + name);
             Assert.IsTrue(button.interactable, "Button should be interactable: " + name);
             return button;
+        }
+
+        private static void AssertActionIconInsideButton(Button button, string label)
+        {
+            Assert.NotNull(button);
+            RectTransform buttonRect = button.GetComponent<RectTransform>();
+            RectTransform iconRect = button.transform.Find("Icono accion " + label).GetComponent<RectTransform>();
+            float iconLeft = iconRect.anchoredPosition.x - iconRect.rect.width * .5f;
+            float iconRight = iconRect.anchoredPosition.x + iconRect.rect.width * .5f;
+            Assert.GreaterOrEqual(iconLeft, 0f, label + " action icon must not render outside the left edge of its button.");
+            Assert.LessOrEqual(iconRight, buttonRect.rect.width, label + " action icon must remain inside its button.");
         }
 
         private static void ClickButton(string name) { ClickButton(FindButton(name)); }

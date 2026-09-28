@@ -18,7 +18,7 @@
 
 ## Gate visual y audio
 
-- Dirección casual premium coherente en patio/parrilla/comida/UI, composición vertical y legible en teléfono. La parrilla de gameplay y el key art actualizado usan vista cenital; la portada se regeneró con cámara ortográfica estricta y se revisó estáticamente, pero la composición con UI, safe area y performance aún requieren GUI/device QA.
+- Dirección casual premium coherente en patio/parrilla/comida/UI, composición vertical y legible en teléfono. Menú, selección, intro, gameplay y resultados se revisaron en GameView portrait 540×960; la composición cabe y los CTA/iconos quedaron alineados. Safe area, contraste, touch y rendimiento aún requieren dispositivo real.
 - Comida distingue estados crudo, calentando, dorando, punto objetivo, pasado y quemado; las caras mantienen progreso propio al voltear.
 - Fuego comunica estados y variación regional del `HeatGrid`; feedback de colocar, mover, voltear, retirar, servir y reacción de comensales.
 - Ignition, movimiento de brasas, grab/lift/release/contact de comida y transición de servir→evaluación tienen respuesta animada distinguible; no solo cambio instantáneo de valores/colores.
@@ -29,9 +29,9 @@
 
 ## Evidencia de actualización visual (2026-09-28)
 
-- Lilita One + wordmark propio, Baloo 2 cinco pesos estáticos (OFL/licencias), launcher icon, comida UI (atlas) y 11 marcas system/action procedurales ya están integrados; el runtime usa Unity Legacy Text, por eso no se generan TMP Font Assets. PlayMode verifica fuentes, glifos españoles (ñ, tildes, signos, ×, · y números), logo, iconos de comida en Level Select/Intro/Results y gating de entrada durante animación.
-- El full-cycle batch PlayMode L1–L5 pasa 6/6 (`/tmp/AsaditoFinalPlayTests.xml`) y el EditMode 13/13 (`/tmp/AsaditoFinalEditTests.xml`); se prueban iconos UI, ignition, 16 cortes de comida, 24 portraits/result expression, portada, transiciones, resultados y navegación. APK Android actual `Succeeded` 47 MB, 0 errores/1 warning C++ no bloqueante, firma Debug v2 (`/tmp/AsaditoFinalVisualUI.apk`), sin instalarse en device. Scan GUID: 0 unresolved; batch validó 2 escenas/0 prefabs/14 componentes/0 scripts faltantes (`/tmp/AsaditoReferenceAudit.final.log`). No valida composición visual final GUI, contraste/touch físico ni safe-area en teléfono.
-- Mantener milestone Visual Slice / `MVP PARTIAL` hasta revisar Editor GUI y reconectar MCP, aprobar pantallas/portada en safe areas, y validar input/performance/arte en dispositivo.
+- Lilita One + wordmark propio, Baloo 2 cinco pesos estáticos (OFL/licencias), launcher icon, comida UI (atlas) y 11 marcas system/action procedurales ya están integrados; el runtime usa Unity Legacy Text, por eso no se generan TMP Font Assets. La portada actual (941×1672) se generó con el fondo cenital de gameplay como referencia estilística; GuestPortraitAtlas se restilizó manteniendo sus 24 slots. Ambos conservan GUID/dimensiones; PlayMode verifica fuentes, glifos, logo, carga de portada, atlas/expresiones de invitados, iconos y gating de entrada.
+- Después de los fixes visuales y de ciclo, Unity Editor real pasó PlayMode 6/6 y EditMode 13/13. Consola: sin errores de app/compilación; 1 warning de `WebSocketTransportClient` (`WebSocket is not initialised`), mientras HTTP MCP responde. La revisión GameView portrait no es QA de dispositivo. APK Android anterior a los fixes recientes: `Succeeded`, 47 MB, firma Debug v2 (`/tmp/AsaditoFinalVisualUI.apk`), sin instalarse en device. Scan GUID previo: 0 unresolved; batch validó 2 escenas/0 prefabs/14 componentes/0 scripts faltantes. Rebuild Android y safe-area/touch/performance físicos siguen pendientes.
+- Mantener `MVP PARTIAL`: review del Editor completada, falta QA físico en teléfono, audio/VFX/arte final, rebuild y revisión final del Acceptance Gate.
 
 ## MVP completo: niveles 1–5
 
@@ -51,8 +51,8 @@
 
 ## Evidencia automatizada (2026-09-28)
 
-- PlayMode batch actual 6/6 (`/tmp/AsaditoFinalPlayTests.xml`) y EditMode 13/13 (`/tmp/AsaditoFinalEditTests.xml`) en copia Unity temporal `/tmp/AsaditoValidation.QP0xpX`.
+- PlayMode del Editor actual 6/6 (job `7d2f3e02417249ffb3d29eedf5b949d0`) y EditMode 13/13 (job `afc695658d5845e99c6d85d49ee56ef1`).
 - Un L1 full-cycle (incluye UI, movimiento/flip, cocción por estado, bandeja, resultados/save y Retry) pasa a la escala default ×30 en 44s de acciones scripted; no incluye deliberación humana.
 - Otra prueba completa cooking→serve→results/progression para L1–L5; usa ×1200 solo para acelerar la prueba y no certifica el ritmo normal ni el tacto de dispositivo.
 - El scan de assets detecta 0 GUIDs irresolubles tras limpiar campos URP obsoletos y Unity batch abre 2 escenas/0 prefabs con 0 scripts faltantes; esto no sustituye revisar referencias/render en GUI.
-- El MCP GUI del Editor original enumera proyecto/instancia pero state/console/hierarchy/windows/cameras fallan por timeout o desconexión tras telemetry ping; no se verificó consola/jerarquía/render posterior ni se probó teléfono.
+- El MCP enumera la instancia y responde a estado, escena y jerarquía; `read_console` fue intermitente, con última lectura exitosa de 0 errores/advertencias. No se probó teléfono.

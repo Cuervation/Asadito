@@ -1523,6 +1523,17 @@ namespace Asadito
 
         private void UpdateCookFeedback()
         {
+            if (portions == null || activePortion < 0 || activePortion >= portions.Length ||
+                cookFill == null || progressText == null)
+            {
+                // A scene/test transition can tear down the active UI between frames.
+                // Do not keep a cooking flag with an invalid portion index or let the
+                // next Update throw while Unity is unloading the old scene.
+                cooking = false;
+                activePortion = -1;
+                return;
+            }
+
             PlayablePortion portion = portions[activePortion];
             cookFill.rectTransform.sizeDelta = new Vector2(760f * Mathf.Clamp01(portion.State.CoreTemperatureC / 80f), 18f);
             progressText.text = Mathf.RoundToInt(portion.State.CoreTemperatureC) + " °C  •  " + portion.Point + "  •  zona " + Mathf.RoundToInt(grill.Sample(portion.Position, new Vector2(.14f, .14f)).x) + " °C";
@@ -1811,7 +1822,7 @@ namespace Asadito
                 Image icon = MakeChildIcon("Icono accion " + label, image.transform, AsaditoUiIcons.Get(actionIcon), Cream,
                     Vector2.zero, new Vector2(34f, 34f));
                 icon.rectTransform.anchorMin = icon.rectTransform.anchorMax = new Vector2(0f, .5f);
-                icon.rectTransform.anchoredPosition = new Vector2(-width * .5f + 43f, 0f);
+                icon.rectTransform.anchoredPosition = new Vector2(43f, 0f);
             }
             Text labelText = MakeText("Texto " + label, image.transform, label, 27, Cream, TextAnchor.MiddleCenter, .5f, .5f, width - 24, height - 16, true);
             labelText.rectTransform.anchorMin = Vector2.zero;

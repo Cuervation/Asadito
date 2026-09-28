@@ -5,9 +5,9 @@ Fuente de dirección/gates: [Visual Bible](../../specs/visual/art-direction.md),
 ## Slice visual ya integrado
 
 - Fuentes estáticas Lilita One y Baloo 2 400/500/600/700/800, con licencias OFL; Canvas runtime usa Unity Legacy Text, no TMP.
-- Portada vertical atmosférica con parrilla cenital ortográfica, logo propio Lilita One, botones `ENTRAR`/`SALIR`, estado de espera accesible durante la animación escalonada, botones redondeados/feedback, brillo ambiental y transición a selección.
+- Portada vertical ilustrada 3D semi-cartoon con parrilla estrictamente cenital (estilo coherente con el fondo de gameplay), logo propio Lilita One, botones `ENTRAR`/`SALIR`, estado de espera accesible durante la animación escalonada, botones redondeados/feedback, brillo ambiental y transición a selección. PNG 941×1672 y GUID conservados; composición revisada en GameView portrait, pendiente QA de device.
 - Icono adaptativo Android rediseñado como chorizo sobre parrilla; se conservó GUID y configuración de las seis densidades/12 capas.
-- Parrilla cenital ilustrada de gameplay, 16 estados de comida por atlas y 24 retratos de seis identidades/cuatro expresiones; atlas activos en runtime.
+- Parrilla cenital ilustrada de gameplay, 16 estados de comida por atlas y nuevo atlas semi-cartoon de 24 retratos (seis identidades/cuatro expresiones); dimensiones y slicing 6×4 preservados, suite PlayMode pasa.
 - Level select, intro, HUD, resultados, score/estrellas/reacciones y navegación L1–L5 continúan sobre Canvas procedural; se verifican loops automáticos sin alterar sistemas de juego durante el polish visual.
 
 ## Plan restante (prioridad MVP)
