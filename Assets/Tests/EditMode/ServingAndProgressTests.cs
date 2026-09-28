@@ -66,5 +66,58 @@ namespace Asadito.Tests
             Assert.AreEqual(2, save.MaxUnlockedLevel);
             Assert.AreEqual(5, save.StarsByLevel.Length);
         }
+
+        [Test]
+        public void MvpLevelCatalog_DefinesProgressivePlayableContentForAllFiveLevels()
+        {
+            Assert.AreEqual(5, Asadito.Runtime.MvpLevelCatalog.Count);
+            int[] expectedGuests = { 2, 3, 4, 4, 6 };
+            for (int level = 1; level <= 5; level++)
+            {
+                Asadito.Runtime.MvpLevelDefinition content = Asadito.Runtime.MvpLevelCatalog.Get(level);
+                Assert.AreEqual(expectedGuests[level - 1], content.GuestCount);
+                Assert.AreEqual(content.GuestCount, content.FoodIds.Length);
+                Assert.AreEqual(content.GuestCount, content.PortionAmounts.Length);
+                Assert.AreEqual(content.GuestCount, Asadito.Runtime.MvpLevelCatalog.CreateGuests(level).Length);
+            }
+            Assert.Contains("vacio", Asadito.Runtime.MvpLevelCatalog.Get(4).FoodIds);
+            Assert.Contains("provoleta", Asadito.Runtime.MvpLevelCatalog.Get(5).FoodIds);
+        }
+
+        [Test]
+        public void MvpLevelCatalog_ReturnsIndependentDefinitionsAndSixDistinctProfiles()
+        {
+            Asadito.Runtime.MvpLevelDefinition first = Asadito.Runtime.MvpLevelCatalog.Get(1);
+            first.FoodIds[0] = "mutated";
+            Assert.AreEqual("tira", Asadito.Runtime.MvpLevelCatalog.Get(1).FoodIds[0]);
+            var allGuests = Asadito.Runtime.MvpLevelCatalog.CreateGuests(5);
+            var ids = new System.Collections.Generic.HashSet<string>();
+            foreach (Asadito.Runtime.GuestProfile guest in allGuests) ids.Add(guest.Id);
+            Assert.AreEqual(6, ids.Count);
+        }
+
+        [Test]
+        public void EveryMvpLevelCanAllocateItsMenuAcrossAllGuests()
+        {
+            for (int levelNumber = 1; levelNumber <= Asadito.Runtime.MvpLevelCatalog.Count; levelNumber++)
+            {
+                Asadito.Runtime.MvpLevelDefinition level = Asadito.Runtime.MvpLevelCatalog.Get(levelNumber);
+                Asadito.Runtime.GuestProfile[] guests = Asadito.Runtime.MvpLevelCatalog.CreateGuests(levelNumber);
+                var portions = new Asadito.Runtime.ServingPortion[level.FoodIds.Length];
+                for (int i = 0; i < portions.Length; i++)
+                    portions[i] = new Asadito.Runtime.ServingPortion
+                    {
+                        Id = "portion-" + i,
+                        FoodId = level.FoodIds[i],
+                        Amount = level.PortionAmounts[i],
+                        Doneness = Asadito.Runtime.Doneness.A_Punto
+                    };
+
+                System.Collections.Generic.List<Asadito.Runtime.ServingAssignment> assignments = Asadito.Runtime.ServingAllocator.Allocate(guests, portions);
+                var assignedGuests = new System.Collections.Generic.HashSet<string>();
+                foreach (Asadito.Runtime.ServingAssignment assignment in assignments) assignedGuests.Add(assignment.GuestId);
+                Assert.AreEqual(level.GuestCount, assignedGuests.Count, "Level " + levelNumber + " should give every diner one serving.");
+            }
+        }
     }
 }

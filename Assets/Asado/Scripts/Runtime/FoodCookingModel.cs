@@ -3,6 +3,8 @@ using UnityEngine;
 
 namespace Asadito.Runtime
 {
+    public enum ProvoletaCookingStage { NotApplicable, Cold, Softening, Browning, Ideal, Failed, Burnt }
+
     [Serializable]
     public struct DonenessBand
     {
@@ -62,8 +64,56 @@ namespace Asadito.Runtime
                     new DonenessBand(Doneness.Bien_Cocido, 81f, 85f)
                 };
             }
+            else if (string.Equals(foodId, "vacio", StringComparison.OrdinalIgnoreCase))
+            {
+                // Vacio is a thick, broad cut: the surface responds to the grate but its core moves slowly.
+                profile.CoreTransferRate = .0015f;
+                profile.SurfaceTransferRate = .52f;
+                profile.MoistureLossRate = .006f;
+                profile.MaillardRate = .018f;
+                profile.CharRate = .0035f;
+                profile.DonenessBands = new[]
+                {
+                    new DonenessBand(Doneness.Jugoso, 52f, 55f),
+                    new DonenessBand(Doneness.A_Punto, 56f, 60f),
+                    new DonenessBand(Doneness.A_PuntoMas, 61f, 65f),
+                    new DonenessBand(Doneness.Cocido, 66f, 70f),
+                    new DonenessBand(Doneness.Bien_Cocido, 71f, 76f)
+                };
+            }
+            else if (string.Equals(foodId, "provoleta", StringComparison.OrdinalIgnoreCase))
+            {
+                // Cheese warms and browns quickly; the UI can expose its named phases through GetProvoletaStage.
+                profile.CoreTransferRate = .012f;
+                profile.SurfaceTransferRate = 1.1f;
+                profile.MoistureLossRate = .004f;
+                profile.MaillardRate = .032f;
+                profile.CharRate = .018f;
+                profile.MaillardStartsAtC = 105f;
+                profile.CharStartsAtC = 175f;
+                profile.DonenessBands = new[]
+                {
+                    new DonenessBand(Doneness.Jugoso, 38f, 45f),
+                    new DonenessBand(Doneness.A_Punto, 46f, 55f),
+                    new DonenessBand(Doneness.A_PuntoMas, 56f, 63f),
+                    new DonenessBand(Doneness.Cocido, 64f, 69f),
+                    new DonenessBand(Doneness.Bien_Cocido, 70f, 76f)
+                };
+            }
 
             return profile;
+        }
+
+        public static ProvoletaCookingStage GetProvoletaStage(FoodState food)
+        {
+            if (food == null) return ProvoletaCookingStage.NotApplicable;
+            if (food.Char >= .72f) return ProvoletaCookingStage.Burnt;
+            if (food.CoreTemperatureC > 69f || food.Moisture < .2f) return ProvoletaCookingStage.Failed;
+            if (food.CoreTemperatureC < 30f) return ProvoletaCookingStage.Cold;
+            if (food.CoreTemperatureC < 46f) return ProvoletaCookingStage.Softening;
+            if (food.CoreTemperatureC >= 54f && food.CoreTemperatureC <= 66f && food.Maillard >= .12f)
+                return ProvoletaCookingStage.Ideal;
+            return food.Maillard > .015f ? ProvoletaCookingStage.Browning : ProvoletaCookingStage.Softening;
         }
 
         public static void Step(FoodState food, FoodCookProfile profile, float localHeat, float deltaMinutes, bool onGrill)

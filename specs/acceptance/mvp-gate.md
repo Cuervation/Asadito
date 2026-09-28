@@ -30,6 +30,9 @@
 - Se pueden configurar cinco niveles progresivos según la tabla de [`mvp-scope.md`](../product/mvp-scope.md); las opciones DEBUG globales son 20, 25, 30, 35 y 40.
 - Una sesión completa apunta a 5–7 minutos como objetivo de tuning.
 - El modelo general de perfiles, fuego, alimentos, asignación y evaluación sirve a los cinco niveles sin fórmulas basadas en género.
+- Menú → selección muestra título, comensales, menú, progreso/estrellas y bloquea los niveles aún no desbloqueados; cada nivel disponible abre una intro que corresponde a su configuración real.
+- Cada nivel se puede jugar hasta servir una bandeja válida, evaluar asignaciones y mostrar resultados/estrellas; Retry resetea la tanda y Next abre el nivel que acaba de desbloquearse. El último nivel vuelve a selección.
+- L1–L5 se prueban de punta a punta tanto con pruebas automatizadas PlayMode donde sea razonable como con una revisión táctil/responsive en dispositivo; no basta con confirmar que se construye la lista de porciones.
 - El alcance excluye carnicería, economía, multijugador, caminar/navegación de NPC y cocciones diferentes de parrilla de carbón.
 
 ## Criterios de consistencia

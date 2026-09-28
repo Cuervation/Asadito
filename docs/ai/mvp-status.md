@@ -1,40 +1,37 @@
-# MVP status
+# Estado del MVP de Asadito
 
 ## IMPLEMENTADO
 
-- SDD liviano: alcance, sistemas, acceptance gate y dirección visual canónicos.
-- Seis imágenes CONCEPT bajo `docs/art/concepts/`.
-- Código del First Playable: carbón/brasas 8×6, drag, perfiles térmicos por alimento, cocción por zona/cara, bandeja, allocator, score, estrellas, save, menú/intro, tutorial, scale debug, feedback provisional y retry.
-- Pruebas EditMode escritas para fuego/grilla, cocción/flip/punto (incluye perfiles por alimento), asignación, score, estrellas y progreso. La puntuación por comensal está normalizada a 0–100 y el nivel 1 a 0–200.
+- SDD liviano: alcance, sistemas, gate de aceptación y dirección visual canónicos.
+- Catálogo de cinco niveles con menú de selección, intro dinámica y composición de botones/porciones variable; seis perfiles de comensal. L1–L5 navegan al gameplay en Editor sin servir.
+- Modelos de fuego/cocción/asignación/evaluación; vacío lento y fases térmicas de provoleta; HUD térmico, movimiento, bandeja, servicio, score, persistencia local, Retry y Next implementados en código.
+- Arte top-down de parrilla añadido como fondo y cargado en Play Mode; tipografías y assets existentes tienen rutas runtime.
+- Pruebas EditMode: 13/13 pasaron en Unity Editor.
 
 ## PROVISIONAL
 
-- Canvas 2D, arte/animación, humo y sizzle de runtime son provisionales.
-- Actualización visual parcial: portada, key art, marca tipográfica Lilita One/Baloo 2, botones feedback/transición y count-up score integrados; propuesta de icono Android creada (todavía no asignada en `ProjectSettings.asset`). Fuentes se marcan `FINAL` por carga/glyph QA en Editor, pero portada/icono no tienen validación final en build/dispositivo.
-- Balance térmico y duración requieren otra sesión de playtest; tras corregir el score falta repetir un ciclo completo en el Editor.
+- El juego utiliza Canvas procedural 2D; el nuevo fondo de parrilla es fotográfico y no cumple el arte casual-premium estilizado de la dirección visual.
+- Comida cambia principalmente por tintes/formas; no hay set completo de estados/caras. Vacío reutiliza un bife genérico; provoleta es geométrica. El avatar es único, no seis retratos.
+- Humo, fuego, animaciones, sizzle sintético y háptica opcional están implementados de forma básica, no aprobados visualmente/sonoramente en device.
+- Flujo de selección→intro→gameplay de L1–L5 observado; no se terminó cooking→serving→results→retry/next para cada nivel, ni QA táctil.
 
-## NO IMPLEMENTADO
+## BLOQUEADO / NO VERIFICADO
 
-- Visual Slice de producción.
-- Niveles 2–5 jugables y configuraciones de los seis perfiles; vacío/provoleta con estados de cocción propios.
-- Visual Slice de producción, QA restante del acceptance gate, test de diversión y build Android.
+- Sin suite PlayMode efectiva: el resultado disponible de PlayMode fue 0 tests.
+- Sin push: `gh` no tiene sesión GitHub autenticada; se requiere `gh auth login`.
+- Sin prueba de dispositivo, safe areas, rendimiento ni legibilidad portrait final.
+- Arte final, VFX/sonido dedicados, rediseño del icono ya conectado y revisión final de Acceptance Gate pendientes.
 
-## KNOWN ISSUES
+## TESTS / EDITOR
 
-- GitHub CLI no está autenticado; el push sigue pendiente.
+- Unity Editor `6000.6.3f1`, escena `Assets/Scenes/SampleScene.unity`.
+- Compilación del proyecto: OK; última suite EditMode completa: 13 passed, 0 failed (`efa711f9e8304581b9bf40eb589c7841`).
+- Runtime observado a través de MCP: nivel 1, 2, 3, 4 y 5; composiciones dinámicas 2/3/4/4/6 porciones según catálogo, L4 vacío, L5 provoleta.
+- Unity MCP HTTP: una instancia conectada, `ready_for_tools=true` y estado no stale tras el build. La consola de la última compilación quedó con 1 warning Android no bloqueante (diagnostics data requiere Full/SymbolTable para stacktraces), 0 errores. Durante la primera build larga hubo warnings WebSocket MCP transitorios; las herramientas HTTP responden.
 
-## TESTS
+## BUILD / PUBLICACIÓN
 
-- Unity Editor abierto: compilación OK; EditMode 9/9 Passed.
-- Visual: Play Mode actual verificó portada, intro, transición a gameplay y botón Salir; EditMode pasó 9/9 después del ajuste de tarjeta para portrait. El Editor MCP respondió durante estas pruebas; consola conserva un warning WebSocket del bridge, no hay errores C# reportados. Gameplay sigue visualmente provisional y falta device/touch QA.
-- Playtest MCP: flujo del nivel 1 y retry completados. La primera corrida detectó total fuera de rango; el código se corrigió y el resultado actualizado dio 193/200 en una verificación rápida del evaluador. Falta repetir el ciclo completo en el código corregido.
-- MCP: HTTP registrado en Codex, Editor conectado; escena `SampleScene`. Consola sin errores de juego; quedó un warning del WebSocket MCP (`WebSocket is not initialised`) tras refrescar assets.
-- Producto, workflow, setup Git/Engram y estado guardados en Engram; tres chunks exportados por Git Sync.
+- APK Android arm64 regenerado con icono adaptive en `Builds/Android/Asadito.apk` (aprox. 43 MB), ZIP/firma Android Debug válidos, 0 errores de build/1 warning. AAPT confirma recurso de icono; package ID `com.DefaultCompany.Asadito` es provisional. No se generó AAB ni se validó en dispositivo; APK local ignorado por Git.
+- Commit `5078cb3` (`Integrate five-level MVP and Android build support`) está en `main` y el árbol de trabajo quedó limpio; todavía no se publicó en `origin` porque `gh` no tiene una sesión GitHub autenticada (`gh auth login`). Sin autenticación el remoto no anunció refs, así que no fue posible verificar si hay divergencia remota.
 
-## BUILD
-
-- Sin build Android generada.
-
-## NEXT
-
-- Repetir el ciclo completo del nivel 1 con score corregido, validar arrastre táctil y seguir con Visual Slice. Completar login de GitHub CLI para subir los commits a Cuervation/Asadito.
+Ver [matriz integral](mvp-audit.md) para acceptance, evidencia y próximos bloqueantes.

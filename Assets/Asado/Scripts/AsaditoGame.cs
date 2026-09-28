@@ -18,19 +18,6 @@ namespace Asadito
         private static readonly Color Gold = new Color32(245, 177, 72, 255);
         private static readonly Color Green = new Color32(67, 106, 73, 255);
 
-        private sealed class Guest
-        {
-            public string name;
-            public string meat;
-            public string point;
-            public Color shirt;
-        }
-
-        private readonly Guest[] guests =
-        {
-            new Guest { name = "ANA", meat = "TIRA", point = "JUGOSO", shirt = new Color32(190, 91, 67, 255) },
-            new Guest { name = "TITO", meat = "CHORI", point = "A PUNTO", shirt = new Color32(71, 117, 127, 255) }
-        };
         private sealed class PlayablePortion
         {
             public readonly FoodState State = new FoodState();
@@ -48,6 +35,18 @@ namespace Asadito
             {
                 get
                 {
+                    if (Profile.FoodId == "provoleta")
+                    {
+                        switch (FoodCookingModel.GetProvoletaStage(State))
+                        {
+                            case ProvoletaCookingStage.Cold: return "FRÍA";
+                            case ProvoletaCookingStage.Softening: return "ABLANDANDO";
+                            case ProvoletaCookingStage.Browning: return "DORANDO";
+                            case ProvoletaCookingStage.Ideal: return "IDEAL";
+                            case ProvoletaCookingStage.Failed: return "PASADA";
+                            case ProvoletaCookingStage.Burnt: return "QUEMADA";
+                        }
+                    }
                     if (State.Char >= .75f) return "QUEMADO";
                     if (State.CoreTemperatureC < Profile.DonenessBands[0].MinimumCoreC) return "CRUDO";
                     if (State.CoreTemperatureC > Profile.DonenessBands[Profile.DonenessBands.Length - 1].MaximumCoreC) return "PASADO";
@@ -66,21 +65,25 @@ namespace Asadito
             }
         }
 
-        private readonly PlayablePortion[] portions = { new PlayablePortion("tira", .065f), new PlayablePortion("chorizo", .095f) };
+        private PlayablePortion[] portions = new PlayablePortion[0];
+        private MvpLevelDefinition currentLevel;
+        private GuestProfile[] activeGuests;
+        private int currentLevelNumber = 1;
         private int activePortion = -1, trayCount;
 
         private Canvas canvas;
         private RectTransform contentRoot;
         private GameObject menuRoot;
+        private GameObject levelSelectRoot;
         private GameObject introRoot;
         private CanvasGroup menuCanvasGroup;
+        private CanvasGroup levelSelectCanvasGroup;
         private CanvasGroup introCanvasGroup;
         private CanvasGroup gameplayCanvasGroup;
         private bool menuTransitionActive;
         private Text tutorialText;
         private Image background;
-        private Image tiraImage;
-        private Image sausageImage;
+        private Image[] portionImages;
         private Image cookFill;
         private Image fireGlow;
         private RectTransform heatGridRect;
@@ -93,8 +96,12 @@ namespace Asadito
         private Text feedbackText;
         private Text scoreText;
         private Text flipButtonText;
-        private Button tiraButton;
-        private Button choriButton;
+        private Text introTitleText;
+        private Text introGuestsText;
+        private Text introMenuText;
+        private Text introObjectiveText;
+        private Button[] levelCards;
+        private Button[] portionButtons;
         private Button flipButton;
         private Button serveButton;
         private Button igniteButton;
@@ -104,7 +111,9 @@ namespace Asadito
         private Sprite circleSprite;
         private Sprite tiraSprite;
         private Sprite chorizoSprite;
+        private Sprite vacioSprite;
         private Sprite patioSprite;
+        private Sprite gameplayGrillSprite;
         private Sprite titleSprite;
         private Sprite roundedButtonSprite;
         private Font displayFont;
@@ -127,6 +136,7 @@ namespace Asadito
         private void Start()
         {
             saveData = MvpSave.Load();
+            ConfigureLevel(1);
             SimulationTimeScale = saveData.Settings.SimulationTimeScale;
             whiteSprite = Sprite.Create(Texture2D.whiteTexture, new Rect(0, 0, 1, 1), new Vector2(.5f, .5f));
             circleSprite = MakeCircleSprite(128);
@@ -138,7 +148,11 @@ namespace Asadito
             boldFont = Resources.Load<Font>("Fonts/Baloo2-Bold");
             extraBoldFont = Resources.Load<Font>("Fonts/Baloo2-ExtraBold");
             tiraSprite = Resources.Load<Sprite>("Art/TiraAsadoCruda");
+            vacioSprite = Resources.Load<Sprite>("Art/BifeCrudo");
             patioSprite = Resources.Load<Sprite>("Art/PatioParrilla");
+            Texture2D gameplayGrillTexture = Resources.Load<Texture2D>("Art/ParrillaTopDownGameplay");
+            if (gameplayGrillTexture != null)
+                gameplayGrillSprite = Sprite.Create(gameplayGrillTexture, new Rect(0, 0, gameplayGrillTexture.width, gameplayGrillTexture.height), new Vector2(.5f, .5f), 100f);
             Texture2D titleTexture = Resources.Load<Texture2D>("Art/PortadaAsadito");
             if (titleTexture != null)
                 titleSprite = Sprite.Create(titleTexture, new Rect(0, 0, titleTexture.width, titleTexture.height), new Vector2(.5f, .5f), 100f);
@@ -167,8 +181,9 @@ namespace Asadito
                 FoodCookingModel.Step(portion.State, portion.Profile, localHeat, minutes, onGrill && grill.IsLit);
             }
             if (cooking) UpdateCookFeedback();
-            else if (trayCount == 2)
-                progressText.text = "TIRA " + portions[0].Point + "  •  CHORI " + portions[1].Point;
+            else if (trayCount > 0)
+                progressText.text = trayCount == portions.Length ? "BANDEJA LISTA PARA SERVIR" :
+                    "BANDEJA " + trayCount + " / " + portions.Length + "  ·  RETIRÁ EL RESTO";
         }
 
         private void OnDestroy()
@@ -176,9 +191,20 @@ namespace Asadito
             if (whiteSprite != null) Destroy(whiteSprite);
             if (circleSprite != null) Destroy(circleSprite);
             if (chorizoSprite != null) Destroy(chorizoSprite);
+            if (gameplayGrillSprite != null) Destroy(gameplayGrillSprite);
             if (titleSprite != null) Destroy(titleSprite);
             if (roundedButtonSprite != null) Destroy(roundedButtonSprite);
             if (sizzleClip != null) Destroy(sizzleClip);
+        }
+
+        private void ConfigureLevel(int levelNumber)
+        {
+            currentLevelNumber = Mathf.Clamp(levelNumber, 1, MvpLevelCatalog.Count);
+            currentLevel = MvpLevelCatalog.Get(currentLevelNumber);
+            portions = new PlayablePortion[currentLevel.FoodIds.Length];
+            for (int i = 0; i < portions.Length; i++)
+                portions[i] = new PlayablePortion(currentLevel.FoodIds[i], currentLevel.PortionAmounts[i]);
+            activeGuests = MvpLevelCatalog.CreateGuests(currentLevelNumber);
         }
 
         private void BuildInterface()
@@ -194,13 +220,13 @@ namespace Asadito
             scaler.referenceResolution = new Vector2(1080, 1920);
             scaler.matchWidthOrHeight = .5f;
 
-            background = MakeImage("Patio ilustrado", canvas.transform, whiteSprite, Color.white, Vector2.zero, new Vector2(1, 1), Vector2.zero);
+            Sprite sceneSprite = gameplayGrillSprite != null ? gameplayGrillSprite : patioSprite;
+            background = MakeImage("Parrilla cenital ilustrada", canvas.transform, sceneSprite != null ? sceneSprite : whiteSprite, Color.white, Vector2.zero, new Vector2(1, 1), Vector2.zero);
             background.rectTransform.offsetMin = Vector2.zero;
             background.rectTransform.offsetMax = Vector2.zero;
-            background.sprite = patioSprite != null ? patioSprite : whiteSprite;
             background.transform.SetAsFirstSibling();
             background.raycastTarget = false;
-            background.rectTransform.localScale = patioSprite == null ? Vector3.one : new Vector3((patioSprite.rect.width / patioSprite.rect.height) / (1080f / 1920f), 1f, 1f);
+            background.rectTransform.localScale = sceneSprite == null ? Vector3.one : new Vector3((sceneSprite.rect.width / sceneSprite.rect.height) / (1080f / 1920f), 1f, 1f);
 
             var contentObject = new GameObject("Safe Area", typeof(RectTransform));
             gameplayCanvasGroup = contentObject.AddComponent<CanvasGroup>();
@@ -239,27 +265,18 @@ namespace Asadito
             feedbackText = MakeText("Feedback", contentRoot, "", 25, Cream, TextAnchor.MiddleCenter, .5f, .342f, 850, 60, true);
             tutorialText = MakeText("Tutorial contextual", contentRoot, "", 19, new Color32(255, 213, 146, 255), TextAnchor.MiddleCenter, .5f, .70f, 830, 58, true);
 
-            tiraImage = MakeImage("Tira de asado en parrilla", contentRoot, tiraSprite != null ? tiraSprite : whiteSprite, Color.white, new Vector2(.5f, .585f), new Vector2(.5f, .585f), new Vector2(238, 156));
-            tiraImage.gameObject.AddComponent<CanvasGroup>();
-            AttachFoodTouch(tiraImage, 0);
-            tiraImage.gameObject.SetActive(false);
-            sausageImage = MakeSausage(new Vector2(.5f, .585f));
-            sausageImage.gameObject.AddComponent<CanvasGroup>();
-            AttachFoodTouch(sausageImage, 1);
-            sausageImage.gameObject.SetActive(false);
+            BuildPortionControls();
             BuildTongsVisual();
 
-            tiraButton = MakeButton("TIRA DE ASADO", contentRoot, .28f, .245f, 425, 116, new Color32(114, 63, 46, 255), CookTira);
-            choriButton = MakeButton("CHORIZO", contentRoot, .72f, .245f, 425, 116, new Color32(156, 79, 48, 255), CookChori);
-            flipButton = MakeButton("DAR VUELTA", contentRoot, .28f, .145f, 425, 104, Green, FlipMeat);
-            serveButton = MakeButton("SERVIR", contentRoot, .72f, .145f, 425, 104, new Color32(199, 139, 54, 255), Serve);
+            flipButton = MakeButton("DAR VUELTA", contentRoot, .28f, .105f, 405, 88, Green, FlipMeat);
+            serveButton = MakeButton("SERVIR", contentRoot, .72f, .105f, 405, 88, new Color32(199, 139, 54, 255), Serve);
             flipButtonText = flipButton.GetComponentInChildren<Text>();
-            scoreText = MakeText("Progreso nivel", contentRoot, "NIVEL 1  •  2 COMENSALES", 22, Cream, TextAnchor.MiddleCenter, .5f, .055f, 960, 54, true);
+            scoreText = MakeText("Progreso nivel", contentRoot, "", 22, Cream, TextAnchor.MiddleCenter, .5f, .055f, 960, 54, true);
             debugScaleButton = MakeButton("DEBUG ×30", contentRoot, .14f, .855f, 190, 58, new Color32(58, 65, 56, 230), CycleSimulationScale);
             MakeText("Ayuda", contentRoot, "Cociná, retirá cada pieza y serví la bandeja.", 18, new Color32(255, 224, 177, 255), TextAnchor.MiddleCenter, .5f, .022f, 960, 38, false);
             igniteButton = MakeButton("PRENDER CARBÓN", contentRoot, .5f, .315f, 620, 86, new Color32(132, 64, 39, 255), IgniteCharcoal);
             SetActionButtons(false);
-            tiraButton.interactable = choriButton.interactable = false;
+            UpdatePortionButtonStates();
             StartCoroutine(AnimateEmbers());
             BuildFrontEnd();
             RefreshDebugScaleLabel();
@@ -357,15 +374,33 @@ namespace Asadito
             emberGlow.raycastTarget = false;
             StartCoroutine(AnimateTitleGlow(emberGlow));
 
+            levelSelectRoot = CreateFullScreenOverlay("Seleccion de nivel");
+            levelSelectCanvasGroup = levelSelectRoot.AddComponent<CanvasGroup>();
+            levelSelectCanvasGroup.alpha = 0f;
+            levelSelectRoot.SetActive(false);
+            MakePanel("Fondo seleccion nivel", levelSelectRoot.transform, new Color32(42, 40, 33, 250), .5f, .5f, 1080, 1920);
+            MakeText("Seleccion titulo", levelSelectRoot.transform, "ELEGÍ TU ASADO", 62, Cream, TextAnchor.MiddleCenter, .5f, .85f, 920, 110, true);
+            MakeText("Seleccion ayuda", levelSelectRoot.transform, "Cada juntada suma un desafío", 25, Gold, TextAnchor.MiddleCenter, .5f, .795f, 900, 55, true);
+            levelCards = new Button[MvpLevelCatalog.Count];
+            for (int i = 0; i < levelCards.Length; i++)
+            {
+                int levelNumber = i + 1;
+                float y = .68f - i * .115f;
+                levelCards[i] = MakeButton("NIVEL " + levelNumber, levelSelectRoot.transform, .5f, y, 830, 110,
+                    new Color32(114, 79, 51, 255), () => SelectLevel(levelNumber));
+            }
+            MakeButton("VOLVER", levelSelectRoot.transform, .5f, .08f, 390, 82, new Color32(92, 72, 55, 245), BackToMenu);
+            RefreshLevelCards();
+
             introRoot = CreateFullScreenOverlay("Intro de nivel");
             introCanvasGroup = introRoot.AddComponent<CanvasGroup>();
             introCanvasGroup.alpha = 0f;
             introRoot.SetActive(false);
             MakePanel("Sombra intro", introRoot.transform, new Color32(31, 34, 29, 245), .5f, .5f, 1080, 1920);
-            MakeText("Intro título", introRoot.transform, "EL DEBUT", 64, Cream, TextAnchor.MiddleCenter, .5f, .66f, 900, 115, true);
-            MakeText("Intro comensales", introRoot.transform, "2 COMENSALES", 31, Gold, TextAnchor.MiddleCenter, .5f, .56f, 850, 64, true);
-            MakeText("Intro menu", introRoot.transform, "CHORIZO ×1   ·   TIRA DE ASADO ×1", 27, Cream, TextAnchor.MiddleCenter, .5f, .505f, 880, 72, true);
-            MakeText("Intro objetivo", introRoot.transform, "Prendé el carbón, repartí las brasas y cociná.\nRetirá todo a punto y serví la bandeja.", 25, Cream, TextAnchor.MiddleCenter, .5f, .445f, 850, 118, false);
+            introTitleText = MakeText("Intro título", introRoot.transform, "EL DEBUT", 64, Cream, TextAnchor.MiddleCenter, .5f, .66f, 900, 115, true);
+            introGuestsText = MakeText("Intro comensales", introRoot.transform, "2 COMENSALES", 31, Gold, TextAnchor.MiddleCenter, .5f, .56f, 850, 64, true);
+            introMenuText = MakeText("Intro menu", introRoot.transform, "CHORIZO ×1   ·   TIRA DE ASADO ×1", 24, Cream, TextAnchor.MiddleCenter, .5f, .505f, 920, 92, true);
+            introObjectiveText = MakeText("Intro objetivo", introRoot.transform, "Prendé el carbón, repartí las brasas y cociná.\nRetirá todo a punto y serví la bandeja.", 25, Cream, TextAnchor.MiddleCenter, .5f, .415f, 850, 118, false);
             MakeButton("IR A LA PARRILLA", introRoot.transform, .5f, .35f, 550, 115, new Color32(199, 139, 54, 255), StartLevel);
             contentRoot.gameObject.SetActive(false);
         }
@@ -383,25 +418,110 @@ namespace Asadito
 
         private void ShowLevelIntro()
         {
-            if (!menuTransitionActive) StartCoroutine(TransitionToIntro());
+            ShowLevelSelect();
         }
 
-        private IEnumerator TransitionToIntro()
+        private void ShowLevelSelect()
+        {
+            if (!menuTransitionActive) StartCoroutine(TransitionToLevelSelect());
+        }
+
+        private IEnumerator TransitionToLevelSelect()
         {
             menuTransitionActive = true;
-            foreach (Button button in menuRoot.GetComponentsInChildren<Button>()) button.interactable = false;
-            introRoot.SetActive(true);
+            RefreshLevelCards();
+            bool menuWasVisible = menuRoot.activeInHierarchy;
+            levelSelectRoot.SetActive(true);
+            levelSelectCanvasGroup.alpha = 0f;
             float t = 0f;
             while (t < .38f)
             {
                 t += Time.unscaledDeltaTime;
                 float p = Mathf.SmoothStep(0f, 1f, Mathf.Clamp01(t / .38f));
-                menuCanvasGroup.alpha = 1f - p;
-                introCanvasGroup.alpha = p;
+                if (menuWasVisible) menuCanvasGroup.alpha = 1f - p;
+                levelSelectCanvasGroup.alpha = p;
                 yield return null;
             }
             menuRoot.SetActive(false);
+            contentRoot.gameObject.SetActive(false);
             menuCanvasGroup.alpha = 1f;
+            levelSelectCanvasGroup.alpha = 1f;
+            menuTransitionActive = false;
+        }
+
+        private void BackToMenu()
+        {
+            if (menuTransitionActive) return;
+            levelSelectRoot.SetActive(false);
+            menuRoot.SetActive(true);
+            levelSelectCanvasGroup.alpha = 0f;
+        }
+
+        private void RefreshLevelCards()
+        {
+            if (levelCards == null || saveData == null) return;
+            for (int i = 0; i < levelCards.Length; i++)
+            {
+                int levelNumber = i + 1;
+                MvpLevelDefinition level = MvpLevelCatalog.Get(levelNumber);
+                bool unlocked = levelNumber <= saveData.MaxUnlockedLevel;
+                int stars = saveData.StarsByLevel != null && i < saveData.StarsByLevel.Length ? saveData.StarsByLevel[i] : 0;
+                Text label = levelCards[i].GetComponentInChildren<Text>();
+                label.text = (unlocked ? "NIVEL " + levelNumber : "BLOQUEADO · NIVEL " + levelNumber) + " — " + level.Title +
+                    "\n" + level.GuestCount + " COMENSALES · " + BuildOrderSummary(level) + "    " + new string('★', stars) + new string('☆', 3 - stars);
+                levelCards[i].interactable = unlocked;
+            }
+        }
+
+        private void SelectLevel(int levelNumber)
+        {
+            if (menuTransitionActive || levelNumber > saveData.MaxUnlockedLevel) return;
+            ConfigureLevel(levelNumber);
+            BuildPortionControls();
+            RefreshOrder();
+            introTitleText.text = "NIVEL " + currentLevelNumber + " · " + currentLevel.Title;
+            introGuestsText.text = currentLevel.GuestCount + " COMENSALES";
+            introMenuText.text = BuildOrderSummary(currentLevel);
+            introObjectiveText.text = currentLevelNumber == 1
+                ? "Prendé el carbón, repartí las brasas y cociná.\nDale vuelta, retiralo a la bandeja y serví."
+                : "Leé los pedidos, repartí el calor por zonas y cociná cada pieza.\nRetirá todas a la bandeja y serví la juntada.";
+            StartCoroutine(TransitionToIntro());
+        }
+
+        private string BuildOrderSummary() => BuildOrderSummary(currentLevel);
+
+        private static string BuildOrderSummary(MvpLevelDefinition level)
+        {
+            var order = new System.Collections.Generic.List<string>();
+            for (int i = 0; i < level.FoodIds.Length; i++)
+            {
+                string food = level.FoodIds[i];
+                bool seen = false;
+                for (int j = 0; j < i; j++) if (level.FoodIds[j] == food) { seen = true; break; }
+                if (seen) continue;
+                int count = 0;
+                for (int j = i; j < level.FoodIds.Length; j++) if (level.FoodIds[j] == food) count++;
+                order.Add(FoodDisplayName(food) + " ×" + count);
+            }
+            return string.Join("  ·  ", order.ToArray());
+        }
+
+        private IEnumerator TransitionToIntro()
+        {
+            menuTransitionActive = true;
+            introRoot.SetActive(true);
+            introCanvasGroup.alpha = 0f;
+            float t = 0f;
+            while (t < .38f)
+            {
+                t += Time.unscaledDeltaTime;
+                float p = Mathf.SmoothStep(0f, 1f, Mathf.Clamp01(t / .38f));
+                levelSelectCanvasGroup.alpha = 1f - p;
+                introCanvasGroup.alpha = p;
+                yield return null;
+            }
+            levelSelectRoot.SetActive(false);
+            levelSelectCanvasGroup.alpha = 1f;
             introCanvasGroup.alpha = 1f;
             menuTransitionActive = false;
         }
@@ -489,7 +609,7 @@ namespace Asadito
             grill.Ignite();
             igniteButton.interactable = false;
             igniteButton.GetComponentInChildren<Text>().text = "CARBÓN ENCENDIDO";
-            tiraButton.interactable = choriButton.interactable = true;
+            UpdatePortionButtonStates();
             feedbackText.text = "Las brasas están listas. Arrastrá las celdas para repartir el calor.";
             AdvanceTutorial(1, "Paso 2: arrastrá brasas para cambiar el calor por zona.");
             RefreshHeatGridVisuals();
@@ -587,25 +707,35 @@ namespace Asadito
                 igniteButton.GetComponentInChildren<Text>().text = "PRENDER CARBÓN";
             }
             RefreshHeatGridVisuals();
-            guestName.text = "ANA + TITO";
-            guestOrder.text = "TIRA JUGOSA  +  CHORIZO A PUNTO";
-            scoreText.text = "NIVEL 1  •  BANDEJA 0 / 2  •  2 COMENSALES";
-            DrawAvatar(guests[0].shirt);
+            guestName.text = BuildGuestNamesSummary();
+            guestOrder.text = BuildOrderSummary();
+            scoreText.text = "NIVEL " + currentLevelNumber + "  •  BANDEJA 0 / " + portions.Length + "  •  " + activeGuests.Length + " COMENSALES";
+            DrawAvatar(new Color32(190, 91, 67, 255));
             servingLocked = cooking = false;
             activePortion = -1;
             trayCount = totalScore = 0;
             for (int i = 0; i < portions.Length; i++) portions[i].Reset();
-            ResetMeat(tiraImage);
-            ResetMeat(sausageImage);
+            for (int i = 0; i < portionImages.Length; i++)
+            {
+                ResetMeat(portionImages[i]);
+                portionButtons[i].GetComponentInChildren<Text>().text = FoodButtonLabel(i);
+            }
             cookFill.rectTransform.sizeDelta = new Vector2(0, 18);
             progressText.text = "ELEGÍ UNA PIEZA PARA EMPEZAR";
-            feedbackText.text = "Retirá ambas piezas antes de servir la bandeja.";
-            tiraButton.GetComponentInChildren<Text>().text = "TIRA DE ASADO";
-            choriButton.GetComponentInChildren<Text>().text = "CHORIZO";
+            feedbackText.text = "Retirá todas las piezas antes de servir la bandeja.";
             SetActionButtons(false);
-            tiraButton.interactable = choriButton.interactable = false;
-            for (int i = 0; i < portions.Length; i++) portions[i].Position = new Vector2(.5f, .5f);
-            SetActionButtons(false);
+            UpdatePortionButtonStates();
+        }
+
+        private string BuildGuestNamesSummary()
+        {
+            if (activeGuests.Length <= 3)
+            {
+                var names = new string[activeGuests.Length];
+                for (int i = 0; i < activeGuests.Length; i++) names[i] = activeGuests[i].Name;
+                return string.Join(" + ", names);
+            }
+            return activeGuests[0].Name + " + " + activeGuests[1].Name + " + " + (activeGuests.Length - 2) + " MÁS";
         }
 
         private void ResetMeat(Image meat)
@@ -617,9 +747,111 @@ namespace Asadito
             meat.GetComponent<CanvasGroup>().alpha = 1f;
         }
 
-        private void CookTira() => ChoosePortion(0);
-        private void CookChori() => ChoosePortion(1);
-        private Image PortionImage(int index) => index == 0 ? tiraImage : sausageImage;
+        private Image PortionImage(int index) => portionImages[index];
+
+        private void BuildPortionControls()
+        {
+            if (portionImages != null)
+                for (int i = 0; i < portionImages.Length; i++)
+                {
+                    if (portionImages[i] != null) Destroy(portionImages[i].gameObject);
+                    if (portionButtons != null && i < portionButtons.Length && portionButtons[i] != null) Destroy(portionButtons[i].gameObject);
+                }
+
+            portionImages = new Image[portions.Length];
+            portionButtons = new Button[portions.Length];
+            int columns = portions.Length == 4 ? 2 : Mathf.Min(3, portions.Length);
+            int buttonRows = Mathf.CeilToInt(portions.Length / (float)columns);
+            for (int i = 0; i < portions.Length; i++)
+            {
+                int index = i;
+                Image foodImage = MakeFoodVisual(portions[index].Profile.FoodId, PortionHome(index));
+                foodImage.gameObject.AddComponent<CanvasGroup>();
+                AttachFoodTouch(foodImage, index);
+                foodImage.gameObject.SetActive(false);
+                portionImages[index] = foodImage;
+
+                int column = i % columns;
+                int row = i / columns;
+                float x = columns == 2 ? (column == 0 ? .28f : .72f) : (columns == 1 ? .5f : .18f + column * .32f);
+                float y = .245f - row * .062f;
+                float width = columns == 2 ? 425f : (columns == 1 ? 520f : 306f);
+                float height = buttonRows == 1 && portions.Length == 2 ? 116f : 76f;
+                portionButtons[index] = MakeButton(FoodButtonLabel(index), contentRoot, x, y, width, height,
+                    portions[index].Profile.FoodId == "provoleta" ? new Color32(172, 133, 66, 255) :
+                    portions[index].Profile.FoodId == "vacio" ? new Color32(113, 65, 48, 255) :
+                    portions[index].Profile.FoodId == "chorizo" ? new Color32(156, 79, 48, 255) : new Color32(114, 63, 46, 255),
+                    () => ChoosePortion(index));
+            }
+        }
+
+        private Vector2 PortionHome(int index)
+        {
+            return new Vector2(.24f + (index % 3) * .26f, .575f + (index < 3 ? .03f : -.03f));
+        }
+
+        private string FoodButtonLabel(int index)
+        {
+            string foodId = portions[index].Profile.FoodId;
+            int count = 0;
+            int occurrence = 0;
+            for (int i = 0; i < portions.Length; i++)
+                if (portions[i].Profile.FoodId == foodId)
+                {
+                    count++;
+                    if (i <= index) occurrence++;
+                }
+            return FoodDisplayName(foodId) + (count > 1 ? " " + occurrence : "");
+        }
+
+        private static string FoodDisplayName(string foodId)
+        {
+            switch (foodId)
+            {
+                case "chorizo": return "CHORIZO";
+                case "tira": return "TIRA DE ASADO";
+                case "vacio": return "VACÍO";
+                case "provoleta": return "PROVOLETA";
+                default: return foodId.ToUpperInvariant();
+            }
+        }
+
+        private Image MakeFoodVisual(string foodId, Vector2 anchor)
+        {
+            if (foodId == "chorizo") return MakeSausage(anchor);
+            if (foodId == "provoleta")
+            {
+                Image cheese = MakeImage("Provoleta en parrilla", contentRoot, circleSprite, new Color32(238, 196, 104, 255), anchor, anchor, new Vector2(170, 145));
+                Image edge = MakeImage("Borde tostado de provoleta", cheese.transform, circleSprite, new Color32(178, 104, 46, 255), new Vector2(.5f, .5f), new Vector2(.5f, .5f), new Vector2(142, 118));
+                edge.transform.SetAsFirstSibling();
+                edge.raycastTarget = false;
+                Image center = MakeImage("Centro fundido de provoleta", cheese.transform, circleSprite, new Color32(246, 219, 153, 255), new Vector2(.5f, .5f), new Vector2(.5f, .5f), new Vector2(120, 98));
+                center.raycastTarget = false;
+                cheese.raycastTarget = true;
+                return cheese;
+            }
+
+            Sprite sprite = foodId == "vacio" ? vacioSprite : tiraSprite;
+            Vector2 size = foodId == "vacio" ? new Vector2(280, 165) : new Vector2(238, 156);
+            Image cut = MakeImage(FoodDisplayName(foodId) + " en parrilla", contentRoot, sprite != null ? sprite : whiteSprite,
+                sprite != null ? Color.white : new Color32(157, 89, 57, 255), anchor, anchor, size);
+            cut.preserveAspect = sprite != null;
+            cut.raycastTarget = true;
+            return cut;
+        }
+
+        private void UpdatePortionButtonStates()
+        {
+            if (portionButtons == null) return;
+            for (int i = 0; i < portionButtons.Length; i++)
+            {
+                if (portionButtons[i] == null) continue;
+                bool activePiece = cooking && i == activePortion;
+                portionButtons[i].interactable = grill.IsLit && !servingLocked && !portions[i].OnTray && (!cooking || activePiece);
+                portionButtons[i].GetComponentInChildren<Text>().text = portions[i].OnTray ? FoodButtonLabel(i) + " ✓" :
+                    (activePiece ? "RETIRAR " + FoodDisplayName(portions[i].Profile.FoodId) : FoodButtonLabel(i));
+            }
+        }
 
         private void ChoosePortion(int index)
         {
@@ -628,17 +860,17 @@ namespace Asadito
             if (cooking) return;
             activePortion = index;
             cooking = portions[index].Started = true;
-            portions[index].Position = new Vector2(.5f, .5f);
+            portions[index].Position = PortionHome(index);
             AdvanceTutorial(3, "Paso 4: arrastrá la pieza a una zona de calor.");
             Image meat = PortionImage(index);
             meat.gameObject.SetActive(true);
-            meat.color = index == 0 ? Color.white : (Color)new Color32(181, 74, 44, 255);
-            meat.rectTransform.position = heatGridRect.TransformPoint(Vector3.zero);
+            meat.color = portions[index].Profile.FoodId == "chorizo" ? new Color32(181, 74, 44, 255) : Color.white;
+            Vector2 home = portions[index].Position;
+            meat.rectTransform.position = heatGridRect.TransformPoint(new Vector2((home.x - .5f) * heatGridRect.rect.width, (home.y - .5f) * heatGridRect.rect.height));
             StartCoroutine(PlaceMeat(meat.rectTransform));
             if (sizzleSource != null && !sizzleSource.isPlaying) sizzleSource.Play();
-            (index == 0 ? tiraButton : choriButton).GetComponentInChildren<Text>().text = "RETIRAR A BANDEJA";
-            (index == 0 ? choriButton : tiraButton).interactable = false;
             flipButton.interactable = true;
+            UpdatePortionButtonStates();
             feedbackText.text = "Dale vuelta y retirá al punto pedido.";
             smokeRoutine = StartCoroutine(SmokePuffs());
         }
@@ -649,18 +881,18 @@ namespace Asadito
             activePortion = -1;
             portions[index].OnTray = true;
             VibrateFeedback();
-            tiraButton.interactable = choriButton.interactable = false;
+            for (int i = 0; i < portionButtons.Length; i++) portionButtons[i].interactable = false;
             flipButton.interactable = false;
             if (smokeRoutine != null) StopCoroutine(smokeRoutine);
             if (sizzleSource != null) sizzleSource.Stop();
             yield return ServeAnimation(PortionImage(index));
             trayCount++;
-            (index == 0 ? tiraButton : choriButton).GetComponentInChildren<Text>().text = "EN BANDEJA  ✓";
-            tiraButton.interactable = !portions[0].OnTray;
-            choriButton.interactable = !portions[1].OnTray;
-            serveButton.interactable = trayCount == 2;
-            scoreText.text = "NIVEL 1  •  BANDEJA " + trayCount + " / 2  •  2 COMENSALES";
-            progressText.text = trayCount == 2 ? "BANDEJA LISTA PARA SERVIR" : "ELEGÍ LA OTRA PIEZA";
+            cooking = false;
+            activePortion = -1;
+            serveButton.interactable = trayCount == portions.Length;
+            scoreText.text = "NIVEL " + currentLevelNumber + "  •  BANDEJA " + trayCount + " / " + portions.Length + "  •  " + activeGuests.Length + " COMENSALES";
+            progressText.text = trayCount == portions.Length ? "BANDEJA LISTA PARA SERVIR" : "ELEGÍ LA PRÓXIMA PIEZA";
+            UpdatePortionButtonStates();
             feedbackText.text = "Las piezas conservan calor mientras reposan.";
             AdvanceTutorial(5, "Repetí con la otra porción y serví la bandeja.");
         }
@@ -715,7 +947,9 @@ namespace Asadito
         {
             RectTransform rect = meat.rectTransform;
             Vector2 start = rect.anchorMin;
-            Vector2 destination = new Vector2(meat == tiraImage ? .43f : .57f, .468f);
+            int index = 0;
+            for (int i = 0; i < portionImages.Length; i++) if (portionImages[i] == meat) { index = i; break; }
+            Vector2 destination = new Vector2(.34f + (index % 3) * .16f, .468f + (index / 3 == 0 ? .018f : -.018f));
             float t = 0f;
             while (t < .42f)
             {
@@ -726,18 +960,18 @@ namespace Asadito
                 yield return null;
             }
             rect.anchorMin = rect.anchorMax = destination;
-            rect.localScale = Vector3.one * .58f;
+            rect.localScale = Vector3.one * (portions.Length > 2 ? .34f : .58f);
         }
 
         private void Serve()
         {
-            if (servingLocked || cooking || trayCount != 2) return;
+            if (servingLocked || cooking || trayCount != portions.Length) return;
             servingLocked = true;
             SetActionButtons(false);
-            GuestProfile[] profiles = BuildGuestProfiles();
-            var servings = new System.Collections.Generic.List<ServingPortion>(2);
+            GuestProfile[] profiles = activeGuests;
+            var servings = new System.Collections.Generic.List<ServingPortion>(portions.Length);
             for (int i = 0; i < portions.Length; i++)
-                servings.Add(new ServingPortion { Id = i == 0 ? "tira-1" : "chorizo-1", FoodId = i == 0 ? "tira" : "chorizo", Amount = portions[i].Amount,
+                servings.Add(new ServingPortion { Id = PortionId(i), FoodId = portions[i].Profile.FoodId, Amount = portions[i].Amount,
                     Doneness = FoodCookingModel.GetDoneness(portions[i].State, portions[i].Profile), CookingQuality = GetCookingQuality(portions[i]) });
             var assignments = ServingAllocator.Allocate(profiles, servings);
             string reactions = "";
@@ -745,7 +979,7 @@ namespace Asadito
             ScoreConfig scoreConfig = new ScoreConfig();
             for (int i = 0; i < profiles.Length; i++)
             {
-                int portionIndex = FindAssignedPortion(assignments, i == 0 ? "ana" : "tito");
+                int portionIndex = FindAssignedPortion(assignments, profiles[i].Id);
                 if (portionIndex < 0) { reactions += profiles[i].Name + ": sin porción\n"; continue; }
                 PlayablePortion portion = portions[portionIndex];
                 float assignedAmount = Mathf.Min(portion.Amount, profiles[i].TargetFoodAmount);
@@ -762,37 +996,30 @@ namespace Asadito
                     " · saciedad " + Mathf.RoundToInt(breakdown.Satiety) + " · punto " + Mathf.RoundToInt(breakdown.DonenessMatch) +
                     " · gusto " + Mathf.RoundToInt(breakdown.FoodPreference) + " = " + points + "/100\n";
             }
-            reactions += "Total: " + totalScore + " / 200";
-            totalStars = starThresholds.Evaluate(totalScore);
+            reactions += "Total: " + totalScore + " / " + (profiles.Length * 100);
+            int normalizedScore = Mathf.RoundToInt(totalScore * 2f / Mathf.Max(1, profiles.Length));
+            totalStars = starThresholds.Evaluate(normalizedScore);
             if (saveData != null && saveData.Settings != null && !saveData.Settings.TutorialCompleted)
             {
                 saveData.Settings.TutorialCompleted = true;
                 MvpSave.Save(saveData);
             }
-            MvpSave.RecordLevelResult(1, totalScore, totalStars);
+            MvpSave.RecordLevelResult(currentLevelNumber, totalScore, totalStars);
             saveData = MvpSave.Load();
             feedbackText.text = reactions;
-            StartCoroutine(GuestReaction(totalScore / guests.Length));
-        }
-
-        private GuestProfile[] BuildGuestProfiles()
-        {
-            var tuning = new GuestAmountTuning { AdultAgeBase = .2f };
-            var ana = new GuestProfile { Id = "ana", Name = "ANA", Age = 30, Weight = 62f, Appetite = .35f, PreferredDoneness = Doneness.Jugoso };
-            ana.FavoriteFoods.Add("tira");
-            ana.CalculateTarget(tuning);
-            var tito = new GuestProfile { Id = "tito", Name = "TITO", Age = 40, Weight = 82f, Appetite = .35f, PreferredDoneness = Doneness.A_Punto };
-            tito.FavoriteFoods.Add("chorizo");
-            tito.CalculateTarget(tuning);
-            return new[] { ana, tito };
+            StartCoroutine(GuestReaction(totalScore / Mathf.Max(1, activeGuests.Length)));
         }
 
         private int FindAssignedPortion(System.Collections.Generic.List<ServingAssignment> assignments, string guestId)
         {
             for (int i = 0; i < assignments.Count; i++)
-                if (assignments[i].GuestId == guestId) return assignments[i].PortionId == "tira-1" ? 0 : 1;
+                if (assignments[i].GuestId == guestId)
+                    for (int portion = 0; portion < portions.Length; portion++)
+                        if (assignments[i].PortionId == PortionId(portion)) return portion;
             return -1;
         }
+
+        private static string PortionId(int index) => "portion-" + index;
 
         private static float GetCookingQuality(PlayablePortion portion)
         {
@@ -819,11 +1046,18 @@ namespace Asadito
         {
             MakePanel("Fin de nivel", contentRoot, new Color32(39, 48, 39, 248), .5f, .54f, 900, 420);
             MakeText("Resultado titulo", contentRoot, "¡ASADO TERMINADO!", 46, Cream, TextAnchor.MiddleCenter, .5f, .625f, 850, 90, true);
-            scoreText = MakeText("Resultado puntos", contentRoot, "0 / 200 PUNTOS", 43, Gold, TextAnchor.MiddleCenter, .5f, .555f, 900, 82, true);
+            int maxScore = activeGuests.Length * 100;
+            scoreText = MakeText("Resultado puntos", contentRoot, "0 / " + maxScore + " PUNTOS", 43, Gold, TextAnchor.MiddleCenter, .5f, .555f, 900, 82, true);
             StartCoroutine(AnimateResultScore(scoreText));
-            MakeText("Resultado detalle", contentRoot, feedbackText.text, 18, Cream, TextAnchor.MiddleCenter, .5f, .49f, 850, 115, false);
-            Button replay = MakeButton("OTRO ASADO", contentRoot, .5f, .405f, 470, 100, new Color32(199, 139, 54, 255), Replay);
-            replay.interactable = true;
+            MakeText("Resultado detalle", contentRoot, feedbackText.text, 15, Cream, TextAnchor.MiddleCenter, .5f, .49f, 850, 115, false);
+            MakeButton("REINTENTAR", contentRoot, .29f, .405f, 390, 86, Green, Retry).interactable = true;
+            bool hasNext = currentLevelNumber < MvpLevelCatalog.Count;
+            int nextLevel = currentLevelNumber + 1;
+            bool nextUnlocked = hasNext && saveData.MaxUnlockedLevel >= nextLevel;
+            UnityEngine.Events.UnityAction nextAction = !hasNext ? (UnityEngine.Events.UnityAction)ShowLevelSelect :
+                (nextUnlocked ? PlayNextLevel : () => { });
+            MakeButton(hasNext ? (nextUnlocked ? "SIGUIENTE" : "BLOQUEADO") : "NIVELES", contentRoot,
+                .71f, .405f, 390, 86, new Color32(199, 139, 54, 255), nextAction).interactable = !hasNext || nextUnlocked;
             SetActionButtons(false);
         }
 
@@ -837,15 +1071,15 @@ namespace Asadito
                 float p = Mathf.Clamp01(elapsed / .58f);
                 float eased = 1f - Mathf.Pow(1f - p, 3f);
                 int points = Mathf.RoundToInt(totalScore * eased);
-                label.text = points + " / 200 PUNTOS";
+                label.text = points + " / " + (activeGuests.Length * 100) + " PUNTOS";
                 label.rectTransform.localScale = Vector3.one * Mathf.Lerp(.82f, 1f, eased);
                 yield return null;
             }
-            label.text = totalScore + " / 200 PUNTOS  ·  " + new string('★', totalStars) + new string('☆', 3 - totalStars);
+            label.text = totalScore + " / " + (activeGuests.Length * 100) + " PUNTOS  ·  " + new string('★', totalStars) + new string('☆', 3 - totalStars);
             label.rectTransform.localScale = Vector3.one;
         }
 
-        private void Replay()
+        private void Retry()
         {
             totalScore = 0;
             Transform result = contentRoot.Find("Fin de nivel");
@@ -853,8 +1087,15 @@ namespace Asadito
             RemoveNamed("Resultado titulo");
             RemoveNamed("Resultado puntos");
             RemoveNamed("Resultado detalle");
-            RemoveNamed("OTRO ASADO");
+            RemoveNamed("REINTENTAR");
+            RemoveNamed(currentLevelNumber < MvpLevelCatalog.Count ? (saveData.MaxUnlockedLevel > currentLevelNumber ? "SIGUIENTE" : "BLOQUEADO") : "NIVELES");
             RefreshOrder();
+        }
+
+        private void PlayNextLevel()
+        {
+            if (currentLevelNumber >= MvpLevelCatalog.Count) return;
+            SelectLevel(currentLevelNumber + 1);
         }
 
         private void RemoveNamed(string objectName)
@@ -876,8 +1117,9 @@ namespace Asadito
             PlayablePortion portion = portions[index];
             float charAmount = Mathf.Clamp01(portion.State.CurrentFace.Char);
             float browning = Mathf.Clamp01(portion.State.CurrentFace.Maillard);
-            Color raw = index == 1 && chorizoSprite == null ? (Color)new Color32(181, 74, 44, 255) : Color.white;
-            Color browned = index == 0 ? new Color32(151, 83, 53, 255) : new Color32(116, 55, 36, 255);
+            bool cheese = portion.Profile.FoodId == "provoleta";
+            Color raw = portion.Profile.FoodId == "chorizo" ? new Color32(181, 74, 44, 255) : Color.white;
+            Color browned = cheese ? new Color32(197, 133, 56, 255) : new Color32(151, 83, 53, 255);
             Color burnt = new Color32(46, 36, 31, 255);
             PortionImage(index).color = Color.Lerp(Color.Lerp(raw, browned, browning), burnt, charAmount);
         }
