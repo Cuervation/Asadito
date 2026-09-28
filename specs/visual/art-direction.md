@@ -22,13 +22,14 @@ Usar colores cálidos con saturación moderada; fondo más oscuro y suave que la
 
 ## Brand
 
-- Wordmark propio `ASADITO`: Lilita One con crema, contorno carbón, extrusión terracota/sombra y acento pequeño de brasa; el lettering se mantiene legible en tamaño chico.
+- Wordmark propio `Asadito,`: Lilita One con trazo chunky/redondeado, cara blanca, contorno casi negro marcado y sombra oscura corta; usar mayúscula inicial y coma según el título de portada. La referencia de juegos casuales solo inspira tipografía, contorno, sombra y jerarquía; no imitar ningún logo, personaje ni composición reconocible.
+- La portada muestra la línea secundaria exacta `el sabor Argentino` debajo del wordmark, con Baloo 2 ExtraBold, y un pequeño emblema con bandera argentina (franjas celeste/blanca/celeste y sol dorado) hacia la esquina superior derecha. Mantener título y emblema en el aire libre del tercio superior; no cubrir la parrilla ni los alimentos.
 - Icono de launcher: símbolo original simple de chorizo sobre parrilla, medallón crema/rojo y glow de brasa; sin texto ni escena completa. El icono adaptativo usa el mismo asset en los slots Android existentes.
 - No tomar formas, composición, personajes, lettering o íconos identificables de Pocket Chef ni de otro juego.
 
 ## UI / tipografía
 
-- **Portada:** key art vertical con parrilla/comida como héroe, título legible arriba, CTA `ENTRAR` dominante y `SALIR` secundario. Entrar conserva el flujo existente de introducción/tutorial. `Application.Quit()` en Player; salir de Play Mode en Unity Editor.
+- **Portada:** key art vertical con parrilla/comida como héroe, `Asadito,` legible arriba y sin tapar la parrilla, línea `el sabor Argentino` inmediatamente debajo, y emblema discreto con bandera argentina. La titular usa Lilita One de peso casual chunky, cara blanca y contorno/sombra negra gruesa; la línea secundaria usa Baloo 2 ExtraBold del mismo tono, más chica. CTA `ENTRAR` dominante y `SALIR` secundario. Entrar conserva el flujo existente de introducción/tutorial. `Application.Quit()` en Player; salir de Play Mode en Unity Editor.
 - **Tipografía:** Lilita One Regular se reserva para wordmark y display; Baloo 2 se usa en UI con pesos instalados 400/500/600/700/800. Las licencias OFL están dentro del proyecto. Canvas Legacy carga TTF desde `Resources` (no TMP); no se generan TMP assets mientras no se use TextMeshPro. Nunito queda como fallback futuro, no instalado sin evidencia de legibilidad insuficiente. Revisar ñ, tildes, números y tamaños mínimos en teléfono.
 - **Botones:** grandes, con esquinas suaves, un verbo, estado normal/hover/tap/deshabilitado; primaria naranja/dorada, secundaria madera/crema. Feedback de color/escala corto y accesible.
 - **Tarjetas/paneles:** crema o carbón con radio amable, agrupación y encabezado inequívoco. HUD no debe tapar parrilla, alimento ni bandeja; safe area en contenido de juego.

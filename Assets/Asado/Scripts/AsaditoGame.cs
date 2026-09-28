@@ -395,37 +395,39 @@ namespace Asadito
                 cover.rectTransform.localScale = new Vector3((titleSprite.rect.width / titleSprite.rect.height) / (1080f / 1920f), 1f, 1f);
             Image shade = MakePanel("Velo de contraste portada", menuRoot.transform, new Color32(25, 24, 19, 54), .5f, .5f, 1080, 1920);
             shade.raycastTarget = false;
-            RectTransform brandRect;
-            if (logoSprite != null)
-            {
-                Image brandMark = MakeImage("Menu marca", menuRoot.transform, logoSprite, Color.white,
-                    new Vector2(.5f, .5f), new Vector2(.5f, .5f), new Vector2(900, 282));
-                brandMark.rectTransform.anchoredPosition = new Vector2(0f, 650f);
-                brandMark.preserveAspect = true;
-                brandRect = brandMark.rectTransform;
-            }
-            else
-            {
-                Text brand = MakeText("Menu marca", menuRoot.transform, "ASADITO", 104, Cream, TextAnchor.MiddleCenter, .5f, .825f, 940, 155, true);
-                var brandOutline = brand.gameObject.AddComponent<Outline>();
-                brandOutline.effectColor = new Color32(79, 39, 29, 245);
-                brandOutline.effectDistance = new Vector2(3, -3);
-                var brandShadow = brand.gameObject.AddComponent<Shadow>();
-                brandShadow.effectColor = new Color(0, 0, 0, .45f);
-                brandShadow.effectDistance = new Vector2(1, -7);
-                brandRect = brand.rectTransform;
-            }
-            Text subtitle = MakeText("Menu subtitulo", menuRoot.transform, "EL SABOR DEL PATIO ARGENTINO", 25, Cream, TextAnchor.MiddleCenter, .5f, .755f, 900, 74, true);
+            Text brand = MakeText("Menu marca", menuRoot.transform, "Asadito,", 112, Color.white, TextAnchor.MiddleCenter, .5f, .925f, 720, 142, true);
+            var brandOutline = brand.gameObject.AddComponent<Outline>();
+            brandOutline.effectColor = new Color32(14, 14, 18, 255);
+            brandOutline.effectDistance = new Vector2(5, -5);
+            var brandShadow = brand.gameObject.AddComponent<Shadow>();
+            brandShadow.effectColor = new Color32(15, 15, 18, 235);
+            brandShadow.effectDistance = new Vector2(1, -8);
+            RectTransform brandRect = brand.rectTransform;
+
+            Text subtitle = MakeText("Menu subtitulo", menuRoot.transform, "el sabor Argentino", 46,
+                Color.white, TextAnchor.MiddleCenter, .5f, .842f, 760, 70, true);
+            if (extraBoldFont != null) subtitle.font = extraBoldFont;
+            var subtitleOutline = subtitle.gameObject.AddComponent<Outline>();
+            subtitleOutline.effectColor = new Color32(14, 14, 18, 245);
+            subtitleOutline.effectDistance = new Vector2(3, -3);
+            var subtitleShadow = subtitle.gameObject.AddComponent<Shadow>();
+            subtitleShadow.effectColor = new Color32(15, 15, 18, 220);
+            subtitleShadow.effectDistance = new Vector2(1, -5);
+            RectTransform flagRect = BuildArgentineFlag(menuRoot.transform, .89f, .925f);
             Button enterButton = MakeButton("ENTRAR", menuRoot.transform, .5f, .245f, 560, 118, new Color32(218, 121, 45, 255), ShowLevelIntro);
             Button exitButton = MakeButton("SALIR", menuRoot.transform, .5f, .158f, 420, 92, new Color32(92, 72, 55, 245), ExitGame);
             CanvasGroup brandEntrance = brandRect.gameObject.AddComponent<CanvasGroup>();
             CanvasGroup subtitleEntrance = subtitle.gameObject.AddComponent<CanvasGroup>();
+            CanvasGroup flagEntrance = flagRect.gameObject.AddComponent<CanvasGroup>();
+            flagEntrance.interactable = false;
+            flagEntrance.blocksRaycasts = false;
             CanvasGroup enterEntrance = enterButton.gameObject.AddComponent<CanvasGroup>();
             CanvasGroup exitEntrance = exitButton.gameObject.AddComponent<CanvasGroup>();
             enterEntrance.interactable = enterEntrance.blocksRaycasts = false;
             exitEntrance.interactable = exitEntrance.blocksRaycasts = false;
             StartCoroutine(AnimateMenuEntrance(brandRect, brandEntrance, .0f, .34f, 18f));
             StartCoroutine(AnimateMenuEntrance(subtitle.rectTransform, subtitleEntrance, .08f, .34f, 14f));
+            StartCoroutine(AnimateMenuEntrance(flagRect, flagEntrance, .1f, .34f, 12f));
             StartCoroutine(AnimateMenuEntrance(enterButton.GetComponent<RectTransform>(), enterEntrance, .14f, .34f, 22f));
             StartCoroutine(AnimateMenuEntrance(exitButton.GetComponent<RectTransform>(), exitEntrance, .22f, .34f, 18f));
             Image emberGlow = MakeImage("Resplandor ambiental portada", menuRoot.transform, circleSprite,
@@ -1736,6 +1738,53 @@ namespace Asadito
             flipButton.interactable = active;
             serveButton.interactable = active;
             if (flipButtonText != null) flipButtonText.text = "DAR VUELTA";
+        }
+
+        private RectTransform BuildArgentineFlag(Transform parent, float x, float y)
+        {
+            var badge = new GameObject("Bandera argentina", typeof(RectTransform));
+            badge.transform.SetParent(parent, false);
+            RectTransform badgeRect = badge.GetComponent<RectTransform>();
+            SetRect(badgeRect, x, y, 126f, 88f);
+
+            Image frame = MakeImage("Marco madera bandera", badge.transform, roundedButtonSprite,
+                new Color32(68, 44, 34, 250), Vector2.zero, Vector2.one, Vector2.zero);
+            frame.rectTransform.offsetMin = new Vector2(-5f, -5f);
+            frame.rectTransform.offsetMax = new Vector2(5f, 5f);
+            var frameShadow = frame.gameObject.AddComponent<Shadow>();
+            frameShadow.effectColor = new Color(0f, 0f, 0f, .4f);
+            frameShadow.effectDistance = new Vector2(1f, -4f);
+
+            Image cloth = MakeImage("Paño bandera", badge.transform, whiteSprite,
+                new Color32(255, 250, 228, 255), Vector2.zero, Vector2.one, Vector2.zero);
+            cloth.rectTransform.offsetMin = new Vector2(9f, 8f);
+            cloth.rectTransform.offsetMax = new Vector2(-9f, -8f);
+
+            Color sky = new Color32(116, 172, 223, 255);
+            MakeImage("Franja celeste superior", badge.transform, whiteSprite, sky,
+                new Vector2(.5f, .5f), new Vector2(.5f, .5f), new Vector2(108f, 21f))
+                .rectTransform.anchoredPosition = new Vector2(0f, 21f);
+            MakeImage("Franja celeste inferior", badge.transform, whiteSprite, sky,
+                new Vector2(.5f, .5f), new Vector2(.5f, .5f), new Vector2(108f, 21f))
+                .rectTransform.anchoredPosition = new Vector2(0f, -21f);
+
+            Color sunColor = new Color32(244, 177, 72, 255);
+            const int rayCount = 8;
+            for (int i = 0; i < rayCount; i++)
+            {
+                float angle = i * Mathf.PI * 2f / rayCount;
+                Image ray = MakeImage("Rayo sol de mayo " + (i + 1), badge.transform, whiteSprite, sunColor,
+                    new Vector2(.5f, .5f), new Vector2(.5f, .5f), new Vector2(2.5f, 7f));
+                ray.rectTransform.anchoredPosition = new Vector2(Mathf.Cos(angle), Mathf.Sin(angle)) * 11f;
+                ray.rectTransform.localEulerAngles = new Vector3(0f, 0f, angle * Mathf.Rad2Deg - 90f);
+            }
+
+            Image sun = MakeImage("Sol de mayo", badge.transform, circleSprite, sunColor,
+                new Vector2(.5f, .5f), new Vector2(.5f, .5f), new Vector2(14f, 14f));
+            var sunOutline = sun.gameObject.AddComponent<Outline>();
+            sunOutline.effectColor = new Color32(188, 115, 43, 255);
+            sunOutline.effectDistance = new Vector2(1f, -1f);
+            return badgeRect;
         }
 
         private Image MakePanel(string objectName, Transform parent, Color color, float x, float y, float width, float height)

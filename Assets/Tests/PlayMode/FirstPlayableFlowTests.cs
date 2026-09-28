@@ -169,6 +169,25 @@ namespace Asadito.Tests.PlayMode
             };
             Assert.NotNull(displayFont, "Lilita One must load as the display face.");
             foreach (Font font in uiFonts) Assert.NotNull(font, "Every configured Baloo 2 static weight must load.");
+            Text menuBrand = FindText("Menu marca");
+            Assert.AreEqual("Asadito,", menuBrand.text, "The cover wordmark must use the requested exact spelling.");
+            Assert.AreEqual(displayFont, menuBrand.font, "Lilita One is reserved for the chunky cover wordmark.");
+            Assert.AreEqual(112, menuBrand.fontSize, "The main title should read as a large game-style display heading.");
+            Assert.AreEqual(Color.white, menuBrand.color, "The title uses the reference's bright white face.");
+            Assert.AreEqual((Color)new Color32(14, 14, 18, 255), menuBrand.GetComponent<Outline>().effectColor);
+            Assert.Greater(menuBrand.rectTransform.anchorMin.y, .9f, "The wordmark belongs above the grill illustration.");
+            Text menuTagline = FindText("Menu subtitulo");
+            Assert.AreEqual("el sabor Argentino", menuTagline.text, "Keep the requested tagline exact and on its own line.");
+            Assert.AreEqual(uiFonts[4], menuTagline.font, "The tagline should share the bold, rounded treatment.");
+            Assert.AreEqual(46, menuTagline.fontSize, "Keep the tagline clearly secondary to the title.");
+            Assert.AreEqual((Color)new Color32(14, 14, 18, 245), menuTagline.GetComponent<Outline>().effectColor);
+            Assert.Greater(menuTagline.rectTransform.anchorMin.y, .8f, "The tagline must remain in the clear title area above the grill.");
+            GameObject flagBadge = GameObject.Find("Bandera argentina");
+            Assert.NotNull(flagBadge, "The cover must include the Argentine flag badge.");
+            Assert.IsFalse(flagBadge.GetComponent<CanvasGroup>().blocksRaycasts, "The decorative flag must not block menu controls.");
+            Assert.AreEqual((Color)new Color32(116, 172, 223, 255),
+                flagBadge.transform.Find("Franja celeste superior").GetComponent<Image>().color);
+            Assert.NotNull(flagBadge.transform.Find("Sol de mayo"), "The flag's center sun completes the Argentine cue.");
             char[] spanishGlyphs = { 'ñ', 'Ñ', 'á', 'é', 'í', 'ó', 'ú', 'ü', '¿', '¡', '×', '·', '0', '9' };
             foreach (char glyph in spanishGlyphs)
             {
