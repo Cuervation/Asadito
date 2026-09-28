@@ -104,6 +104,14 @@
       "sessions": 2,
       "memories": 2,
       "prompts": 0
+    },
+    {
+      "id": "60d38883",
+      "created_by": "celestino",
+      "created_at": "2026-09-28T11:45:57.819986Z",
+      "sessions": 1,
+      "memories": 1,
+      "prompts": 0
     }
   ]
 }
