@@ -62,6 +62,9 @@ namespace Asadito.Tests.PlayMode
             Assert.IsNotNull(GameObject.Find("REINTENTAR"));
             Button next = FindButton("SIGUIENTE");
             Assert.IsTrue(next.interactable, "A one-star result must unlock the next level.");
+            Assert.AreEqual("Asadito UI Icon Star", GameObject.Find("Resultado estrella 1").GetComponent<Image>().sprite.name);
+            Assert.AreEqual("tira_ideal", GameObject.Find("Resultado icon comida TIRA DE ASADO").GetComponent<Image>().sprite.name);
+            Assert.AreEqual("chorizo_ideal", GameObject.Find("Resultado icon comida CHORIZO").GetComponent<Image>().sprite.name);
             Assert.GreaterOrEqual(ReadSaveInt("MaxUnlockedLevel"), 2);
             MvpSaveData saved = MvpSave.Load();
             Assert.AreEqual(MvpSaveData.CurrentVersion, saved.Version);
@@ -144,6 +147,8 @@ namespace Asadito.Tests.PlayMode
         [UnityTest]
         public IEnumerator VisualAssets_FourFoodsExposeRawWarmingIdealAndBurntStates()
         {
+            ResetSaveCache();
+            MvpSave.Save(new MvpSaveData());
             Component game = null;
             yield return LoadGameScene(value => game = value);
             Assert.NotNull(game);
@@ -177,6 +182,26 @@ namespace Asadito.Tests.PlayMode
             Assert.IsFalse(menuEnter.IsInteractable(), "The Enter CTA must not be clickable while its entrance animation is still hidden.");
             yield return new WaitForSecondsRealtime(.6f);
             Assert.IsTrue(menuEnter.IsInteractable(), "The Enter CTA must become interactable after its entrance animation.");
+
+            ClickButton("ENTRAR");
+            yield return new WaitForSecondsRealtime(.45f);
+            Button levelOne = FindButton("NIVEL 1");
+            Assert.AreEqual("Asadito UI Icon Guest", levelOne.transform.Find("Icon comensal NIVEL 1").GetComponent<Image>().sprite.name);
+            Assert.AreEqual("Asadito UI Icon Locked", levelOne.transform.Find("Icon candado NIVEL 1").GetComponent<Image>().sprite.name);
+            Assert.IsFalse(levelOne.transform.Find("Icon candado NIVEL 1").gameObject.activeSelf);
+            Button levelTwo = GameObject.Find("NIVEL 2").GetComponent<Button>();
+            Assert.IsNotNull(levelTwo);
+            Assert.IsTrue(levelTwo.transform.Find("Icon candado NIVEL 2").gameObject.activeSelf);
+            Assert.IsFalse(levelTwo.interactable);
+            Assert.AreEqual("tira_ideal", levelOne.transform.Find("Icon comida tira NIVEL 1").GetComponent<Image>().sprite.name);
+            Assert.AreEqual("chorizo_ideal", levelOne.transform.Find("Icon comida chorizo NIVEL 1").GetComponent<Image>().sprite.name);
+            Assert.AreEqual("Asadito UI Icon Star", levelOne.transform.Find("Icon estrella 1 NIVEL 1").GetComponent<Image>().sprite.name);
+            ClickButton("NIVEL 1");
+            yield return new WaitForSecondsRealtime(.45f);
+            Assert.AreEqual("Asadito UI Icon Guest", GameObject.Find("Icon comensales intro").GetComponent<Image>().sprite.name);
+            Assert.AreEqual("tira_ideal", GameObject.Find("Icon comida intro TIRA DE ASADO").GetComponent<Image>().sprite.name);
+            Assert.AreEqual("chorizo_ideal", GameObject.Find("Icon comida intro CHORIZO").GetComponent<Image>().sprite.name);
+            Assert.AreEqual("Asadito UI Icon Next", FindButton("IR A LA PARRILLA").transform.Find("Icono accion IR A LA PARRILLA").GetComponent<Image>().sprite.name);
 
             Sprite[][] sprites = (Sprite[][])GetField(game, "foodStateSprites");
             Assert.NotNull(sprites, "The generated food-state atlas must load in runtime.");
@@ -435,6 +460,8 @@ namespace Asadito.Tests.PlayMode
         private static void IgniteAndMoveEmbers(Component game, bool assertTutorialStep = true)
         {
             ClickButton("PRENDER CARBÓN");
+            Image ignitionFlame = GameObject.Find("Destello de encendido").GetComponent<Image>();
+            Assert.AreEqual("Asadito UI Icon Flame", ignitionFlame.sprite.name);
             if (assertTutorialStep) Assert.That(FindText("Tutorial contextual").text, Does.Contain("Paso 2"));
             CharcoalGrillModel grill = (CharcoalGrillModel)GetField(game, "grill");
             Assert.IsTrue(grill.IsLit);
