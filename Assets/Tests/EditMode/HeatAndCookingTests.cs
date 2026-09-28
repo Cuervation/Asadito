@@ -85,6 +85,7 @@ namespace Asadito.Tests
             Assert.AreEqual("tira", tira.FoodId);
             Assert.AreNotEqual(tira.DonenessBands[0].MinimumCoreC, chorizo.DonenessBands[0].MinimumCoreC);
             Assert.AreNotEqual(tira.CoreTransferRate, chorizo.CoreTransferRate);
+            Assert.AreEqual(.007f, chorizo.CoreTransferRate, .0001f);
             Assert.AreEqual(71f, chorizo.DonenessBands[1].MinimumCoreC);
             Assert.AreEqual(73f, chorizo.DonenessBands[1].MaximumCoreC);
         }

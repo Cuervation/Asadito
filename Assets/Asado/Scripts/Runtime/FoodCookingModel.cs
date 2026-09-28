@@ -51,7 +51,7 @@ namespace Asadito.Runtime
             {
                 // Chorizo is a smaller sausage cut: it heats and browns faster, with
                 // a higher internal-temperature range than the whole-cut baseline.
-                profile.CoreTransferRate = .0045f;
+                profile.CoreTransferRate = .007f;
                 profile.CharRate = .008f;
                 profile.DonenessBands = new[]
                 {
