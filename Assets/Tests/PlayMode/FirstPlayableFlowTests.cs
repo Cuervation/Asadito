@@ -170,7 +170,7 @@ namespace Asadito.Tests.PlayMode
             Assert.NotNull(displayFont, "Lilita One must load as the display face.");
             foreach (Font font in uiFonts) Assert.NotNull(font, "Every configured Baloo 2 static weight must load.");
             Text menuBrand = FindText("Menu marca");
-            Assert.AreEqual("Asadito,", menuBrand.text, "The cover wordmark must use the requested exact spelling.");
+            Assert.AreEqual("Asadito", menuBrand.text, "The cover wordmark must use the requested exact spelling without a comma.");
             Assert.AreEqual(displayFont, menuBrand.font, "Lilita One is reserved for the chunky cover wordmark.");
             Assert.AreEqual(112, menuBrand.fontSize, "The main title should read as a large game-style display heading.");
             Assert.AreEqual(Color.white, menuBrand.color, "The title uses the reference's bright white face.");
@@ -178,16 +178,20 @@ namespace Asadito.Tests.PlayMode
             Assert.Greater(menuBrand.rectTransform.anchorMin.y, .9f, "The wordmark belongs above the grill illustration.");
             Text menuTagline = FindText("Menu subtitulo");
             Assert.AreEqual("el sabor Argentino", menuTagline.text, "Keep the requested tagline exact and on its own line.");
-            Assert.AreEqual(uiFonts[4], menuTagline.font, "The tagline should share the bold, rounded treatment.");
-            Assert.AreEqual(46, menuTagline.fontSize, "Keep the tagline clearly secondary to the title.");
+            Assert.AreEqual(displayFont, menuTagline.font, "The tagline should use the chunky display face from the reference style.");
+            Assert.AreEqual(50, menuTagline.fontSize, "Keep the tagline prominent and readable below the title.");
+            Assert.AreEqual(HorizontalWrapMode.Overflow, menuTagline.horizontalOverflow);
+            Assert.AreEqual(VerticalWrapMode.Overflow, menuTagline.verticalOverflow);
+            Assert.Less(menuBrand.rectTransform.anchorMin.y - menuTagline.rectTransform.anchorMin.y, .05f,
+                "Keep the tagline close beneath the wordmark instead of leaving a large vertical gap.");
+            Assert.GreaterOrEqual(menuTagline.rectTransform.rect.height, 100f, "The tagline needs enough vertical room to render on device.");
             Assert.AreEqual((Color)new Color32(14, 14, 18, 245), menuTagline.GetComponent<Outline>().effectColor);
             Assert.Greater(menuTagline.rectTransform.anchorMin.y, .8f, "The tagline must remain in the clear title area above the grill.");
-            GameObject flagBadge = GameObject.Find("Bandera argentina");
-            Assert.NotNull(flagBadge, "The cover must include the Argentine flag badge.");
-            Assert.IsFalse(flagBadge.GetComponent<CanvasGroup>().blocksRaycasts, "The decorative flag must not block menu controls.");
-            Assert.AreEqual((Color)new Color32(116, 172, 223, 255),
-                flagBadge.transform.Find("Franja celeste superior").GetComponent<Image>().color);
-            Assert.NotNull(flagBadge.transform.Find("Sol de mayo"), "The flag's center sun completes the Argentine cue.");
+            Assert.IsNull(GameObject.Find("Bandera argentina"),
+                "The Argentine flag should be part of the illustrated dish towel, not a separate waving UI badge.");
+            Image coverIllustration = GameObject.Find("Portada ilustrada").GetComponent<Image>();
+            Assert.AreSame(titleArt.texture, coverIllustration.sprite.texture,
+                "The cover must keep its authored illustration, including the integrated Argentine dish towel.");
             char[] spanishGlyphs = { 'ñ', 'Ñ', 'á', 'é', 'í', 'ó', 'ú', 'ü', '¿', '¡', '×', '·', '0', '9' };
             foreach (char glyph in spanishGlyphs)
             {
@@ -199,6 +203,26 @@ namespace Asadito.Tests.PlayMode
             Assert.AreEqual(appIcon.width, appIcon.height, "The mobile launcher icon must remain square.");
             Button menuEnter = FindButton("ENTRAR");
             AssertActionIconInsideButton(menuEnter, "ENTRAR");
+            Assert.AreEqual("Arcade Gold Button", ((Image)menuEnter.targetGraphic).sprite.name,
+                "Primary actions should use the raised gold arcade-button skin.");
+            Text menuEnterLabel = menuEnter.GetComponentInChildren<Text>();
+            Assert.AreEqual(displayFont, menuEnterLabel.font, "Button labels share the chunky display face.");
+            Assert.GreaterOrEqual(menuEnterLabel.fontSize, 48, "Primary calls to action should be sized to match the bold arcade reference.");
+            Assert.AreEqual(new Vector2(560f, 118f), menuEnter.GetComponent<RectTransform>().rect.size,
+                "The two title-screen actions should share the same button dimensions.");
+            Assert.AreEqual(new Vector2(12f, 8f), menuEnterLabel.rectTransform.offsetMin,
+                "Inset the CTA label symmetrically so its center matches the button center.");
+            Assert.AreEqual(new Vector2(-12f, -8f), menuEnterLabel.rectTransform.offsetMax,
+                "Inset the CTA label symmetrically so its center matches the button center.");
+            Assert.AreEqual(Color.white, menuEnterLabel.color, "Button labels use bright white fill.");
+            Assert.NotNull(menuEnterLabel.GetComponent<Outline>(), "Chunky button lettering needs its dark arcade outline.");
+            Assert.NotNull(menuEnter.transform.Find("Relieve inferior ENTRAR"), "The arcade button has a visible lower extrusion.");
+            Button menuExit = GameObject.Find("SALIR").GetComponent<Button>();
+            Assert.AreEqual("Arcade Coral Button", ((Image)menuExit.targetGraphic).sprite.name,
+                "Back/exit actions should use the coral red style from the reference.");
+            Assert.AreEqual(menuEnter.GetComponent<RectTransform>().rect.size, menuExit.GetComponent<RectTransform>().rect.size,
+                "The Enter and Exit actions should match in width and height.");
+            Assert.NotNull(menuExit.transform.Find("Borde boton SALIR"), "The button face has a dark contour layer.");
             Assert.IsFalse(menuEnter.IsInteractable(), "The Enter CTA must not be clickable while its entrance animation is still hidden.");
             yield return new WaitForSecondsRealtime(.6f);
             Assert.IsTrue(menuEnter.IsInteractable(), "The Enter CTA must become interactable after its entrance animation.");
@@ -206,16 +230,26 @@ namespace Asadito.Tests.PlayMode
             ClickButton("ENTRAR");
             yield return new WaitForSecondsRealtime(.45f);
             Button levelOne = FindButton("NIVEL 1");
-            Assert.AreEqual("Asadito UI Icon Guest", levelOne.transform.Find("Icon comensal NIVEL 1").GetComponent<Image>().sprite.name);
-            Assert.AreEqual("Asadito UI Icon Locked", levelOne.transform.Find("Icon candado NIVEL 1").GetComponent<Image>().sprite.name);
-            Assert.IsFalse(levelOne.transform.Find("Icon candado NIVEL 1").gameObject.activeSelf);
+            Assert.AreEqual("Nivel 1", levelOne.GetComponentInChildren<Text>().text,
+                "Each level card should show only its simple level label.");
+            Image levelOneImage = levelOne.transform.Find("Imagen representativa nivel 1").GetComponent<Image>();
+            Assert.AreEqual("Imagen Nivel 1", levelOneImage.sprite.name,
+                "Level 1 should use its own representative illustration.");
+            Assert.AreEqual(1, levelOne.GetComponentsInChildren<Text>().Length,
+                "The level card must not show descriptive metadata or menu details.");
+            Assert.IsNull(levelOne.transform.Find("Icon comensal NIVEL 1"));
+            Assert.IsNull(levelOne.transform.Find("Icon candado NIVEL 1"));
+            Assert.IsNull(levelOne.transform.Find("Icon comida tira NIVEL 1"));
+            Assert.IsNull(levelOne.transform.Find("Icon estrella 1 NIVEL 1"));
             Button levelTwo = GameObject.Find("NIVEL 2").GetComponent<Button>();
             Assert.IsNotNull(levelTwo);
-            Assert.IsTrue(levelTwo.transform.Find("Icon candado NIVEL 2").gameObject.activeSelf);
+            Assert.AreEqual("Nivel 2", levelTwo.GetComponentInChildren<Text>().text);
+            Assert.AreEqual("Imagen Nivel 2",
+                levelTwo.transform.Find("Imagen representativa nivel 2").GetComponent<Image>().sprite.name);
+            Assert.AreEqual(1, levelTwo.GetComponentsInChildren<Text>().Length);
             Assert.IsFalse(levelTwo.interactable);
-            Assert.AreEqual("tira_ideal", levelOne.transform.Find("Icon comida tira NIVEL 1").GetComponent<Image>().sprite.name);
-            Assert.AreEqual("chorizo_ideal", levelOne.transform.Find("Icon comida chorizo NIVEL 1").GetComponent<Image>().sprite.name);
-            Assert.AreEqual("Asadito UI Icon Star", levelOne.transform.Find("Icon estrella 1 NIVEL 1").GetComponent<Image>().sprite.name);
+            Assert.IsNull(GameObject.Find("Seleccion ayuda"),
+                "The level-selection screen should not add a secondary block of descriptive copy.");
             ClickButton("NIVEL 1");
             yield return new WaitForSecondsRealtime(.45f);
             Assert.AreEqual("Asadito UI Icon Guest", GameObject.Find("Icon comensales intro").GetComponent<Image>().sprite.name);

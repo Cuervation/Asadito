@@ -14,6 +14,9 @@ Asadito es un juego argentino de cocina casual premium: patio/quincho cálido, c
 | Crema | `#FFF0D1` | texto claro, paneles y fondos de UI |
 | Brasa | `#E95B32` | fuego, acción primaria y alerta |
 | Dorado | `#F3AE48` | foco perfecto, acento y premio |
+| Oro arcade | `#FFD33A` → `#FFA60D` | botones primarios elevados |
+| Coral arcade | `#FF644E` → `#ED312B` | volver/salir y acciones secundarias |
+| Tinta de contorno | `#301713` | borde y sombra de botones/títulos |
 | Madera | `#8A5234` | parrilla, superficies y bandeja |
 | Verde salvia | `#66815D` | estado positivo, hierbas y apoyo |
 | Carne cruda | `#B94F46` | estado crudo; nunca usar el color como único indicador |
@@ -22,16 +25,17 @@ Usar colores cálidos con saturación moderada; fondo más oscuro y suave que la
 
 ## Brand
 
-- Wordmark propio `Asadito,`: Lilita One con trazo chunky/redondeado, cara blanca, contorno casi negro marcado y sombra oscura corta; usar mayúscula inicial y coma según el título de portada. La referencia de juegos casuales solo inspira tipografía, contorno, sombra y jerarquía; no imitar ningún logo, personaje ni composición reconocible.
-- La portada muestra la línea secundaria exacta `el sabor Argentino` debajo del wordmark, con Baloo 2 ExtraBold, y un pequeño emblema con bandera argentina (franjas celeste/blanca/celeste y sol dorado) hacia la esquina superior derecha. Mantener título y emblema en el aire libre del tercio superior; no cubrir la parrilla ni los alimentos.
+- Wordmark propio `Asadito` (sin coma): Lilita One con trazo chunky/redondeado, cara blanca, contorno casi negro marcado y sombra oscura corta; usar mayúscula inicial. La referencia de juegos casuales solo inspira tipografía, contorno, sombra y jerarquía; no imitar ningún logo, personaje ni composición reconocible.
+- La portada muestra la línea secundaria exacta `el sabor Argentino` debajo del wordmark, con Lilita One blanca y contorno oscuro. La identidad argentina va integrada a un repasador de tela dentro del key art: tres franjas celeste/blanco/celeste y un Sol de Mayo pequeño que sigue los pliegues; no añadir un estandarte, mástil ni cuadrado ondeando por separado. Mantener título y repasador en el aire libre del tercio superior; no cubrir la parrilla ni los alimentos.
 - Icono de launcher: símbolo original simple de chorizo sobre parrilla, medallón crema/rojo y glow de brasa; sin texto ni escena completa. El icono adaptativo usa el mismo asset en los slots Android existentes.
 - No tomar formas, composición, personajes, lettering o íconos identificables de Pocket Chef ni de otro juego.
 
 ## UI / tipografía
 
-- **Portada:** key art vertical con parrilla/comida como héroe, `Asadito,` legible arriba y sin tapar la parrilla, línea `el sabor Argentino` inmediatamente debajo, y emblema discreto con bandera argentina. La titular usa Lilita One de peso casual chunky, cara blanca y contorno/sombra negra gruesa; la línea secundaria usa Baloo 2 ExtraBold del mismo tono, más chica. CTA `ENTRAR` dominante y `SALIR` secundario. Entrar conserva el flujo existente de introducción/tutorial. `Application.Quit()` en Player; salir de Play Mode en Unity Editor.
-- **Tipografía:** Lilita One Regular se reserva para wordmark y display; Baloo 2 se usa en UI con pesos instalados 400/500/600/700/800. Las licencias OFL están dentro del proyecto. Canvas Legacy carga TTF desde `Resources` (no TMP); no se generan TMP assets mientras no se use TextMeshPro. Nunito queda como fallback futuro, no instalado sin evidencia de legibilidad insuficiente. Revisar ñ, tildes, números y tamaños mínimos en teléfono.
-- **Botones:** grandes, con esquinas suaves, un verbo, estado normal/hover/tap/deshabilitado; primaria naranja/dorada, secundaria madera/crema. Feedback de color/escala corto y accesible.
+- **Portada:** key art vertical con parrilla/comida como héroe, `Asadito` legible arriba y sin tapar la parrilla, línea `el sabor Argentino` inmediatamente debajo con separación vertical corta, y un repasador dentro de la ilustración con el motivo argentino integrado a su tela. No crear una bandera animada/superpuesta en UI. Título y bajada usan Lilita One chunky, cara blanca y contorno/sombra oscuros. CTA `ENTRAR` y `SALIR` tienen las mismas dimensiones y ambas etiquetas centradas geométricamente en sus botones; color oro para entrar, coral para salir. Entrar conserva el flujo existente de introducción/tutorial. `Application.Quit()` en Player; salir de Play Mode en Unity Editor.
+- **Selector de niveles:** reemplazar la lista de botones con información por una grilla visual de postales clickeables, dos columnas, cada una con ilustración propia y solo la etiqueta `Nivel 1`…`Nivel 5`. No mostrar nombre descriptivo, comensales, platos, estrellas, candados ni subtítulo por ahora; el bloqueo de niveles conserva su lógica y solo cambia la disponibilidad táctil.
+- **Tipografía:** Lilita One Regular para wordmark, títulos cortos y etiquetas de botón, en blanco con contorno/sombra tinta; Baloo 2 para texto corrido e instrucciones legibles (pesos 400/500/600/700/800). Las licencias OFL están dentro del proyecto. Canvas Legacy carga TTF desde `Resources` (no TMP); no se generan TMP assets mientras no se use TextMeshPro. Nunito queda como fallback futuro, no instalado sin evidencia de legibilidad insuficiente. Revisar ñ, tildes, números y tamaños mínimos en teléfono.
+- **Botones:** todos los botones de UI usan silueta arcade de esquinas moderadas, cara dorada degradada, marco tinta y relieve/sombra inferior; volver/salir usan coral-rojo. Etiqueta grande Lilita One blanca delineada y escalada con la altura del botón para conservar jerarquía entre CTA, controles de gameplay y tarjetas. Feedback de brillo/escala corto y accesible; deshabilitados conservan un estado apagado inequívoco.
 - **Tarjetas/paneles:** crema o carbón con radio amable, agrupación y encabezado inequívoco. HUD no debe tapar parrilla, alimento ni bandeja; safe area en contenido de juego.
 
 ## Style, color y formas
@@ -55,7 +59,7 @@ Animar únicamente para confirmar entrada, volteo, retiro, servicio, cambio tér
 
 ## Portabilidad de la inspiración
 
-La referencia es solo calidad/claridad de juegos casuales de cocina. No reproducir assets, logo, personajes, layout, iconografía ni composición identificable de Pocket Chef ni de terceros. La identidad de Asadito proviene del quincho, el asado compartido y tono argentino.
+La referencia de interfaz adjunta inspira solo rasgos generales de UI arcade (tipografía chunky delineada, botones dorados/rojos elevados, contraste vivo). No copiar su pantalla de ajustes, textos de configuración, etiqueta de versión, layout, assets, logo, iconografía ni composición identificable. Mantener el key art, vocabulario, distribución móvil y mundo cálido propios de Asadito.
 
 ## Estado visual MVP al 2026-09-28
 

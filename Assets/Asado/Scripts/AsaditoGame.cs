@@ -106,10 +106,9 @@ namespace Asadito
         private Text introMenuText;
         private Text introObjectiveText;
         private Button[] levelCards;
-        private Image[] levelGuestIcons;
-        private Image[] levelLockIcons;
-        private Image[][] levelFoodIcons;
-        private Image[][] levelStarIcons;
+        private Image[] levelCardImages;
+        private Text[] levelCardLabels;
+        private Sprite[] levelCardSprites;
         private Image[] introFoodIcons;
         private Button[] portionButtons;
         private Button flipButton;
@@ -129,6 +128,9 @@ namespace Asadito
         private Sprite titleSprite;
         private Sprite logoSprite;
         private Sprite roundedButtonSprite;
+        private Sprite arcadeButtonShapeSprite;
+        private Sprite arcadeGoldButtonSprite;
+        private Sprite arcadeCoralButtonSprite;
         private Font displayFont;
         private Font bodyFont;
         private Font mediumFont;
@@ -156,6 +158,11 @@ namespace Asadito
             whiteSprite = Sprite.Create(Texture2D.whiteTexture, new Rect(0, 0, 1, 1), new Vector2(.5f, .5f));
             circleSprite = MakeCircleSprite(128);
             roundedButtonSprite = MakeRoundedRectSprite(128, 34);
+            arcadeButtonShapeSprite = MakeRoundedRectSprite(128, 16);
+            arcadeGoldButtonSprite = MakeGradientButtonSprite(128, 16,
+                new Color32(255, 211, 58, 255), new Color32(255, 166, 13, 255), "Arcade Gold Button");
+            arcadeCoralButtonSprite = MakeGradientButtonSprite(128, 16,
+                new Color32(255, 100, 78, 255), new Color32(237, 49, 43, 255), "Arcade Coral Button");
             displayFont = Resources.Load<Font>("Fonts/LilitaOne-Regular");
             bodyFont = Resources.Load<Font>("Fonts/Baloo2-Regular");
             mediumFont = Resources.Load<Font>("Fonts/Baloo2-Medium");
@@ -173,6 +180,15 @@ namespace Asadito
             Texture2D titleTexture = Resources.Load<Texture2D>("Art/PortadaAsadito");
             if (titleTexture != null)
                 titleSprite = Sprite.Create(titleTexture, new Rect(0, 0, titleTexture.width, titleTexture.height), new Vector2(.5f, .5f), 100f);
+            levelCardSprites = new Sprite[MvpLevelCatalog.Count];
+            for (int i = 0; i < levelCardSprites.Length; i++)
+            {
+                Texture2D levelArt = Resources.Load<Texture2D>("Art/LevelCards/Nivel" + (i + 1));
+                if (levelArt == null) continue;
+                levelCardSprites[i] = Sprite.Create(levelArt,
+                    new Rect(0, 0, levelArt.width, levelArt.height), new Vector2(.5f, .5f), 100f);
+                levelCardSprites[i].name = "Imagen Nivel " + (i + 1);
+            }
             Texture2D logoTexture = Resources.Load<Texture2D>("Art/AsaditoLogo");
             if (logoTexture != null)
             {
@@ -231,6 +247,12 @@ namespace Asadito
             if (titleSprite != null) Destroy(titleSprite);
             if (logoSprite != null) Destroy(logoSprite);
             if (roundedButtonSprite != null) Destroy(roundedButtonSprite);
+            if (arcadeButtonShapeSprite != null) Destroy(arcadeButtonShapeSprite);
+            if (arcadeGoldButtonSprite != null) Destroy(arcadeGoldButtonSprite);
+            if (arcadeCoralButtonSprite != null) Destroy(arcadeCoralButtonSprite);
+            if (levelCardSprites != null)
+                foreach (Sprite levelCardSprite in levelCardSprites)
+                    if (levelCardSprite != null) Destroy(levelCardSprite);
             if (sizzleClip != null) Destroy(sizzleClip);
         }
 
@@ -395,7 +417,7 @@ namespace Asadito
                 cover.rectTransform.localScale = new Vector3((titleSprite.rect.width / titleSprite.rect.height) / (1080f / 1920f), 1f, 1f);
             Image shade = MakePanel("Velo de contraste portada", menuRoot.transform, new Color32(25, 24, 19, 54), .5f, .5f, 1080, 1920);
             shade.raycastTarget = false;
-            Text brand = MakeText("Menu marca", menuRoot.transform, "Asadito,", 112, Color.white, TextAnchor.MiddleCenter, .5f, .925f, 720, 142, true);
+            Text brand = MakeText("Menu marca", menuRoot.transform, "Asadito", 112, Color.white, TextAnchor.MiddleCenter, .5f, .925f, 720, 142, true);
             var brandOutline = brand.gameObject.AddComponent<Outline>();
             brandOutline.effectColor = new Color32(14, 14, 18, 255);
             brandOutline.effectDistance = new Vector2(5, -5);
@@ -404,30 +426,23 @@ namespace Asadito
             brandShadow.effectDistance = new Vector2(1, -8);
             RectTransform brandRect = brand.rectTransform;
 
-            Text subtitle = MakeText("Menu subtitulo", menuRoot.transform, "el sabor Argentino", 46,
-                Color.white, TextAnchor.MiddleCenter, .5f, .842f, 760, 70, true);
-            if (extraBoldFont != null) subtitle.font = extraBoldFont;
-            var subtitleOutline = subtitle.gameObject.AddComponent<Outline>();
-            subtitleOutline.effectColor = new Color32(14, 14, 18, 245);
-            subtitleOutline.effectDistance = new Vector2(3, -3);
-            var subtitleShadow = subtitle.gameObject.AddComponent<Shadow>();
-            subtitleShadow.effectColor = new Color32(15, 15, 18, 220);
-            subtitleShadow.effectDistance = new Vector2(1, -5);
-            RectTransform flagRect = BuildArgentineFlag(menuRoot.transform, .89f, .925f);
+            Text subtitle = MakeText("Menu subtitulo", menuRoot.transform, "el sabor Argentino", 50,
+                Color.white, TextAnchor.MiddleCenter, .5f, .89f, 920, 112, true);
+            subtitle.horizontalOverflow = HorizontalWrapMode.Overflow;
+            subtitle.verticalOverflow = VerticalWrapMode.Overflow;
+            subtitle.resizeTextForBestFit = true;
+            subtitle.resizeTextMinSize = 46;
+            subtitle.resizeTextMaxSize = 50;
             Button enterButton = MakeButton("ENTRAR", menuRoot.transform, .5f, .245f, 560, 118, new Color32(218, 121, 45, 255), ShowLevelIntro);
-            Button exitButton = MakeButton("SALIR", menuRoot.transform, .5f, .158f, 420, 92, new Color32(92, 72, 55, 245), ExitGame);
+            Button exitButton = MakeButton("SALIR", menuRoot.transform, .5f, .158f, 560, 118, new Color32(92, 72, 55, 245), ExitGame);
             CanvasGroup brandEntrance = brandRect.gameObject.AddComponent<CanvasGroup>();
             CanvasGroup subtitleEntrance = subtitle.gameObject.AddComponent<CanvasGroup>();
-            CanvasGroup flagEntrance = flagRect.gameObject.AddComponent<CanvasGroup>();
-            flagEntrance.interactable = false;
-            flagEntrance.blocksRaycasts = false;
             CanvasGroup enterEntrance = enterButton.gameObject.AddComponent<CanvasGroup>();
             CanvasGroup exitEntrance = exitButton.gameObject.AddComponent<CanvasGroup>();
             enterEntrance.interactable = enterEntrance.blocksRaycasts = false;
             exitEntrance.interactable = exitEntrance.blocksRaycasts = false;
             StartCoroutine(AnimateMenuEntrance(brandRect, brandEntrance, .0f, .34f, 18f));
             StartCoroutine(AnimateMenuEntrance(subtitle.rectTransform, subtitleEntrance, .08f, .34f, 14f));
-            StartCoroutine(AnimateMenuEntrance(flagRect, flagEntrance, .1f, .34f, 12f));
             StartCoroutine(AnimateMenuEntrance(enterButton.GetComponent<RectTransform>(), enterEntrance, .14f, .34f, 22f));
             StartCoroutine(AnimateMenuEntrance(exitButton.GetComponent<RectTransform>(), exitEntrance, .22f, .34f, 18f));
             Image emberGlow = MakeImage("Resplandor ambiental portada", menuRoot.transform, circleSprite,
@@ -442,55 +457,59 @@ namespace Asadito
             levelSelectRoot.SetActive(false);
             MakePanel("Fondo seleccion nivel", levelSelectRoot.transform, new Color32(42, 40, 33, 250), .5f, .5f, 1080, 1920);
             MakeText("Seleccion titulo", levelSelectRoot.transform, "ELEGÍ TU ASADO", 62, Cream, TextAnchor.MiddleCenter, .5f, .85f, 920, 110, true);
-            MakeText("Seleccion ayuda", levelSelectRoot.transform, "Cada juntada suma un desafío", 25, Gold, TextAnchor.MiddleCenter, .5f, .795f, 900, 55, true);
             levelCards = new Button[MvpLevelCatalog.Count];
-            levelGuestIcons = new Image[levelCards.Length];
-            levelLockIcons = new Image[levelCards.Length];
-            levelFoodIcons = new Image[levelCards.Length][];
-            levelStarIcons = new Image[levelCards.Length][];
+            levelCardImages = new Image[levelCards.Length];
+            levelCardLabels = new Text[levelCards.Length];
             for (int i = 0; i < levelCards.Length; i++)
             {
                 int levelNumber = i + 1;
-                float y = .68f - i * .115f;
-                levelCards[i] = MakeButton("NIVEL " + levelNumber, levelSelectRoot.transform, .5f, y, 830, 110,
-                    new Color32(114, 79, 51, 255), () => SelectLevel(levelNumber));
-                levelCards[i].GetComponentInChildren<Text>().fontSize = 21;
-                Text cardLabel = levelCards[i].GetComponentInChildren<Text>();
-                cardLabel.alignment = TextAnchor.MiddleLeft;
-                cardLabel.rectTransform.offsetMin = new Vector2(84f, 6f);
-                cardLabel.rectTransform.offsetMax = new Vector2(-204f, -6f);
+                int row = i / 2;
+                int column = i % 2;
+                float x = i == levelCards.Length - 1 && levelCards.Length % 2 != 0
+                    ? .5f
+                    : (column == 0 ? .275f : .725f);
+                float y = .70f - row * .22f;
 
-                levelGuestIcons[i] = MakeChildIcon("Icon comensal NIVEL " + levelNumber, levelCards[i].transform,
-                    AsaditoUiIcons.Get(AsaditoUiIcon.Guest), Gold, Vector2.zero, new Vector2(32f, 32f));
-                levelGuestIcons[i].rectTransform.anchorMin = levelGuestIcons[i].rectTransform.anchorMax = new Vector2(0f, .5f);
-                levelGuestIcons[i].rectTransform.anchoredPosition = new Vector2(38f, 0f);
-                levelLockIcons[i] = MakeChildIcon("Icon candado NIVEL " + levelNumber, levelCards[i].transform,
-                    AsaditoUiIcons.Get(AsaditoUiIcon.Locked), Cream, Vector2.zero, new Vector2(32f, 32f));
-                levelLockIcons[i].rectTransform.anchorMin = levelLockIcons[i].rectTransform.anchorMax = new Vector2(0f, .5f);
-                levelLockIcons[i].rectTransform.anchoredPosition = new Vector2(38f, 0f);
+                Image cardFrame = MakeImage("Marco nivel " + levelNumber, levelSelectRoot.transform,
+                    roundedButtonSprite, new Color32(55, 34, 23, 255), new Vector2(x, y), new Vector2(x, y),
+                    new Vector2(434f, 296f));
+                cardFrame.gameObject.name = "NIVEL " + levelNumber;
+                cardFrame.type = Image.Type.Sliced;
+                cardFrame.raycastTarget = true;
+                var cardShadow = cardFrame.gameObject.AddComponent<Shadow>();
+                cardShadow.effectColor = new Color(0f, 0f, 0f, .48f);
+                cardShadow.effectDistance = new Vector2(0f, -7f);
+                levelCards[i] = cardFrame.gameObject.AddComponent<Button>();
+                levelCards[i].targetGraphic = cardFrame;
+                levelCards[i].onClick.AddListener(() => SelectLevel(levelNumber));
+                ColorBlock levelColors = levelCards[i].colors;
+                levelColors.normalColor = Color.white;
+                levelColors.highlightedColor = new Color32(255, 239, 207, 255);
+                levelColors.pressedColor = new Color32(221, 186, 137, 255);
+                levelColors.disabledColor = new Color32(126, 120, 111, 255);
+                levelCards[i].colors = levelColors;
+                levelCards[i].gameObject.AddComponent<AsaditoButtonFeedback>();
 
-                string[] foods = UniqueFoodIds(MvpLevelCatalog.Get(levelNumber));
-                levelFoodIcons[i] = new Image[foods.Length];
-                for (int foodIndex = 0; foodIndex < foods.Length; foodIndex++)
-                {
-                    Sprite foodSprite = FoodStateSprite(foods[foodIndex], 3) ?? FoodStateSprite(foods[foodIndex], 0);
-                    Image foodIcon = MakeChildIcon("Icon comida " + foods[foodIndex] + " NIVEL " + levelNumber,
-                        levelCards[i].transform, foodSprite, Color.white, Vector2.zero, new Vector2(36f, 36f));
-                    foodIcon.preserveAspect = true;
-                    foodIcon.rectTransform.anchorMin = foodIcon.rectTransform.anchorMax = new Vector2(1f, .5f);
-                    foodIcon.rectTransform.anchoredPosition = new Vector2(-32f - foodIndex * 42f, 10f);
-                    levelFoodIcons[i][foodIndex] = foodIcon;
-                }
+                Image illustration = MakeImage("Imagen representativa nivel " + levelNumber,
+                    levelCards[i].transform, levelCardSprites != null ? levelCardSprites[i] : null,
+                    Color.white, Vector2.zero, Vector2.one, Vector2.zero);
+                illustration.rectTransform.offsetMin = new Vector2(7f, 7f);
+                illustration.rectTransform.offsetMax = new Vector2(-7f, -7f);
+                illustration.preserveAspect = false;
+                illustration.raycastTarget = false;
+                levelCardImages[i] = illustration;
 
-                levelStarIcons[i] = new Image[3];
-                for (int starIndex = 0; starIndex < levelStarIcons[i].Length; starIndex++)
-                {
-                    Image star = MakeChildIcon("Icon estrella " + (starIndex + 1) + " NIVEL " + levelNumber,
-                        levelCards[i].transform, AsaditoUiIcons.Get(AsaditoUiIcon.Star), Gold, Vector2.zero, new Vector2(18f, 18f));
-                    star.rectTransform.anchorMin = star.rectTransform.anchorMax = new Vector2(1f, .5f);
-                    star.rectTransform.anchoredPosition = new Vector2(-39f - starIndex * 24f, -31f);
-                    levelStarIcons[i][starIndex] = star;
-                }
+                Image labelBacking = MakeImage("Fondo etiqueta nivel " + levelNumber,
+                    levelCards[i].transform, whiteSprite, new Color32(36, 25, 18, 205),
+                    Vector2.zero, Vector2.zero, new Vector2(0f, 72f));
+                labelBacking.rectTransform.anchorMin = Vector2.zero;
+                labelBacking.rectTransform.anchorMax = new Vector2(1f, 0f);
+                labelBacking.rectTransform.pivot = new Vector2(.5f, 0f);
+                labelBacking.rectTransform.anchoredPosition = new Vector2(0f, 7f);
+                labelBacking.raycastTarget = false;
+
+                levelCardLabels[i] = MakeText("Texto Nivel " + levelNumber, levelCards[i].transform,
+                    "Nivel " + levelNumber, 48, Cream, TextAnchor.MiddleCenter, .5f, .145f, 400f, 66f, true);
             }
             MakeButton("VOLVER", levelSelectRoot.transform, .5f, .08f, 390, 82, new Color32(92, 72, 55, 245), BackToMenu);
             RefreshLevelCards();
@@ -579,17 +598,10 @@ namespace Asadito
             for (int i = 0; i < levelCards.Length; i++)
             {
                 int levelNumber = i + 1;
-                MvpLevelDefinition level = MvpLevelCatalog.Get(levelNumber);
                 bool unlocked = levelNumber <= saveData.MaxUnlockedLevel;
-                int stars = saveData.StarsByLevel != null && i < saveData.StarsByLevel.Length ? saveData.StarsByLevel[i] : 0;
-                Text label = levelCards[i].GetComponentInChildren<Text>();
-                label.text = (unlocked ? "NIVEL " + levelNumber : "BLOQUEADO · NIVEL " + levelNumber) + " — " + level.Title +
-                    "\n" + level.GuestCount + " COMENSALES · " + BuildOrderSummary(level);
+                levelCardLabels[i].text = "Nivel " + levelNumber;
                 levelCards[i].interactable = unlocked;
-                levelGuestIcons[i].gameObject.SetActive(unlocked);
-                levelLockIcons[i].gameObject.SetActive(!unlocked);
-                for (int starIndex = 0; starIndex < levelStarIcons[i].Length; starIndex++)
-                    levelStarIcons[i][starIndex].color = starIndex < stars ? Gold : new Color32(139, 119, 91, 155);
+                levelCardImages[i].color = unlocked ? Color.white : new Color32(166, 157, 143, 255);
             }
         }
 
@@ -1103,8 +1115,12 @@ namespace Asadito
                 if (portionButtons[i] == null) continue;
                 bool activePiece = cooking && i == activePortion;
                 portionButtons[i].interactable = grill.IsLit && !servingLocked && !portions[i].OnTray && (!cooking || activePiece);
-                portionButtons[i].GetComponentInChildren<Text>().text = portions[i].OnTray ? FoodButtonLabel(i) + " ✓" :
+                Text label = portionButtons[i].GetComponentInChildren<Text>();
+                bool delivered = portions[i].OnTray;
+                label.text = delivered ? FoodButtonLabel(i) + " ✓" :
                     (activePiece ? "RETIRAR " + FoodDisplayName(portions[i].Profile.FoodId) : FoodButtonLabel(i));
+                if (delivered && displayFont != null && !displayFont.HasCharacter('✓')) label.font = boldFont;
+                else if (displayFont != null) label.font = displayFont;
             }
         }
 
@@ -1740,53 +1756,6 @@ namespace Asadito
             if (flipButtonText != null) flipButtonText.text = "DAR VUELTA";
         }
 
-        private RectTransform BuildArgentineFlag(Transform parent, float x, float y)
-        {
-            var badge = new GameObject("Bandera argentina", typeof(RectTransform));
-            badge.transform.SetParent(parent, false);
-            RectTransform badgeRect = badge.GetComponent<RectTransform>();
-            SetRect(badgeRect, x, y, 126f, 88f);
-
-            Image frame = MakeImage("Marco madera bandera", badge.transform, roundedButtonSprite,
-                new Color32(68, 44, 34, 250), Vector2.zero, Vector2.one, Vector2.zero);
-            frame.rectTransform.offsetMin = new Vector2(-5f, -5f);
-            frame.rectTransform.offsetMax = new Vector2(5f, 5f);
-            var frameShadow = frame.gameObject.AddComponent<Shadow>();
-            frameShadow.effectColor = new Color(0f, 0f, 0f, .4f);
-            frameShadow.effectDistance = new Vector2(1f, -4f);
-
-            Image cloth = MakeImage("Paño bandera", badge.transform, whiteSprite,
-                new Color32(255, 250, 228, 255), Vector2.zero, Vector2.one, Vector2.zero);
-            cloth.rectTransform.offsetMin = new Vector2(9f, 8f);
-            cloth.rectTransform.offsetMax = new Vector2(-9f, -8f);
-
-            Color sky = new Color32(116, 172, 223, 255);
-            MakeImage("Franja celeste superior", badge.transform, whiteSprite, sky,
-                new Vector2(.5f, .5f), new Vector2(.5f, .5f), new Vector2(108f, 21f))
-                .rectTransform.anchoredPosition = new Vector2(0f, 21f);
-            MakeImage("Franja celeste inferior", badge.transform, whiteSprite, sky,
-                new Vector2(.5f, .5f), new Vector2(.5f, .5f), new Vector2(108f, 21f))
-                .rectTransform.anchoredPosition = new Vector2(0f, -21f);
-
-            Color sunColor = new Color32(244, 177, 72, 255);
-            const int rayCount = 8;
-            for (int i = 0; i < rayCount; i++)
-            {
-                float angle = i * Mathf.PI * 2f / rayCount;
-                Image ray = MakeImage("Rayo sol de mayo " + (i + 1), badge.transform, whiteSprite, sunColor,
-                    new Vector2(.5f, .5f), new Vector2(.5f, .5f), new Vector2(2.5f, 7f));
-                ray.rectTransform.anchoredPosition = new Vector2(Mathf.Cos(angle), Mathf.Sin(angle)) * 11f;
-                ray.rectTransform.localEulerAngles = new Vector3(0f, 0f, angle * Mathf.Rad2Deg - 90f);
-            }
-
-            Image sun = MakeImage("Sol de mayo", badge.transform, circleSprite, sunColor,
-                new Vector2(.5f, .5f), new Vector2(.5f, .5f), new Vector2(14f, 14f));
-            var sunOutline = sun.gameObject.AddComponent<Outline>();
-            sunOutline.effectColor = new Color32(188, 115, 43, 255);
-            sunOutline.effectDistance = new Vector2(1f, -1f);
-            return badgeRect;
-        }
-
         private Image MakePanel(string objectName, Transform parent, Color color, float x, float y, float width, float height)
         {
             Image image = MakeImage(objectName, parent, roundedButtonSprite != null ? roundedButtonSprite : whiteSprite, color,
@@ -1829,8 +1798,9 @@ namespace Asadito
             text.text = value;
             bool isBrand = objectName == "Menu marca";
             bool isButtonLabel = objectName.StartsWith("Texto ");
-            Font preferredFont = isBrand ? displayFont
-                : (isButtonLabel ? boldFont : (bold ? (size >= 42 ? extraBoldFont : semiBoldFont) : (size <= 20 ? mediumFont : bodyFont)));
+            bool isChunkyDisplayText = isBrand || isButtonLabel || (bold && size >= 27);
+            Font preferredFont = isChunkyDisplayText ? displayFont
+                : (bold ? (size >= 42 ? extraBoldFont : semiBoldFont) : (size <= 20 ? mediumFont : bodyFont));
             text.font = preferredFont != null ? preferredFont : Resources.GetBuiltinResource<Font>("LegacyRuntime.ttf");
             text.fontSize = size;
             text.fontStyle = preferredFont != null ? FontStyle.Normal : (bold ? FontStyle.Bold : FontStyle.Normal);
@@ -1839,44 +1809,78 @@ namespace Asadito
             text.horizontalOverflow = HorizontalWrapMode.Wrap;
             text.verticalOverflow = VerticalWrapMode.Truncate;
             text.raycastTarget = false;
+            if (isChunkyDisplayText && !isBrand)
+            {
+                var outline = text.gameObject.AddComponent<Outline>();
+                outline.effectColor = new Color32(14, 14, 18, 245);
+                outline.effectDistance = new Vector2(2.4f, -2.4f);
+                var shadow = text.gameObject.AddComponent<Shadow>();
+                shadow.effectColor = new Color(0f, 0f, 0f, .78f);
+                shadow.effectDistance = new Vector2(1f, -3f);
+            }
             return text;
         }
 
         private Button MakeButton(string label, Transform parent, float x, float y, float width, float height, Color color, UnityEngine.Events.UnityAction onClick)
         {
-            Image image = MakeImage(label, parent, whiteSprite, color, new Vector2(x, y), new Vector2(x, y), new Vector2(width, height));
-            if (roundedButtonSprite != null)
-            {
-                image.sprite = roundedButtonSprite;
-                image.type = Image.Type.Sliced;
-            }
-            image.raycastTarget = true;
-            Button button = image.gameObject.AddComponent<Button>();
-            button.targetGraphic = image;
+            var buttonObject = new GameObject(label, typeof(RectTransform));
+            buttonObject.transform.SetParent(parent, false);
+            SetRect(buttonObject.GetComponent<RectTransform>(), x, y, width, height);
+
+            bool isBackAction = label == "SALIR" || label == "VOLVER" || label == "NIVELES";
+            Image extrusion = MakeImage("Relieve inferior " + label, buttonObject.transform,
+                arcadeButtonShapeSprite != null ? arcadeButtonShapeSprite : roundedButtonSprite,
+                new Color32(80, 34, 13, 255), new Vector2(.5f, .5f), new Vector2(.5f, .5f),
+                new Vector2(width + 8f, height + 12f));
+            extrusion.type = Image.Type.Sliced;
+            extrusion.rectTransform.anchoredPosition = new Vector2(0f, -5f);
+
+            Image border = MakeImage("Borde boton " + label, buttonObject.transform,
+                arcadeButtonShapeSprite != null ? arcadeButtonShapeSprite : roundedButtonSprite,
+                new Color32(48, 23, 19, 255), new Vector2(.5f, .5f), new Vector2(.5f, .5f),
+                new Vector2(width + 6f, height + 6f));
+            border.type = Image.Type.Sliced;
+
+            bool isDebugAction = label.StartsWith("DEBUG ");
+            Image face = MakeImage("Cara boton " + label, buttonObject.transform,
+                isBackAction ? arcadeCoralButtonSprite : (isDebugAction ? arcadeButtonShapeSprite : arcadeGoldButtonSprite),
+                isDebugAction ? color : Color.white,
+                new Vector2(.5f, .5f), new Vector2(.5f, .5f), new Vector2(width, height));
+            face.type = Image.Type.Sliced;
+            face.raycastTarget = true;
+
+            Image topHighlight = MakeImage("Brillo boton " + label, buttonObject.transform, whiteSprite,
+                new Color32(255, 255, 225, 200), new Vector2(.09f, .84f), new Vector2(.91f, .84f), new Vector2(0f, 4f));
+            topHighlight.raycastTarget = false;
+
+            Button button = buttonObject.AddComponent<Button>();
+            button.targetGraphic = face;
             ColorBlock colors = button.colors;
-            colors.normalColor = color;
-            colors.highlightedColor = Color.Lerp(color, Color.white, .16f);
-            colors.pressedColor = Color.Lerp(color, Color.black, .17f);
-            colors.disabledColor = new Color(color.r * .45f, color.g * .45f, color.b * .45f, .75f);
+            Color restingTint = isDebugAction ? color : Color.white;
+            colors.normalColor = restingTint;
+            colors.highlightedColor = isDebugAction ? Color.Lerp(color, Color.white, .16f) : Color.white;
+            colors.pressedColor = isDebugAction ? Color.Lerp(color, Color.black, .17f) : new Color(.84f, .82f, .76f, 1f);
+            colors.disabledColor = new Color(.5f, .5f, .5f, .75f);
             button.colors = colors;
-            var shadow = image.gameObject.AddComponent<Shadow>();
-            shadow.effectColor = new Color(0, 0, 0, .35f);
-            shadow.effectDistance = new Vector2(0, -5);
-            AsaditoButtonFeedback buttonFeedback = image.gameObject.AddComponent<AsaditoButtonFeedback>();
+            AsaditoButtonFeedback buttonFeedback = buttonObject.AddComponent<AsaditoButtonFeedback>();
             buttonFeedback.PulseWhenInteractable = label == "SERVIR";
             button.onClick.AddListener(onClick);
             bool hasActionIcon = TryGetActionIcon(label, out AsaditoUiIcon actionIcon);
             if (hasActionIcon)
             {
-                Image icon = MakeChildIcon("Icono accion " + label, image.transform, AsaditoUiIcons.Get(actionIcon), Cream,
+                Image icon = MakeChildIcon("Icono accion " + label, buttonObject.transform, AsaditoUiIcons.Get(actionIcon), Color.white,
                     Vector2.zero, new Vector2(34f, 34f));
                 icon.rectTransform.anchorMin = icon.rectTransform.anchorMax = new Vector2(0f, .5f);
                 icon.rectTransform.anchoredPosition = new Vector2(43f, 0f);
+                var iconOutline = icon.gameObject.AddComponent<Outline>();
+                iconOutline.effectColor = new Color32(45, 29, 21, 255);
+                iconOutline.effectDistance = new Vector2(1.5f, -1.5f);
             }
-            Text labelText = MakeText("Texto " + label, image.transform, label, 27, Cream, TextAnchor.MiddleCenter, .5f, .5f, width - 24, height - 16, true);
+            int labelSize = Mathf.Clamp(Mathf.RoundToInt(height * .42f), 28, 50);
+            Text labelText = MakeText("Texto " + label, buttonObject.transform, label, labelSize, Color.white, TextAnchor.MiddleCenter, .5f, .5f, width - 24, height - 16, true);
             labelText.rectTransform.anchorMin = Vector2.zero;
             labelText.rectTransform.anchorMax = Vector2.one;
-            labelText.rectTransform.offsetMin = new Vector2(hasActionIcon ? 68f : 12f, 8);
+            labelText.rectTransform.offsetMin = new Vector2(12f, 8);
             labelText.rectTransform.offsetMax = new Vector2(-12, -8);
             return button;
         }
@@ -1933,6 +1937,30 @@ namespace Asadito
             texture.Apply();
             return Sprite.Create(texture, new Rect(0, 0, size, size), new Vector2(.5f, .5f), 100f,
                 0, SpriteMeshType.FullRect, new Vector4(r, r, r, r));
+        }
+
+        private static Sprite MakeGradientButtonSprite(int size, int radius, Color topColor, Color bottomColor, string spriteName)
+        {
+            var texture = new Texture2D(size, size, TextureFormat.RGBA32, false) { name = spriteName };
+            texture.filterMode = FilterMode.Bilinear;
+            var pixels = new Color[size * size];
+            float r = Mathf.Clamp(radius, 1, size / 2 - 1);
+            for (int y = 0; y < size; y++)
+            for (int x = 0; x < size; x++)
+            {
+                float cx = Mathf.Clamp(x, r, size - 1 - r);
+                float cy = Mathf.Clamp(y, r, size - 1 - r);
+                float distance = Vector2.Distance(new Vector2(x, y), new Vector2(cx, cy));
+                Color fill = Color.Lerp(bottomColor, topColor, y / (float)(size - 1));
+                fill.a = Mathf.Clamp01(r + .75f - distance);
+                pixels[y * size + x] = fill;
+            }
+            texture.SetPixels(pixels);
+            texture.Apply();
+            Sprite sprite = Sprite.Create(texture, new Rect(0, 0, size, size), new Vector2(.5f, .5f), 100f,
+                0, SpriteMeshType.FullRect, new Vector4(r, r, r, r));
+            sprite.name = spriteName;
+            return sprite;
         }
 
         private static void SetRect(RectTransform rect, float x, float y, float width, float height)
