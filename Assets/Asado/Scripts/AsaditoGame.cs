@@ -328,7 +328,7 @@ namespace Asadito
             cookFill.rectTransform.pivot = new Vector2(0, .5f);
             cookFill.rectTransform.anchorMin = cookFill.rectTransform.anchorMax = new Vector2(.12f, .385f);
             cookFill.rectTransform.anchoredPosition = new Vector2(0, 0);
-            feedbackText = MakeText("Feedback", gameplayRoot, "", 25, Cream, TextAnchor.MiddleCenter, .5f, .342f, 850, 60, true);
+            feedbackText = MakeText("Feedback", gameplayRoot, "", 25, Cream, TextAnchor.MiddleCenter, .5f, .36f, 850, 60, true);
             tutorialText = MakeText("Tutorial contextual", gameplayRoot, "", 19, new Color32(255, 213, 146, 255), TextAnchor.MiddleCenter, .5f, .70f, 830, 58, true);
 
             BuildPortionControls();
