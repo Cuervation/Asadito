@@ -13,12 +13,12 @@
 ## Verificación actual
 
 - EditMode **18/18 PASS** y PlayMode **6/6 PASS** ejecutados con Unity 6000.6.3f1; PlayMode completa los doce niveles y comprobación de seis estados/face.
-- `Tools/validate_food_content.py`: PASS (18 definiciones/perfiles, 108 sprites, 12 cartas). `git diff --check`: PASS antes del commit.
+- `Tools/validate_food_content.py`: PASS (18 definiciones/perfiles, 108 sprites, 12 cartas). GitHub Actions run [36592407375](https://github.com/Cuervation/Asadito/actions/runs/36592407375): validator y whitespace-check PASS. El job Unity remoto se omitió por el gate de licencia desactivado; ambas suites Unity sí pasaron localmente.
 - APK Android construye correctamente, pasa inspección `aapt`/firma debug `apksigner`, se instala y lanza en el emulador Pixel 7a Android 16/API36. Screenshot de portada disponible.
-- No se afirma QA física. Emulador muestra la portada; la interacción manual/táctil no se considera certificada. Retención de assets, nombres, estados y futuras pruebas en `docs/gameplay/food-catalog.md` y `docs/art/*manifest.md`.
+- No se afirma QA física. Emulador muestra la portada; el tap sintético de ADB no certificó navegación/tacto humano. Retención de assets, nombres, estados y futuras pruebas en `docs/gameplay/food-catalog.md` y `docs/art/*manifest.md`.
 
 ## PROVISIONAL / fuera de gate automatizado
 
 Arte y audio integrados pero no aprobados profesionalmente. No hay clips Animator authored únicos para cada comida; las animaciones son interacciones genéricas compartidas con arte/perfiles diferentes. Las temperaturas son tuning de gameplay, **no** consejo de inocuidad ni modelo científico. Sin teléfono físico, firma de distribución, check Play Console o publicación.
 
-Ver [auditoría y evidencia](mvp-audit.md), [build Android](../android-release.md), [catálogo completo](../gameplay/food-catalog.md).
+Ver [auditoría y evidencia](mvp-audit.md), [build Android](../android-release.md), [catálogo completo](../gameplay/food-catalog.md) y [progresión](../gameplay/level-progression.md).

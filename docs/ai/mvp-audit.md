@@ -14,10 +14,10 @@
 | PlayMode | PASS | **6 passed / 0 failed**; los 12 niveles completos, retry/UI/progresión, atlas/6 estados por cara; XML `/tmp/Asadito-PlayMode-passing.xml`. |
 | Content/diff check | PASS | Validator imprime 18 unique profiles,108 cooking sprites,12 level illustrations; `git diff --check` PASS. |
 | Android | PASS build/install | Unity 6000.6.3f1, APK ~52MB; `com.cuervation.asadito` 1.1.0 code2, min26, target36, portrait, ARM64 IL2CPP; AAPT metadata+adaptive icon XML, debug signer; instalado/lanzado en Pixel 7a emulator API36. No release signing/Play publish. |
-| GitHub CI | Preparada | Content/diff job cada push/PR. Unity GameCI job requiere variable `UNITY_CI_LICENSE_READY=true` y tres secretos de licencia; no verificaría suites en Actions si la licencia falta. |
+| GitHub CI | PASS parcial | Run [36592407375](https://github.com/Cuervation/Asadito/actions/runs/36592407375): validator de contenido y `git diff --check` PASS. Job Unity omitido por gate de licencia no habilitado. Un primer run detectó checkout superficial sin `HEAD^`; se corrigió en `6925c2b` y el rerun quedó PASS. |
 | Touch/física/arte final | Parcial / no certificado | Captura portada del emulador confirma render startup; el screenshot no es prueba de tacto, notch ni rendimiento de teléfono real. |
-| Git push | Pendiente de cierre | GH auth está disponible; hacer commit lógico(s), luego push normal sin force y comprobar `origin/main`. |
+| Git / push | PASS | `dfa0072` (`feat(content): expand food catalog and progression`) y `6925c2b` (`fix(ci): fetch history for patch validation`) publicados a `origin/main`; rama sincronizada y worktree limpio al 2026-09-29. |
 
 ## Bloqueos reales no técnicos
 
-Prueba física solo requiere conectar/autorizar un teléfono si se desea QA humano. Unity CI remoto requiere credencial/licencia del owner en secrets. Firma productiva/publicación están fuera de autorización. Ninguna de esas cosas bloqueó tests/build locales.
+QA física/táctil requiere una persona/teléfono; las pruebas locales automatizadas no la certifican. Para ejecutar GameCI remoto, el owner debe habilitar `UNITY_CI_LICENSE_READY=true` y secretos de licencia de Unity. Firma productiva/publicación están fuera de autorización. Ninguna de esas cosas bloqueó tests/build locales.
