@@ -928,8 +928,13 @@ namespace Asadito
             if (tongsVisual != null)
             {
                 tongsVisual.position = screenPosition + new Vector2(38f, 45f);
-                tongsVisual.gameObject.SetActive(true);
-                tongsVisual.SetAsLastSibling();
+                if (!tongsVisual.gameObject.activeSelf)
+                {
+                    // Keep the tong sprite above the food, but don't reorder the Canvas on
+                    // every pointer-move event during a drag.
+                    tongsVisual.gameObject.SetActive(true);
+                    tongsVisual.SetAsLastSibling();
+                }
             }
             activePortion = index;
             cooking = true;
