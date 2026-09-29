@@ -21,6 +21,7 @@ namespace Asadito.Runtime
         [Range(0f, 1f)] public float Maillard;
         [Range(0f, 1f)] public float Char;
         [Range(0f, 1f)] public float FatRendered;
+        [Range(0f, 1f)] public float SplitRisk;
         public FoodFaceState[] Faces = { new FoodFaceState(), new FoodFaceState() };
         [SerializeField] private int exposedFace;
 
@@ -38,7 +39,7 @@ namespace Asadito.Runtime
             CoreTemperatureC = 0f;
             SurfaceTemperatureC = 0f;
             Moisture = 1f;
-            Maillard = Char = FatRendered = 0f;
+            Maillard = Char = FatRendered = SplitRisk = 0f;
             Faces = new[] { new FoodFaceState(), new FoodFaceState() };
             exposedFace = 0;
         }

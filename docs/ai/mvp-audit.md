@@ -1,27 +1,23 @@
-# ASADITO — MVP Audit (2026-09-28)
+# Auditoría de expansión — 2026-09-29
 
-| Gate | Estado | Evidencia / pendiente |
+| Gate | Estado | Evidencia / límites |
 |---|---|---|
-| Compilación en Unity | PASS (Editor real) | Tras restaurar MCP embedded bajo `Packages/` y resolver sus dependencias, Editor 6000.6.3f1 quedó listo, sin errores de compilación; solo dos warnings UAC0005 del paquete. Build Android anterior a esta reparación del empaquetado. |
-| EditMode | PASS (Editor real) | 13/13 pruebas pasaron en el Editor conectado después de la reparación (job `9842d52e9f9248f8a5458e1b396de811`). |
-| PlayMode | PASS (Editor real) | Suite 6/6 pasó después de la reparación (job `c7855f2a0d604c4aaf1f2d8b665ce719`), incluye loop L1–L5, Retry, UI, iconos, ignition, retratos y assets. |
-| Nivel 1: loop completo | PASS | Entrar→selección/intro→brasas→drag/flip→cocción→bandeja→servir→resultado/save/unlock; Retry resetea. A ×30 scripted duró 43.8s. |
-| Catálogo y shell niveles 1–5 | PASS | Botones/porciones dinámicos observados: L1 2, L2 3, L3 4, L4 4 (vacío), L5 6 (incluye provoleta). |
-| Cooking→serve→results para L1–L5 | PASS (acelerado) | Test cocina cada menú, sirve, guarda/puntúa y desbloquea Next L1→L5; L5 vuelve a selección. Usa ×1200 de test y no certifica ritmo normal. |
-| Retry / Next / progreso guardado | PARTIAL | Unlock/score/Next pasa en todos; Retry/reset y tutorial/save se validan en L1, no hay Retry separado en L2–L5. |
-| Mecánicas táctiles y duración | PARTIAL | `ExecuteEvents` valida pointer/drag; L1 ×30 scripted bajo 180s, pero falta tacto real, deliberación humana y safe-area device. |
-| Dirección visual final | PARTIAL | Portada, niveles, intro, gameplay y resultados se inspeccionaron en GameView portrait 540×960; iconos CTA/back/retry quedaron dentro de sus botones. Se conservan los assets/GUIDs y tests. Falta QA en dispositivo: safe area, touch, legibilidad/rendimiento y aprobación final. |
-| Audio, animación, VFX | PARTIAL | Sizzle sintético, humo, glow y secuencias procedurales básicas de ignition, tween de brasas, lift/release, flip, tray, reacción, transición de resultados y score count; faltan polish/QA móvil, audio/VFX de producción y blending. |
-| Icono de app | PARTIAL | PNG 1254×1254 actualizado a pictograma propio y GUID adaptativo conservado en 6 densidades/12 capas; el APK de validación temporal sí contiene el icono actualizado; falta launcher/device QA y publicar build desde checkout oficial. |
-| Android build | PASS (artifact) | Build release del commit `c0a2835`: 0 errores/1 warning de Debug Symbols/Diagnostics Data; APK 52.98 MB, package `com.DefaultCompany.Asadito`, ZIP íntegro y firma Debug v2 verificada. `adb devices` no enumera teléfono y Unity SDK no incluye Android Emulator; instalación/device QA pendiente. No copiado a `Builds/Android`. |
-| Referencias Unity | PASS (aislado) | Se eliminaron siete GUIDs colgantes en campos URP 2D obsoletos de `Assets/Settings/Renderer2D.asset`. Tras el cambio, scan de referencias GUID serializadas en Assets: 0 unresolved; Unity batch abrió 2 escenas/0 prefabs y revisó 14 componentes, con 0 missing scripts (`/tmp/AsaditoReferenceAudit.final.log`). |
-| GitHub push | BLOCKED | `gh auth status` confirma que no hay sesión; un `gh auth login` que quedó en terminal no visible se canceló sin confirmar. El proyecto Codex registrado no es Git y apunta a `/Users/celestino/Documents/ChatGPT/Asadito`; el Unity checkout es `/Users/celestino/Asadito`. `git ls-remote` sin auth no anuncia refs; inspeccionar remoto autenticado antes de push normal. No force push. |
-| Unity MCP | PASS | `project/info` confirma el checkout `/Users/celestino/Asadito`; paquete embedded en `Packages/`, dependencia Newtonsoft restaurada, herramientas y `manage_build` respondieron; EditMode 13/13 y PlayMode 6/6. Editor idle en `SampleScene`, sin cambios externos. Importación emitió dos warnings UAC0005 de `AppDomain.GetAssemblies()`; `read_console` final: 0 errores/warnings actuales. Build anterior tiene además 1 warning separado sobre Debug Symbols/Diagnostics Data. |
+| Fuente de verdad Git/Unity | Revisado | Checkout `/Users/celestino/Asadito`, `main`, remote `origin`; remoto GitHub autenticado. El directorio alias Codex `Documents/ChatGPT/Asadito` no es checkout. |
+| Catálogo / perfiles | PASS | 18 IDs requeridos, todas las firmas térmicas distintas; JSON validados también en runtime. Cortes/profile/motor separados; solo provoleta tiene regla específica declarada por data flag. |
+| Art de comida / seis estados | PASS automatizable | 18 atlas 1024×1536 RGBA, 6 frames cada uno =108 recortes runtime no-null; EditMode comprueba todos y los estados clave. PROVISIONAL visualmente. |
+| Progresión/niveles | PASS | 12 niveles, 12 ilustraciones PNG; save v2/migración v1; PlayMode cooking→serving→results/unlock→selector final L1–L12. |
+| Cara/flip | PASS automatizable | Estado y sprites separados por cara; PlayMode verifica ideal↔raw↔ideal tras flip. |
+| Serving/score/guests | PASS automatizable | Allocator reparto justo, prioridad cobertura/gusto/punto; scoring ponderado 40/30/20/10 con inputs 0–100; seis guests distintos; favorito=100. |
+| Safe area / layers | PASS en código, no QA físico | `Screen.safeArea` actualiza anchors; gameplay group separado de overlays/selector. Emulador portrait; falta notch/gestos/touch humano. |
+| Motion/VFX/audio | Integrado, PROVISIONAL | Lista real runtime en `docs/art/animation-manifest.md`. Procedural; sin clips por tipo de comida, partículas production o mezcla audio aprobada. |
+| EditMode | PASS | **18 passed / 0 failed**; Unity 6000.6.3f1, XML `/tmp/Asadito-EditMode-final.xml`. |
+| PlayMode | PASS | **6 passed / 0 failed**; los 12 niveles completos, retry/UI/progresión, atlas/6 estados por cara; XML `/tmp/Asadito-PlayMode-passing.xml`. |
+| Content/diff check | PASS | Validator imprime 18 unique profiles,108 cooking sprites,12 level illustrations; `git diff --check` PASS. |
+| Android | PASS build/install | Unity 6000.6.3f1, APK ~52MB; `com.cuervation.asadito` 1.1.0 code2, min26, target36, portrait, ARM64 IL2CPP; AAPT metadata+adaptive icon XML, debug signer; instalado/lanzado en Pixel 7a emulator API36. No release signing/Play publish. |
+| GitHub CI | Preparada | Content/diff job cada push/PR. Unity GameCI job requiere variable `UNITY_CI_LICENSE_READY=true` y tres secretos de licencia; no verificaría suites en Actions si la licencia falta. |
+| Touch/física/arte final | Parcial / no certificado | Captura portada del emulador confirma render startup; el screenshot no es prueba de tacto, notch ni rendimiento de teléfono real. |
+| Git push | Pendiente de cierre | GH auth está disponible; hacer commit lógico(s), luego push normal sin force y comprobar `origin/main`. |
 
-**Resultado:** `MVP PARTIAL`. Gates de esta matriz: 9/15 completos, 5 parciales y 1 bloqueado por autenticación GitHub. Los loops y ambas suites pasan en el Editor real; APK vigente construido y firmado, pero no instalado en dispositivo. Siguen pendientes safe area/touch/performance físicos, audio/VFX final, package/release signing, aceptación final y push. Los tests capturan/restauran `PlayerPrefs`; el ciclo L1–L5 usa ×1200 solo para acelerar test. Capturas/Builds y copia temporal son artefactos locales ignorados.
+## Bloqueos reales no técnicos
 
-## Próximas prioridades (máximo 3)
-1. QA en teléfono: instalar APK vigente, probar safe areas, legibilidad, touch, rendimiento y launcher; requiere conectar y autorizar un dispositivo.
-2. Completar motion/VFX/audio final y la aceptación del MVP.
-3. Tras la aceptación final, autenticar GitHub y pushear `main` mediante fast-forward normal.
-3. Tras el login autenticado de GitHub, subir `main` mediante push normal (sin force push).
+Prueba física solo requiere conectar/autorizar un teléfono si se desea QA humano. Unity CI remoto requiere credencial/licencia del owner en secrets. Firma productiva/publicación están fuera de autorización. Ninguna de esas cosas bloqueó tests/build locales.

@@ -1,13 +1,22 @@
 fileFormatVersion: 2
-guid: 44572f578f5dd460f87ba7962ff28e41
+guid: 6a68d2023157a4ceeb125bdd5009dbe2
 TextureImporter:
   internalIDToNameTable:
   - first:
-      213: -2544858816605125926
-    second: BifeCrudo_0
+      213: 1970120090611313359
+    second: bife_chorizo_0
   - first:
-      213: -1862069487170004054
-    second: BifeCrudo_1
+      213: -728240065483759094
+    second: bife_chorizo_1
+  - first:
+      213: 9028367350028284364
+    second: bife_chorizo_2
+  - first:
+      213: -749716168368104528
+    second: bife_chorizo_3
+  - first:
+      213: 8703279922012060576
+    second: bife_chorizo_4
   externalObjects: {}
   serializedVersion: 13
   mipmaps:
@@ -49,7 +58,7 @@ TextureImporter:
   nPOTScale: 0
   lightmap: 0
   compressionQuality: 50
-  spriteMode: 2
+  spriteMode: 0
   spriteExtrude: 1
   spriteMeshType: 1
   alignment: 0
@@ -62,7 +71,7 @@ TextureImporter:
   spriteTessellationMethod: 0
   spriteTessellationDetail: -1
   spriteGeometrySubdivision: -1
-  textureType: 8
+  textureType: 0
   textureShape: 1
   singleChannelComponent: 0
   flipbookRows: 1
@@ -77,11 +86,11 @@ TextureImporter:
   platformSettings:
   - serializedVersion: 4
     buildTarget: DefaultTexturePlatform
-    maxTextureSize: 2048
+    maxTextureSize: 768
     resizeAlgorithm: 0
     textureFormat: -1
-    textureCompression: 1
-    compressionQuality: 50
+    textureCompression: 2
+    compressionQuality: 82
     crunchedCompression: 0
     allowsAlphaSplitting: 0
     overridden: 0
@@ -102,6 +111,19 @@ TextureImporter:
     androidETC2FallbackOverride: 0
     forceMaximumCompressionQuality_BC6H_BC7: 0
   - serializedVersion: 4
+    buildTarget: Android
+    maxTextureSize: 768
+    resizeAlgorithm: 0
+    textureFormat: 47
+    textureCompression: 2
+    compressionQuality: 82
+    crunchedCompression: 0
+    allowsAlphaSplitting: 0
+    overridden: 1
+    ignorePlatformSupport: 0
+    androidETC2FallbackOverride: 0
+    forceMaximumCompressionQuality_BC6H_BC7: 0
+  - serializedVersion: 4
     buildTarget: WebGL
     maxTextureSize: 2048
     resizeAlgorithm: 0
@@ -118,13 +140,13 @@ TextureImporter:
     serializedVersion: 2
     sprites:
     - serializedVersion: 2
-      name: BifeCrudo_0
+      name: bife_chorizo_0
       rect:
         serializedVersion: 2
         x: 0
-        y: 0
-        width: 1523
-        height: 997
+        y: 105
+        width: 1013
+        height: 1431
       alignment: 0
       pivot: {x: 0, y: 0}
       border: {x: 0, y: 0, z: 0, w: 0}
@@ -133,20 +155,20 @@ TextureImporter:
       physicsShape: []
       tessellationDetail: -1
       bones: []
-      spriteID: ad20bb8b368deacd0800000000000000
-      internalID: -2544858816605125926
+      spriteID: fca6fb5c8c5475b10800000000000000
+      internalID: 1970120090611313359
       vertices: []
       indices:
       edges: []
       weights: []
     - serializedVersion: 2
-      name: BifeCrudo_1
+      name: bife_chorizo_1
       rect:
         serializedVersion: 2
-        x: 1334
-        y: 983
-        width: 11
-        height: 11
+        x: 44
+        y: 39
+        width: 51
+        height: 74
       alignment: 0
       pivot: {x: 0, y: 0}
       border: {x: 0, y: 0, z: 0, w: 0}
@@ -155,8 +177,74 @@ TextureImporter:
       physicsShape: []
       tessellationDetail: -1
       bones: []
-      spriteID: aab5326caa99826e0800000000000000
-      internalID: -1862069487170004054
+      spriteID: a0222a1d485c4e5f0800000000000000
+      internalID: -728240065483759094
+      vertices: []
+      indices:
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: bife_chorizo_2
+      rect:
+        serializedVersion: 2
+        x: 186
+        y: 15
+        width: 769
+        height: 1014
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData:
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: cc1bb2045443b4d70800000000000000
+      internalID: 9028367350028284364
+      vertices: []
+      indices:
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: bife_chorizo_3
+      rect:
+        serializedVersion: 2
+        x: 886
+        y: 178
+        width: 9
+        height: 22
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData:
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 0bb5d06fd197895f0800000000000000
+      internalID: -749716168368104528
+      vertices: []
+      indices:
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: bife_chorizo_4
+      rect:
+        serializedVersion: 2
+        x: 942
+        y: 395
+        width: 37
+        height: 22
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData:
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 0ab71542af248c870800000000000000
+      internalID: 8703279922012060576
       vertices: []
       indices:
       edges: []
@@ -175,8 +263,11 @@ TextureImporter:
     spriteCustomMetadata:
       entries: []
     nameFileIdTable:
-      BifeCrudo_0: -2544858816605125926
-      BifeCrudo_1: -1862069487170004054
+      bife_chorizo_0: 1970120090611313359
+      bife_chorizo_1: -728240065483759094
+      bife_chorizo_2: 9028367350028284364
+      bife_chorizo_3: -749716168368104528
+      bife_chorizo_4: 8703279922012060576
   mipmapLimitGroupName:
   pSDRemoveMatte: 0
   userData:

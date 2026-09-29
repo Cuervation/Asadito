@@ -1,0 +1,1049 @@
+{
+  "SchemaVersion": 1,
+  "Foods": [
+    {
+      "Id": "tira",
+      "DisplayName": "TIRA DE ASADO",
+      "Category": "Vacuno",
+      "DisplayScale": 1.0,
+      "SpriteCrop": {
+        "XMin": 0.1728515625,
+        "YMin": 0.0,
+        "XMax": 0.8330078125,
+        "YMax": 1.0
+      },
+      "Profile": {
+        "FoodId": "tira",
+        "CoreTransferRate": 0.025,
+        "SurfaceTransferRate": 0.9,
+        "CoolingRate": 0.025,
+        "MoistureLossRate": 0.008,
+        "MaillardRate": 0.025,
+        "CharRate": 0.006,
+        "FatRenderRate": 0.012,
+        "MaillardStartsAtC": 120,
+        "CharStartsAtC": 190,
+        "ThermalMass": 1.45,
+        "ThicknessCm": 4.0,
+        "PreferredHeatC": 195,
+        "StrongHeatThresholdC": 210,
+        "SplitRiskRate": 0.0,
+        "FaceBalanceWeight": 0.85,
+        "UsesCheeseStages": false,
+        "DonenessBands": [
+          {
+            "Doneness": 0,
+            "MinimumCoreC": 50,
+            "MaximumCoreC": 54
+          },
+          {
+            "Doneness": 1,
+            "MinimumCoreC": 55,
+            "MaximumCoreC": 59
+          },
+          {
+            "Doneness": 2,
+            "MinimumCoreC": 60,
+            "MaximumCoreC": 64
+          },
+          {
+            "Doneness": 3,
+            "MinimumCoreC": 65,
+            "MaximumCoreC": 69
+          },
+          {
+            "Doneness": 4,
+            "MinimumCoreC": 70,
+            "MaximumCoreC": 76
+          }
+        ]
+      }
+    },
+    {
+      "Id": "chorizo",
+      "DisplayName": "CHORIZO",
+      "Category": "Embutido",
+      "DisplayScale": 0.92,
+      "SpriteCrop": {
+        "XMin": 0.17578125,
+        "YMin": 0.0,
+        "XMax": 0.8232421875,
+        "YMax": 1.0
+      },
+      "Profile": {
+        "FoodId": "chorizo",
+        "CoreTransferRate": 0.055,
+        "SurfaceTransferRate": 0.95,
+        "CoolingRate": 0.026,
+        "MoistureLossRate": 0.009,
+        "MaillardRate": 0.03,
+        "CharRate": 0.008,
+        "FatRenderRate": 0.035,
+        "MaillardStartsAtC": 120,
+        "CharStartsAtC": 190,
+        "ThermalMass": 0.88,
+        "ThicknessCm": 2.0,
+        "PreferredHeatC": 185,
+        "StrongHeatThresholdC": 215,
+        "SplitRiskRate": 0.001,
+        "FaceBalanceWeight": 0.55,
+        "UsesCheeseStages": false,
+        "DonenessBands": [
+          {
+            "Doneness": 0,
+            "MinimumCoreC": 68,
+            "MaximumCoreC": 70
+          },
+          {
+            "Doneness": 1,
+            "MinimumCoreC": 71,
+            "MaximumCoreC": 73
+          },
+          {
+            "Doneness": 2,
+            "MinimumCoreC": 74,
+            "MaximumCoreC": 76
+          },
+          {
+            "Doneness": 3,
+            "MinimumCoreC": 77,
+            "MaximumCoreC": 80
+          },
+          {
+            "Doneness": 4,
+            "MinimumCoreC": 81,
+            "MaximumCoreC": 85
+          }
+        ]
+      }
+    },
+    {
+      "Id": "vacio",
+      "DisplayName": "VACÍO",
+      "Category": "Vacuno",
+      "DisplayScale": 1.08,
+      "SpriteCrop": {
+        "XMin": 0.16796875,
+        "YMin": 0.0,
+        "XMax": 0.8310546875,
+        "YMax": 1.0
+      },
+      "Profile": {
+        "FoodId": "vacio",
+        "CoreTransferRate": 0.012,
+        "SurfaceTransferRate": 0.52,
+        "CoolingRate": 0.028,
+        "MoistureLossRate": 0.006,
+        "MaillardRate": 0.018,
+        "CharRate": 0.0035,
+        "FatRenderRate": 0.02,
+        "MaillardStartsAtC": 120,
+        "CharStartsAtC": 200,
+        "ThermalMass": 2.2,
+        "ThicknessCm": 6.0,
+        "PreferredHeatC": 170,
+        "StrongHeatThresholdC": 200,
+        "SplitRiskRate": 0.0,
+        "FaceBalanceWeight": 0.9,
+        "UsesCheeseStages": false,
+        "DonenessBands": [
+          {
+            "Doneness": 0,
+            "MinimumCoreC": 52,
+            "MaximumCoreC": 55
+          },
+          {
+            "Doneness": 1,
+            "MinimumCoreC": 56,
+            "MaximumCoreC": 60
+          },
+          {
+            "Doneness": 2,
+            "MinimumCoreC": 61,
+            "MaximumCoreC": 65
+          },
+          {
+            "Doneness": 3,
+            "MinimumCoreC": 66,
+            "MaximumCoreC": 70
+          },
+          {
+            "Doneness": 4,
+            "MinimumCoreC": 71,
+            "MaximumCoreC": 76
+          }
+        ]
+      }
+    },
+    {
+      "Id": "provoleta",
+      "DisplayName": "PROVOLETA",
+      "Category": "Queso",
+      "DisplayScale": 0.9,
+      "SpriteCrop": {
+        "XMin": 0.3408203125,
+        "YMin": 0.0,
+        "XMax": 0.6630859375,
+        "YMax": 1.0
+      },
+      "Profile": {
+        "FoodId": "provoleta",
+        "CoreTransferRate": 0.09,
+        "SurfaceTransferRate": 1.1,
+        "CoolingRate": 0.035,
+        "MoistureLossRate": 0.004,
+        "MaillardRate": 0.065,
+        "CharRate": 0.018,
+        "FatRenderRate": 0.001,
+        "MaillardStartsAtC": 105,
+        "CharStartsAtC": 175,
+        "ThermalMass": 0.65,
+        "ThicknessCm": 1.5,
+        "PreferredHeatC": 165,
+        "StrongHeatThresholdC": 190,
+        "SplitRiskRate": 0.01,
+        "FaceBalanceWeight": 0.3,
+        "UsesCheeseStages": true,
+        "DonenessBands": [
+          {
+            "Doneness": 0,
+            "MinimumCoreC": 38,
+            "MaximumCoreC": 45
+          },
+          {
+            "Doneness": 1,
+            "MinimumCoreC": 46,
+            "MaximumCoreC": 55
+          },
+          {
+            "Doneness": 2,
+            "MinimumCoreC": 56,
+            "MaximumCoreC": 63
+          },
+          {
+            "Doneness": 3,
+            "MinimumCoreC": 64,
+            "MaximumCoreC": 69
+          },
+          {
+            "Doneness": 4,
+            "MinimumCoreC": 70,
+            "MaximumCoreC": 76
+          }
+        ]
+      }
+    },
+    {
+      "Id": "entrana",
+      "DisplayName": "ENTRAÑA",
+      "Category": "Vacuno",
+      "DisplayScale": 0.92,
+      "SpriteCrop": {
+        "XMin": 0.0478515625,
+        "YMin": 0.0,
+        "XMax": 0.951171875,
+        "YMax": 1.0
+      },
+      "Profile": {
+        "FoodId": "entrana",
+        "CoreTransferRate": 0.07,
+        "SurfaceTransferRate": 1.05,
+        "CoolingRate": 0.032,
+        "MoistureLossRate": 0.011,
+        "MaillardRate": 0.038,
+        "CharRate": 0.013,
+        "FatRenderRate": 0.018,
+        "MaillardStartsAtC": 115,
+        "CharStartsAtC": 180,
+        "ThermalMass": 0.62,
+        "ThicknessCm": 1.2,
+        "PreferredHeatC": 175,
+        "StrongHeatThresholdC": 205,
+        "SplitRiskRate": 0.0,
+        "FaceBalanceWeight": 1.0,
+        "UsesCheeseStages": false,
+        "DonenessBands": [
+          {
+            "Doneness": 0,
+            "MinimumCoreC": 50,
+            "MaximumCoreC": 54
+          },
+          {
+            "Doneness": 1,
+            "MinimumCoreC": 55,
+            "MaximumCoreC": 59
+          },
+          {
+            "Doneness": 2,
+            "MinimumCoreC": 60,
+            "MaximumCoreC": 64
+          },
+          {
+            "Doneness": 3,
+            "MinimumCoreC": 65,
+            "MaximumCoreC": 69
+          },
+          {
+            "Doneness": 4,
+            "MinimumCoreC": 70,
+            "MaximumCoreC": 76
+          }
+        ]
+      }
+    },
+    {
+      "Id": "colita_cuadril",
+      "DisplayName": "COLITA DE CUADRIL",
+      "Category": "Vacuno",
+      "DisplayScale": 1.0,
+      "SpriteCrop": {
+        "XMin": 0.2880859375,
+        "YMin": 0.0,
+        "XMax": 0.7138671875,
+        "YMax": 1.0
+      },
+      "Profile": {
+        "FoodId": "colita_cuadril",
+        "CoreTransferRate": 0.022,
+        "SurfaceTransferRate": 0.78,
+        "CoolingRate": 0.026,
+        "MoistureLossRate": 0.007,
+        "MaillardRate": 0.023,
+        "CharRate": 0.005,
+        "FatRenderRate": 0.018,
+        "MaillardStartsAtC": 120,
+        "CharStartsAtC": 192,
+        "ThermalMass": 1.5,
+        "ThicknessCm": 4.0,
+        "PreferredHeatC": 185,
+        "StrongHeatThresholdC": 212,
+        "SplitRiskRate": 0.0,
+        "FaceBalanceWeight": 0.8,
+        "UsesCheeseStages": false,
+        "DonenessBands": [
+          {
+            "Doneness": 0,
+            "MinimumCoreC": 50,
+            "MaximumCoreC": 54
+          },
+          {
+            "Doneness": 1,
+            "MinimumCoreC": 55,
+            "MaximumCoreC": 59
+          },
+          {
+            "Doneness": 2,
+            "MinimumCoreC": 60,
+            "MaximumCoreC": 64
+          },
+          {
+            "Doneness": 3,
+            "MinimumCoreC": 65,
+            "MaximumCoreC": 69
+          },
+          {
+            "Doneness": 4,
+            "MinimumCoreC": 70,
+            "MaximumCoreC": 76
+          }
+        ]
+      }
+    },
+    {
+      "Id": "lomo",
+      "DisplayName": "LOMO",
+      "Category": "Vacuno",
+      "DisplayScale": 0.94,
+      "SpriteCrop": {
+        "XMin": 0.3349609375,
+        "YMin": 0.0,
+        "XMax": 0.6669921875,
+        "YMax": 1.0
+      },
+      "Profile": {
+        "FoodId": "lomo",
+        "CoreTransferRate": 0.045,
+        "SurfaceTransferRate": 0.82,
+        "CoolingRate": 0.03,
+        "MoistureLossRate": 0.012,
+        "MaillardRate": 0.022,
+        "CharRate": 0.006,
+        "FatRenderRate": 0.004,
+        "MaillardStartsAtC": 122,
+        "CharStartsAtC": 190,
+        "ThermalMass": 1.0,
+        "ThicknessCm": 3.0,
+        "PreferredHeatC": 168,
+        "StrongHeatThresholdC": 195,
+        "SplitRiskRate": 0.0,
+        "FaceBalanceWeight": 0.85,
+        "UsesCheeseStages": false,
+        "DonenessBands": [
+          {
+            "Doneness": 0,
+            "MinimumCoreC": 50,
+            "MaximumCoreC": 54
+          },
+          {
+            "Doneness": 1,
+            "MinimumCoreC": 55,
+            "MaximumCoreC": 59
+          },
+          {
+            "Doneness": 2,
+            "MinimumCoreC": 60,
+            "MaximumCoreC": 64
+          },
+          {
+            "Doneness": 3,
+            "MinimumCoreC": 65,
+            "MaximumCoreC": 69
+          },
+          {
+            "Doneness": 4,
+            "MinimumCoreC": 70,
+            "MaximumCoreC": 76
+          }
+        ]
+      }
+    },
+    {
+      "Id": "bife_ancho",
+      "DisplayName": "BIFE ANCHO",
+      "Category": "Vacuno",
+      "DisplayScale": 1.08,
+      "SpriteCrop": {
+        "XMin": 0.326171875,
+        "YMin": 0.0,
+        "XMax": 0.6748046875,
+        "YMax": 1.0
+      },
+      "Profile": {
+        "FoodId": "bife_ancho",
+        "CoreTransferRate": 0.032,
+        "SurfaceTransferRate": 0.9,
+        "CoolingRate": 0.023,
+        "MoistureLossRate": 0.006,
+        "MaillardRate": 0.029,
+        "CharRate": 0.009,
+        "FatRenderRate": 0.045,
+        "MaillardStartsAtC": 120,
+        "CharStartsAtC": 188,
+        "ThermalMass": 1.25,
+        "ThicknessCm": 3.4,
+        "PreferredHeatC": 200,
+        "StrongHeatThresholdC": 220,
+        "SplitRiskRate": 0.0,
+        "FaceBalanceWeight": 0.75,
+        "UsesCheeseStages": false,
+        "DonenessBands": [
+          {
+            "Doneness": 0,
+            "MinimumCoreC": 50,
+            "MaximumCoreC": 54
+          },
+          {
+            "Doneness": 1,
+            "MinimumCoreC": 55,
+            "MaximumCoreC": 59
+          },
+          {
+            "Doneness": 2,
+            "MinimumCoreC": 60,
+            "MaximumCoreC": 64
+          },
+          {
+            "Doneness": 3,
+            "MinimumCoreC": 65,
+            "MaximumCoreC": 69
+          },
+          {
+            "Doneness": 4,
+            "MinimumCoreC": 70,
+            "MaximumCoreC": 76
+          }
+        ]
+      }
+    },
+    {
+      "Id": "bife_angosto",
+      "DisplayName": "BIFE ANGOSTO",
+      "Category": "Vacuno",
+      "DisplayScale": 0.98,
+      "SpriteCrop": {
+        "XMin": 0.208984375,
+        "YMin": 0.0,
+        "XMax": 0.791015625,
+        "YMax": 1.0
+      },
+      "Profile": {
+        "FoodId": "bife_angosto",
+        "CoreTransferRate": 0.038,
+        "SurfaceTransferRate": 0.95,
+        "CoolingRate": 0.025,
+        "MoistureLossRate": 0.008,
+        "MaillardRate": 0.028,
+        "CharRate": 0.01,
+        "FatRenderRate": 0.023,
+        "MaillardStartsAtC": 120,
+        "CharStartsAtC": 186,
+        "ThermalMass": 1.0,
+        "ThicknessCm": 2.4,
+        "PreferredHeatC": 190,
+        "StrongHeatThresholdC": 212,
+        "SplitRiskRate": 0.0,
+        "FaceBalanceWeight": 0.85,
+        "UsesCheeseStages": false,
+        "DonenessBands": [
+          {
+            "Doneness": 0,
+            "MinimumCoreC": 50,
+            "MaximumCoreC": 54
+          },
+          {
+            "Doneness": 1,
+            "MinimumCoreC": 55,
+            "MaximumCoreC": 59
+          },
+          {
+            "Doneness": 2,
+            "MinimumCoreC": 60,
+            "MaximumCoreC": 64
+          },
+          {
+            "Doneness": 3,
+            "MinimumCoreC": 65,
+            "MaximumCoreC": 69
+          },
+          {
+            "Doneness": 4,
+            "MinimumCoreC": 70,
+            "MaximumCoreC": 76
+          }
+        ]
+      }
+    },
+    {
+      "Id": "bife_chorizo",
+      "DisplayName": "BIFE DE CHORIZO",
+      "Category": "Vacuno",
+      "DisplayScale": 1.02,
+      "SpriteCrop": {
+        "XMin": 0.201171875,
+        "YMin": 0.0,
+        "XMax": 0.7998046875,
+        "YMax": 1.0
+      },
+      "Profile": {
+        "FoodId": "bife_chorizo",
+        "CoreTransferRate": 0.028,
+        "SurfaceTransferRate": 0.86,
+        "CoolingRate": 0.025,
+        "MoistureLossRate": 0.007,
+        "MaillardRate": 0.026,
+        "CharRate": 0.007,
+        "FatRenderRate": 0.032,
+        "MaillardStartsAtC": 120,
+        "CharStartsAtC": 192,
+        "ThermalMass": 1.4,
+        "ThicknessCm": 3.8,
+        "PreferredHeatC": 190,
+        "StrongHeatThresholdC": 215,
+        "SplitRiskRate": 0.0,
+        "FaceBalanceWeight": 0.82,
+        "UsesCheeseStages": false,
+        "DonenessBands": [
+          {
+            "Doneness": 0,
+            "MinimumCoreC": 50,
+            "MaximumCoreC": 54
+          },
+          {
+            "Doneness": 1,
+            "MinimumCoreC": 55,
+            "MaximumCoreC": 59
+          },
+          {
+            "Doneness": 2,
+            "MinimumCoreC": 60,
+            "MaximumCoreC": 64
+          },
+          {
+            "Doneness": 3,
+            "MinimumCoreC": 65,
+            "MaximumCoreC": 69
+          },
+          {
+            "Doneness": 4,
+            "MinimumCoreC": 70,
+            "MaximumCoreC": 76
+          }
+        ]
+      }
+    },
+    {
+      "Id": "ojo_bife",
+      "DisplayName": "OJO DE BIFE",
+      "Category": "Vacuno",
+      "DisplayScale": 1.04,
+      "SpriteCrop": {
+        "XMin": 0.3173828125,
+        "YMin": 0.0,
+        "XMax": 0.6865234375,
+        "YMax": 1.0
+      },
+      "Profile": {
+        "FoodId": "ojo_bife",
+        "CoreTransferRate": 0.03,
+        "SurfaceTransferRate": 0.88,
+        "CoolingRate": 0.023,
+        "MoistureLossRate": 0.006,
+        "MaillardRate": 0.03,
+        "CharRate": 0.008,
+        "FatRenderRate": 0.05,
+        "MaillardStartsAtC": 119,
+        "CharStartsAtC": 189,
+        "ThermalMass": 1.25,
+        "ThicknessCm": 3.3,
+        "PreferredHeatC": 200,
+        "StrongHeatThresholdC": 220,
+        "SplitRiskRate": 0.0,
+        "FaceBalanceWeight": 0.72,
+        "UsesCheeseStages": false,
+        "DonenessBands": [
+          {
+            "Doneness": 0,
+            "MinimumCoreC": 50,
+            "MaximumCoreC": 54
+          },
+          {
+            "Doneness": 1,
+            "MinimumCoreC": 55,
+            "MaximumCoreC": 59
+          },
+          {
+            "Doneness": 2,
+            "MinimumCoreC": 60,
+            "MaximumCoreC": 64
+          },
+          {
+            "Doneness": 3,
+            "MinimumCoreC": 65,
+            "MaximumCoreC": 69
+          },
+          {
+            "Doneness": 4,
+            "MinimumCoreC": 70,
+            "MaximumCoreC": 76
+          }
+        ]
+      }
+    },
+    {
+      "Id": "chinchulines",
+      "DisplayName": "CHINCHULINES",
+      "Category": "Achura",
+      "DisplayScale": 0.9,
+      "SpriteCrop": {
+        "XMin": 0.1904296875,
+        "YMin": 0.0,
+        "XMax": 0.8095703125,
+        "YMax": 1.0
+      },
+      "Profile": {
+        "FoodId": "chinchulines",
+        "CoreTransferRate": 0.08,
+        "SurfaceTransferRate": 0.84,
+        "CoolingRate": 0.027,
+        "MoistureLossRate": 0.02,
+        "MaillardRate": 0.045,
+        "CharRate": 0.016,
+        "FatRenderRate": 0.055,
+        "MaillardStartsAtC": 112,
+        "CharStartsAtC": 175,
+        "ThermalMass": 0.66,
+        "ThicknessCm": 1.0,
+        "PreferredHeatC": 185,
+        "StrongHeatThresholdC": 205,
+        "SplitRiskRate": 0.002,
+        "FaceBalanceWeight": 0.35,
+        "UsesCheeseStages": false,
+        "DonenessBands": [
+          {
+            "Doneness": 0,
+            "MinimumCoreC": 50,
+            "MaximumCoreC": 54
+          },
+          {
+            "Doneness": 1,
+            "MinimumCoreC": 55,
+            "MaximumCoreC": 59
+          },
+          {
+            "Doneness": 2,
+            "MinimumCoreC": 60,
+            "MaximumCoreC": 64
+          },
+          {
+            "Doneness": 3,
+            "MinimumCoreC": 65,
+            "MaximumCoreC": 69
+          },
+          {
+            "Doneness": 4,
+            "MinimumCoreC": 70,
+            "MaximumCoreC": 76
+          }
+        ]
+      }
+    },
+    {
+      "Id": "morcilla",
+      "DisplayName": "MORCILLA",
+      "Category": "Embutido",
+      "DisplayScale": 0.96,
+      "SpriteCrop": {
+        "XMin": 0.208984375,
+        "YMin": 0.0,
+        "XMax": 0.79296875,
+        "YMax": 1.0
+      },
+      "Profile": {
+        "FoodId": "morcilla",
+        "CoreTransferRate": 0.065,
+        "SurfaceTransferRate": 0.72,
+        "CoolingRate": 0.03,
+        "MoistureLossRate": 0.006,
+        "MaillardRate": 0.02,
+        "CharRate": 0.01,
+        "FatRenderRate": 0.018,
+        "MaillardStartsAtC": 128,
+        "CharStartsAtC": 182,
+        "ThermalMass": 0.9,
+        "ThicknessCm": 2.0,
+        "PreferredHeatC": 150,
+        "StrongHeatThresholdC": 172,
+        "SplitRiskRate": 0.095,
+        "FaceBalanceWeight": 0.55,
+        "UsesCheeseStages": false,
+        "DonenessBands": [
+          {
+            "Doneness": 0,
+            "MinimumCoreC": 55,
+            "MaximumCoreC": 58
+          },
+          {
+            "Doneness": 1,
+            "MinimumCoreC": 59,
+            "MaximumCoreC": 62
+          },
+          {
+            "Doneness": 2,
+            "MinimumCoreC": 63,
+            "MaximumCoreC": 67
+          },
+          {
+            "Doneness": 3,
+            "MinimumCoreC": 68,
+            "MaximumCoreC": 72
+          },
+          {
+            "Doneness": 4,
+            "MinimumCoreC": 73,
+            "MaximumCoreC": 77
+          }
+        ]
+      }
+    },
+    {
+      "Id": "morcilla_vasca",
+      "DisplayName": "MORCILLA VASCA",
+      "Category": "Embutido",
+      "DisplayScale": 1.0,
+      "SpriteCrop": {
+        "XMin": 0.31640625,
+        "YMin": 0.0,
+        "XMax": 0.6826171875,
+        "YMax": 1.0
+      },
+      "Profile": {
+        "FoodId": "morcilla_vasca",
+        "CoreTransferRate": 0.058,
+        "SurfaceTransferRate": 0.76,
+        "CoolingRate": 0.03,
+        "MoistureLossRate": 0.0055,
+        "MaillardRate": 0.022,
+        "CharRate": 0.011,
+        "FatRenderRate": 0.022,
+        "MaillardStartsAtC": 126,
+        "CharStartsAtC": 180,
+        "ThermalMass": 0.92,
+        "ThicknessCm": 2.2,
+        "PreferredHeatC": 155,
+        "StrongHeatThresholdC": 175,
+        "SplitRiskRate": 0.1,
+        "FaceBalanceWeight": 0.6,
+        "UsesCheeseStages": false,
+        "DonenessBands": [
+          {
+            "Doneness": 0,
+            "MinimumCoreC": 55,
+            "MaximumCoreC": 58
+          },
+          {
+            "Doneness": 1,
+            "MinimumCoreC": 59,
+            "MaximumCoreC": 62
+          },
+          {
+            "Doneness": 2,
+            "MinimumCoreC": 63,
+            "MaximumCoreC": 67
+          },
+          {
+            "Doneness": 3,
+            "MinimumCoreC": 68,
+            "MaximumCoreC": 72
+          },
+          {
+            "Doneness": 4,
+            "MinimumCoreC": 73,
+            "MaximumCoreC": 77
+          }
+        ]
+      }
+    },
+    {
+      "Id": "matambre_cerdo",
+      "DisplayName": "MATAMBRE DE CERDO",
+      "Category": "Cerdo",
+      "DisplayScale": 1.02,
+      "SpriteCrop": {
+        "XMin": 0.1162109375,
+        "YMin": 0.0,
+        "XMax": 0.8896484375,
+        "YMax": 1.0
+      },
+      "Profile": {
+        "FoodId": "matambre_cerdo",
+        "CoreTransferRate": 0.026,
+        "SurfaceTransferRate": 0.78,
+        "CoolingRate": 0.028,
+        "MoistureLossRate": 0.011,
+        "MaillardRate": 0.028,
+        "CharRate": 0.009,
+        "FatRenderRate": 0.03,
+        "MaillardStartsAtC": 116,
+        "CharStartsAtC": 188,
+        "ThermalMass": 1.45,
+        "ThicknessCm": 4.0,
+        "PreferredHeatC": 178,
+        "StrongHeatThresholdC": 205,
+        "SplitRiskRate": 0.005,
+        "FaceBalanceWeight": 0.85,
+        "UsesCheeseStages": false,
+        "DonenessBands": [
+          {
+            "Doneness": 0,
+            "MinimumCoreC": 52,
+            "MaximumCoreC": 55
+          },
+          {
+            "Doneness": 1,
+            "MinimumCoreC": 56,
+            "MaximumCoreC": 59
+          },
+          {
+            "Doneness": 2,
+            "MinimumCoreC": 60,
+            "MaximumCoreC": 63
+          },
+          {
+            "Doneness": 3,
+            "MinimumCoreC": 64,
+            "MaximumCoreC": 68
+          },
+          {
+            "Doneness": 4,
+            "MinimumCoreC": 69,
+            "MaximumCoreC": 74
+          }
+        ]
+      }
+    },
+    {
+      "Id": "costillita_cerdo",
+      "DisplayName": "COSTILLITA DE CERDO",
+      "Category": "Cerdo",
+      "DisplayScale": 0.94,
+      "SpriteCrop": {
+        "XMin": 0.3125,
+        "YMin": 0.0,
+        "XMax": 0.7216796875,
+        "YMax": 1.0
+      },
+      "Profile": {
+        "FoodId": "costillita_cerdo",
+        "CoreTransferRate": 0.022,
+        "SurfaceTransferRate": 0.75,
+        "CoolingRate": 0.025,
+        "MoistureLossRate": 0.009,
+        "MaillardRate": 0.025,
+        "CharRate": 0.007,
+        "FatRenderRate": 0.042,
+        "MaillardStartsAtC": 120,
+        "CharStartsAtC": 193,
+        "ThermalMass": 1.55,
+        "ThicknessCm": 4.5,
+        "PreferredHeatC": 185,
+        "StrongHeatThresholdC": 212,
+        "SplitRiskRate": 0.004,
+        "FaceBalanceWeight": 0.88,
+        "UsesCheeseStages": false,
+        "DonenessBands": [
+          {
+            "Doneness": 0,
+            "MinimumCoreC": 52,
+            "MaximumCoreC": 55
+          },
+          {
+            "Doneness": 1,
+            "MinimumCoreC": 56,
+            "MaximumCoreC": 59
+          },
+          {
+            "Doneness": 2,
+            "MinimumCoreC": 60,
+            "MaximumCoreC": 63
+          },
+          {
+            "Doneness": 3,
+            "MinimumCoreC": 64,
+            "MaximumCoreC": 68
+          },
+          {
+            "Doneness": 4,
+            "MinimumCoreC": 69,
+            "MaximumCoreC": 74
+          }
+        ]
+      }
+    },
+    {
+      "Id": "solomillo_cerdo",
+      "DisplayName": "SOLOMILLO DE CERDO",
+      "Category": "Cerdo",
+      "DisplayScale": 0.92,
+      "SpriteCrop": {
+        "XMin": 0.3115234375,
+        "YMin": 0.01171875,
+        "XMax": 0.6923828125,
+        "YMax": 0.98828125
+      },
+      "Profile": {
+        "FoodId": "solomillo_cerdo",
+        "CoreTransferRate": 0.04,
+        "SurfaceTransferRate": 0.84,
+        "CoolingRate": 0.03,
+        "MoistureLossRate": 0.013,
+        "MaillardRate": 0.027,
+        "CharRate": 0.008,
+        "FatRenderRate": 0.009,
+        "MaillardStartsAtC": 118,
+        "CharStartsAtC": 185,
+        "ThermalMass": 0.85,
+        "ThicknessCm": 2.0,
+        "PreferredHeatC": 170,
+        "StrongHeatThresholdC": 195,
+        "SplitRiskRate": 0.003,
+        "FaceBalanceWeight": 0.9,
+        "UsesCheeseStages": false,
+        "DonenessBands": [
+          {
+            "Doneness": 0,
+            "MinimumCoreC": 55,
+            "MaximumCoreC": 58
+          },
+          {
+            "Doneness": 1,
+            "MinimumCoreC": 59,
+            "MaximumCoreC": 62
+          },
+          {
+            "Doneness": 2,
+            "MinimumCoreC": 63,
+            "MaximumCoreC": 66
+          },
+          {
+            "Doneness": 3,
+            "MinimumCoreC": 67,
+            "MaximumCoreC": 70
+          },
+          {
+            "Doneness": 4,
+            "MinimumCoreC": 71,
+            "MaximumCoreC": 76
+          }
+        ]
+      }
+    },
+    {
+      "Id": "pollo_deshuesado",
+      "DisplayName": "POLLO DESHUESADO",
+      "Category": "Ave",
+      "DisplayScale": 0.98,
+      "SpriteCrop": {
+        "XMin": 0.291015625,
+        "YMin": 0.0,
+        "XMax": 0.708984375,
+        "YMax": 1.0
+      },
+      "Profile": {
+        "FoodId": "pollo_deshuesado",
+        "CoreTransferRate": 0.035,
+        "SurfaceTransferRate": 0.8,
+        "CoolingRate": 0.034,
+        "MoistureLossRate": 0.012,
+        "MaillardRate": 0.03,
+        "CharRate": 0.008,
+        "FatRenderRate": 0.02,
+        "MaillardStartsAtC": 115,
+        "CharStartsAtC": 190,
+        "ThermalMass": 1.05,
+        "ThicknessCm": 2.5,
+        "PreferredHeatC": 178,
+        "StrongHeatThresholdC": 205,
+        "SplitRiskRate": 0.0,
+        "FaceBalanceWeight": 1.0,
+        "UsesCheeseStages": false,
+        "DonenessBands": [
+          {
+            "Doneness": 0,
+            "MinimumCoreC": 58,
+            "MaximumCoreC": 61
+          },
+          {
+            "Doneness": 1,
+            "MinimumCoreC": 62,
+            "MaximumCoreC": 65
+          },
+          {
+            "Doneness": 2,
+            "MinimumCoreC": 66,
+            "MaximumCoreC": 69
+          },
+          {
+            "Doneness": 3,
+            "MinimumCoreC": 70,
+            "MaximumCoreC": 74
+          },
+          {
+            "Doneness": 4,
+            "MinimumCoreC": 75,
+            "MaximumCoreC": 82
+          }
+        ]
+      }
+    }
+  ]
+}

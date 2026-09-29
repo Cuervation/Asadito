@@ -1,19 +1,31 @@
 fileFormatVersion: 2
-guid: 31ba4d4ffe1a6434b8f7060cd6182456
+guid: 3856f013271264ed4a4a5c03051cf83b
 TextureImporter:
   internalIDToNameTable:
   - first:
-      213: -6193284918744064693
-    second: TiraAsadoCruda_0
+      213: -4954531188348916596
+    second: matambre_cerdo_0
   - first:
-      213: 6119446257010330908
-    second: TiraAsadoCruda_1
+      213: 6237971996131538943
+    second: matambre_cerdo_1
   - first:
-      213: 2584875652809407844
-    second: TiraAsadoCruda_2
+      213: 4657347170118526440
+    second: matambre_cerdo_2
   - first:
-      213: 831395622305582077
-    second: TiraAsadoCruda_3
+      213: 3893063305580335714
+    second: matambre_cerdo_3
+  - first:
+      213: -3678281646922199269
+    second: matambre_cerdo_4
+  - first:
+      213: -4578688458405856798
+    second: matambre_cerdo_5
+  - first:
+      213: 7493964996570651641
+    second: matambre_cerdo_6
+  - first:
+      213: 7997796594266661625
+    second: matambre_cerdo_7
   externalObjects: {}
   serializedVersion: 13
   mipmaps:
@@ -55,7 +67,7 @@ TextureImporter:
   nPOTScale: 0
   lightmap: 0
   compressionQuality: 50
-  spriteMode: 2
+  spriteMode: 0
   spriteExtrude: 1
   spriteMeshType: 1
   alignment: 0
@@ -68,7 +80,7 @@ TextureImporter:
   spriteTessellationMethod: 0
   spriteTessellationDetail: -1
   spriteGeometrySubdivision: -1
-  textureType: 8
+  textureType: 0
   textureShape: 1
   singleChannelComponent: 0
   flipbookRows: 1
@@ -83,11 +95,11 @@ TextureImporter:
   platformSettings:
   - serializedVersion: 4
     buildTarget: DefaultTexturePlatform
-    maxTextureSize: 2048
+    maxTextureSize: 768
     resizeAlgorithm: 0
     textureFormat: -1
-    textureCompression: 1
-    compressionQuality: 50
+    textureCompression: 2
+    compressionQuality: 82
     crunchedCompression: 0
     allowsAlphaSplitting: 0
     overridden: 0
@@ -108,6 +120,19 @@ TextureImporter:
     androidETC2FallbackOverride: 0
     forceMaximumCompressionQuality_BC6H_BC7: 0
   - serializedVersion: 4
+    buildTarget: Android
+    maxTextureSize: 768
+    resizeAlgorithm: 0
+    textureFormat: 47
+    textureCompression: 2
+    compressionQuality: 82
+    crunchedCompression: 0
+    allowsAlphaSplitting: 0
+    overridden: 1
+    ignorePlatformSupport: 0
+    androidETC2FallbackOverride: 0
+    forceMaximumCompressionQuality_BC6H_BC7: 0
+  - serializedVersion: 4
     buildTarget: WebGL
     maxTextureSize: 2048
     resizeAlgorithm: 0
@@ -124,13 +149,101 @@ TextureImporter:
     serializedVersion: 2
     sprites:
     - serializedVersion: 2
-      name: TiraAsadoCruda_0
+      name: matambre_cerdo_0
+      rect:
+        serializedVersion: 2
+        x: 130
+        y: 1274
+        width: 768
+        height: 236
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData:
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: c8c6ed96228fd3bb0800000000000000
+      internalID: -4954531188348916596
+      vertices: []
+      indices:
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: matambre_cerdo_1
+      rect:
+        serializedVersion: 2
+        x: 270
+        y: 1495
+        width: 9
+        height: 14
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData:
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: ff73144fa7ab19650800000000000000
+      internalID: 6237971996131538943
+      vertices: []
+      indices:
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: matambre_cerdo_2
+      rect:
+        serializedVersion: 2
+        x: 131
+        y: 1033
+        width: 870
+        height: 235
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData:
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 8e5e596539832a040800000000000000
+      internalID: 4657347170118526440
+      vertices: []
+      indices:
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: matambre_cerdo_3
+      rect:
+        serializedVersion: 2
+        x: 24
+        y: 279
+        width: 987
+        height: 747
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData:
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 26259393370f60630800000000000000
+      internalID: 3893063305580335714
+      vertices: []
+      indices:
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: matambre_cerdo_4
       rect:
         serializedVersion: 2
         x: 40
-        y: 23
-        width: 1483
-        height: 970
+        y: 387
+        width: 13
+        height: 15
       alignment: 0
       pivot: {x: 0, y: 0}
       border: {x: 0, y: 0, z: 0, w: 0}
@@ -139,20 +252,20 @@ TextureImporter:
       physicsShape: []
       tessellationDetail: -1
       bones: []
-      spriteID: b4dd9790e280d0aa0800000000000000
-      internalID: -6193284918744064693
+      spriteID: b1f0d5b945e14fcc0800000000000000
+      internalID: -3678281646922199269
       vertices: []
       indices:
       edges: []
       weights: []
     - serializedVersion: 2
-      name: TiraAsadoCruda_1
+      name: matambre_cerdo_5
       rect:
         serializedVersion: 2
-        x: 710
-        y: 871
-        width: 83
-        height: 133
+        x: 125
+        y: 525
+        width: 786
+        height: 241
       alignment: 0
       pivot: {x: 0, y: 0}
       border: {x: 0, y: 0, z: 0, w: 0}
@@ -161,20 +274,20 @@ TextureImporter:
       physicsShape: []
       tessellationDetail: -1
       bones: []
-      spriteID: c1dc133d2f3ace450800000000000000
-      internalID: 6119446257010330908
+      spriteID: 2e9b9832b1b3570c0800000000000000
+      internalID: -4578688458405856798
       vertices: []
       indices:
       edges: []
       weights: []
     - serializedVersion: 2
-      name: TiraAsadoCruda_2
+      name: matambre_cerdo_6
       rect:
         serializedVersion: 2
-        x: 176
-        y: 71
-        width: 9
-        height: 9
+        x: 129
+        y: 269
+        width: 771
+        height: 245
       alignment: 0
       pivot: {x: 0, y: 0}
       border: {x: 0, y: 0, z: 0, w: 0}
@@ -183,20 +296,20 @@ TextureImporter:
       physicsShape: []
       tessellationDetail: -1
       bones: []
-      spriteID: 46db24206b25fd320800000000000000
-      internalID: 2584875652809407844
+      spriteID: 9fb1ecba579eff760800000000000000
+      internalID: 7493964996570651641
       vertices: []
       indices:
       edges: []
       weights: []
     - serializedVersion: 2
-      name: TiraAsadoCruda_3
+      name: matambre_cerdo_7
       rect:
         serializedVersion: 2
-        x: 576
-        y: 71
-        width: 7
-        height: 9
+        x: 0
+        y: 0
+        width: 995
+        height: 266
       alignment: 0
       pivot: {x: 0, y: 0}
       border: {x: 0, y: 0, z: 0, w: 0}
@@ -205,8 +318,8 @@ TextureImporter:
       physicsShape: []
       tessellationDetail: -1
       bones: []
-      spriteID: dfbc65fd9e5b98b00800000000000000
-      internalID: 831395622305582077
+      spriteID: 9f2e71bd0a1edfe60800000000000000
+      internalID: 7997796594266661625
       vertices: []
       indices:
       edges: []
@@ -225,10 +338,14 @@ TextureImporter:
     spriteCustomMetadata:
       entries: []
     nameFileIdTable:
-      TiraAsadoCruda_0: -6193284918744064693
-      TiraAsadoCruda_1: 6119446257010330908
-      TiraAsadoCruda_2: 2584875652809407844
-      TiraAsadoCruda_3: 831395622305582077
+      matambre_cerdo_0: -4954531188348916596
+      matambre_cerdo_1: 6237971996131538943
+      matambre_cerdo_2: 4657347170118526440
+      matambre_cerdo_3: 3893063305580335714
+      matambre_cerdo_4: -3678281646922199269
+      matambre_cerdo_5: -4578688458405856798
+      matambre_cerdo_6: 7493964996570651641
+      matambre_cerdo_7: 7997796594266661625
   mipmapLimitGroupName:
   pSDRemoveMatte: 0
   userData:

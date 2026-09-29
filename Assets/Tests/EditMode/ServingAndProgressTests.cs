@@ -54,7 +54,7 @@ namespace Asadito.Tests
         }
 
         [Test]
-        public void SaveData_TracksFiveLevelProgressWithoutSavingExtraFields()
+        public void SaveData_TracksTwelveLevelProgressAndPreservesLegacyRows()
         {
             var save = new Asadito.Runtime.MvpSaveData();
             save.RecordLevelResult(1, 15, 0);
@@ -64,15 +64,30 @@ namespace Asadito.Tests
             Assert.AreEqual(2, save.StarsByLevel[0]);
             Assert.AreEqual(130, save.BestScoreByLevel[0]);
             Assert.AreEqual(2, save.MaxUnlockedLevel);
-            Assert.AreEqual(5, save.StarsByLevel.Length);
+            Assert.AreEqual(Asadito.Runtime.MvpLevelCatalog.Count, save.StarsByLevel.Length);
+            var legacy = new Asadito.Runtime.MvpSaveData
+            {
+                Version = 1,
+                MaxUnlockedLevel = 5,
+                StarsByLevel = new[] { 1, 2, 3, 1, 2 },
+                BestScoreByLevel = new[] { 70, 90, 120, 60, 99 }
+            };
+            Asadito.Runtime.MvpSaveData migrated = Asadito.Runtime.MvpSaveData.Migrate(legacy);
+            Assert.AreEqual(2, migrated.Version);
+            Assert.AreEqual(12, migrated.StarsByLevel.Length);
+            Assert.AreEqual(3, migrated.StarsByLevel[2]);
+            Assert.AreEqual(120, migrated.BestScoreByLevel[2]);
+            Assert.AreEqual(0, migrated.StarsByLevel[11]);
+            migrated.RecordLevelResult(5, 160, 2);
+            Assert.AreEqual(6, migrated.MaxUnlockedLevel);
         }
 
         [Test]
-        public void MvpLevelCatalog_DefinesProgressivePlayableContentForAllFiveLevels()
+        public void MvpLevelCatalog_DefinesProgressivePlayableContentForAllTwelveLevels()
         {
-            Assert.AreEqual(5, Asadito.Runtime.MvpLevelCatalog.Count);
-            int[] expectedGuests = { 2, 3, 4, 4, 6 };
-            for (int level = 1; level <= 5; level++)
+            Assert.AreEqual(12, Asadito.Runtime.MvpLevelCatalog.Count);
+            int[] expectedGuests = { 2, 3, 4, 4, 6, 5, 4, 5, 5, 6, 6, 6 };
+            for (int level = 1; level <= Asadito.Runtime.MvpLevelCatalog.Count; level++)
             {
                 Asadito.Runtime.MvpLevelDefinition content = Asadito.Runtime.MvpLevelCatalog.Get(level);
                 Assert.AreEqual(expectedGuests[level - 1], content.GuestCount);
@@ -82,6 +97,13 @@ namespace Asadito.Tests
             }
             Assert.Contains("vacio", Asadito.Runtime.MvpLevelCatalog.Get(4).FoodIds);
             Assert.Contains("provoleta", Asadito.Runtime.MvpLevelCatalog.Get(5).FoodIds);
+            Assert.Contains("entrana", Asadito.Runtime.MvpLevelCatalog.Get(6).FoodIds);
+            Assert.Contains("morcilla_vasca", Asadito.Runtime.MvpLevelCatalog.Get(8).FoodIds);
+            Assert.Contains("pollo_deshuesado", Asadito.Runtime.MvpLevelCatalog.Get(9).FoodIds);
+            var introduced = new System.Collections.Generic.HashSet<string>();
+            for (int level = 1; level <= Asadito.Runtime.MvpLevelCatalog.Count; level++)
+                foreach (string foodId in Asadito.Runtime.MvpLevelCatalog.Get(level).FoodIds) introduced.Add(foodId);
+            Assert.AreEqual(Asadito.Runtime.FoodCatalog.Count, introduced.Count, "Progression must eventually feature every catalog food.");
         }
 
         [Test]

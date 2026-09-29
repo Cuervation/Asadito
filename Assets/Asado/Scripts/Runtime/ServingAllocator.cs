@@ -30,6 +30,7 @@ namespace Asadito.Runtime
             var result = new List<ServingAssignment>();
             if (guests == null || portions == null || guests.Count == 0) return result;
             var assigned = new float[guests.Count];
+            var portionsByGuest = new int[guests.Count];
             var order = new List<int>(portions.Count);
             for (int i = 0; i < portions.Count; i++) order.Add(i);
             order.Sort((a, b) => string.CompareOrdinal(portions[a]?.Id, portions[b]?.Id));
@@ -39,6 +40,7 @@ namespace Asadito.Runtime
                 ServingPortion portion = portions[portionIndex];
                 if (portion == null) continue;
                 int bestGuest = -1;
+                int bestServedCount = int.MaxValue;
                 float bestCoverage = float.NegativeInfinity;
                 int bestFoodPreference = int.MinValue;
                 int bestDoneness = int.MinValue;
@@ -50,14 +52,19 @@ namespace Asadito.Runtime
                     float coverage = target <= 0f ? 0f : Mathf.Min(portion.Amount, Mathf.Max(0f, target - assigned[guestIndex]));
                     int foodPreference = GetFoodPreference(guest, portion.FoodId);
                     int doneness = guest.PreferredDoneness == portion.Doneness ? 1 : 0;
-                    if (coverage > bestCoverage || (Mathf.Approximately(coverage, bestCoverage) && foodPreference > bestFoodPreference) ||
-                        (Mathf.Approximately(coverage, bestCoverage) && foodPreference == bestFoodPreference && doneness > bestDoneness))
+                    int servedCount = portionsByGuest[guestIndex];
+                    if (servedCount < bestServedCount ||
+                        (servedCount == bestServedCount && coverage > bestCoverage) ||
+                        (servedCount == bestServedCount && Mathf.Approximately(coverage, bestCoverage) && foodPreference > bestFoodPreference) ||
+                        (servedCount == bestServedCount && Mathf.Approximately(coverage, bestCoverage) && foodPreference == bestFoodPreference && doneness > bestDoneness))
                     {
-                        bestGuest = guestIndex; bestCoverage = coverage; bestFoodPreference = foodPreference; bestDoneness = doneness;
+                        bestGuest = guestIndex; bestServedCount = servedCount; bestCoverage = coverage;
+                        bestFoodPreference = foodPreference; bestDoneness = doneness;
                     }
                 }
                 if (bestGuest < 0) continue;
                 assigned[bestGuest] += Mathf.Max(0f, portion.Amount);
+                portionsByGuest[bestGuest]++;
                 result.Add(new ServingAssignment(guests[bestGuest].Id, portion.Id));
             }
             return result;
@@ -70,6 +77,18 @@ namespace Asadito.Runtime
             if (Contains(guest.FavoriteFoods, foodId)) return 3;
             if (Contains(guest.LikedFoods, foodId)) return 2;
             return 1;
+        }
+
+        /// <summary>Maps preference tiers to a player-readable 0–100 score; favorites can earn the full 100.</summary>
+        public static float GetFoodPreferenceScore(GuestProfile guest, string foodId)
+        {
+            switch (GetFoodPreference(guest, foodId))
+            {
+                case 0: return 0f;
+                case 1: return 40f;
+                case 2: return 70f;
+                default: return 100f;
+            }
         }
 
         private static bool Contains(List<string> values, string value)

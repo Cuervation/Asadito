@@ -23,7 +23,6 @@ namespace Asadito.Editor
             }
 
             PrepareSprite("Assets/Asado/Resources/Art/PatioParrilla.png");
-            PrepareSprite("Assets/Asado/Resources/Art/TiraAsadoCruda.png");
             var scene = EditorSceneManager.GetActiveScene();
             if (!scene.IsValid() || string.IsNullOrEmpty(scene.path)) return;
             if (GameObject.Find("Asadito MVP") != null) return;

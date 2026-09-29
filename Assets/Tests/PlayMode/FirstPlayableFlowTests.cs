@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Generic;
 using System.Collections;
 using System.Reflection;
 using Asadito.Runtime;
@@ -145,7 +146,7 @@ namespace Asadito.Tests.PlayMode
         }
 
         [UnityTest]
-        public IEnumerator VisualAssets_FourFoodsExposeSixThermalStatesPerFace()
+        public IEnumerator VisualAssets_CatalogFoodsExposeSixThermalStatesPerFace()
         {
             ResetSaveCache();
             MvpSave.Save(new MvpSaveData());
@@ -259,21 +260,24 @@ namespace Asadito.Tests.PlayMode
             Assert.AreEqual("Asadito UI Icon Next", introStart.transform.Find("Icono accion IR A LA PARRILLA").GetComponent<Image>().sprite.name);
             AssertActionIconInsideButton(introStart, "IR A LA PARRILLA");
 
-            Sprite[][] sprites = (Sprite[][])GetField(game, "foodStateSprites");
-            Assert.NotNull(sprites, "The generated food-state atlas must load in runtime.");
-            string[] foodIds = { "chorizo", "tira", "vacio", "provoleta" };
-            string[] stages = { "raw", "warming", "browning", "ideal", "overcooked", "burnt" };
-            Assert.AreEqual(foodIds.Length, sprites.Length);
-            for (int food = 0; food < foodIds.Length; food++)
+            var sprites = (Dictionary<string, Sprite[]>)GetField(game, "foodStateSprites");
+            Assert.NotNull(sprites, "Food-state atlases should be cached by catalog id.");
+            string[] foodIds = { "tira", "chorizo" };
+            string[] stages = FoodSpriteLibrary.StateNames;
+            Assert.AreEqual(foodIds.Length, sprites.Count,
+                "Runtime should load only foods needed by the selected order, not eagerly load all atlases.");
+            foreach (string foodId in foodIds)
             {
-                Assert.AreEqual(stages.Length, sprites[food].Length);
+                Assert.IsTrue(sprites.TryGetValue(foodId, out Sprite[] states), "Missing lazily loaded state atlas " + foodId);
+                Assert.AreEqual(stages.Length, states.Length);
                 for (int stage = 0; stage < stages.Length; stage++)
                 {
-                    Assert.NotNull(sprites[food][stage]);
-                    Assert.AreEqual(foodIds[food] + "_" + stages[stage], sprites[food][stage].name);
-                    Assert.AreEqual("FoodStateAtlas6", sprites[food][stage].texture.name);
-                    Assert.AreEqual(240f, sprites[food][stage].rect.width);
-                    Assert.AreEqual(240f, sprites[food][stage].rect.height);
+                    Assert.NotNull(states[stage]);
+                    Assert.AreEqual(foodId + "_" + stages[stage], states[stage].name);
+                    Assert.AreEqual(foodId, states[stage].texture.name,
+                        "Each cut should have its own optimized six-state atlas.");
+                    Assert.Greater(states[stage].rect.width, 0f);
+                    Assert.Greater(states[stage].rect.height, 0f);
                 }
             }
 
@@ -284,18 +288,24 @@ namespace Asadito.Tests.PlayMode
             FoodFaceState[] cookingFaces =
             {
                 new FoodFaceState { SurfaceTemperatureC = 20f },
-                new FoodFaceState { SurfaceTemperatureC = 60f },
-                new FoodFaceState { SurfaceTemperatureC = 140f, Maillard = .12f },
+                new FoodFaceState { SurfaceTemperatureC = 45f },
+                new FoodFaceState { SurfaceTemperatureC = 140f, Maillard = .05f },
                 new FoodFaceState { SurfaceTemperatureC = 160f, Maillard = .36f },
-                new FoodFaceState { SurfaceTemperatureC = 190f, Maillard = .6f, Char = .12f },
-                new FoodFaceState { SurfaceTemperatureC = 220f, Maillard = .8f, Char = .35f }
+                new FoodFaceState { SurfaceTemperatureC = 190f, Maillard = .6f },
+                new FoodFaceState { SurfaceTemperatureC = 220f, Maillard = .8f, Char = .75f }
             };
+            float[] coreTemperatures = { 20f, 30f, 40f, 60f, 60f, 72f };
+            float[] moistures = { 1f, 1f, 1f, 1f, .2f, .1f };
             for (int index = 0; index < portions.Length; index++)
             {
                 FoodState state = (FoodState)GetField(portions.GetValue(index), "State");
-                string foodId = ((FoodCookProfile)GetField(portions.GetValue(index), "Profile")).FoodId;
+                FoodCookProfile profile = (FoodCookProfile)GetField(portions.GetValue(index), "Profile");
+                string foodId = profile.FoodId;
                 for (int stage = 0; stage < cookingFaces.Length; stage++)
                 {
+                    state.CoreTemperatureC = coreTemperatures[stage];
+                    if (stage == 3) state.CoreTemperatureC = profile.DonenessBands[0].MinimumCoreC + .5f;
+                    state.Moisture = moistures[stage];
                     state.SetCurrentFace(cookingFaces[stage]);
                     refreshVisual.Invoke(game, new object[] { index });
                     Assert.AreEqual(foodId + "_" + stages[stage], images[index].sprite.name,
@@ -303,6 +313,7 @@ namespace Asadito.Tests.PlayMode
                 }
 
                 state.Reset();
+                state.CoreTemperatureC = profile.DonenessBands[0].MinimumCoreC + .5f;
                 state.SetCurrentFace(cookingFaces[3]);
                 refreshVisual.Invoke(game, new object[] { index });
                 Assert.AreEqual(foodId + "_ideal", images[index].sprite.name);
@@ -347,7 +358,7 @@ namespace Asadito.Tests.PlayMode
         }
 
         [UnityTest]
-        public IEnumerator Mvp_AllFiveLevels_CookServeResultsUnlockNextAndReturnToSelection()
+        public IEnumerator Mvp_AllTwelveLevels_CookServeResultsUnlockNextAndReturnToSelection()
         {
             ResetSaveCache();
             MvpSave.Save(new MvpSaveData());
@@ -365,8 +376,8 @@ namespace Asadito.Tests.PlayMode
             ClickButton("IR A LA PARRILLA");
             yield return new WaitForSecondsRealtime(.45f);
 
-            int[] expectedPortions = { 2, 3, 4, 4, 6 };
-            for (int level = 1; level <= 5; level++)
+            int[] expectedPortions = { 2, 3, 4, 4, 6, 5, 4, 5, 5, 6, 6, 6 };
+            for (int level = 1; level <= expectedPortions.Length; level++)
             {
                 Assert.AreEqual(level, ReadField<int>(game, "currentLevelNumber"));
                 Array portions = (Array)GetField(game, "portions");
@@ -399,7 +410,7 @@ namespace Asadito.Tests.PlayMode
                 Assert.GreaterOrEqual(result.StarsByLevel[level - 1], 1, "L" + level + " must earn one star to unlock the next MVP level.");
                 Assert.Greater(result.BestScoreByLevel[level - 1], 0, "L" + level + " must persist its score.");
 
-                if (level < 5)
+                if (level < expectedPortions.Length)
                 {
                     Button next = FindButton("SIGUIENTE");
                     Assert.IsTrue(next.interactable, "Passing L" + level + " must unlock Next.");
@@ -416,7 +427,7 @@ namespace Asadito.Tests.PlayMode
                     Assert.IsTrue(FindButton("NIVELES").interactable, "The last result must return to level selection.");
                     ClickButton("NIVELES");
                     yield return new WaitForSecondsRealtime(.5f);
-                    Assert.NotNull(GameObject.Find("Seleccion de nivel"), "L5 completion must return to level selection.");
+                    Assert.NotNull(GameObject.Find("Seleccion de nivel"), "L12 completion must return to level selection.");
                 }
             }
         }
@@ -468,14 +479,23 @@ namespace Asadito.Tests.PlayMode
 
         private static IEnumerator LoadGameScene(Action<Component> setGame)
         {
-            SceneManager.LoadScene(0, LoadSceneMode.Single);
+            SceneManager.LoadScene("SampleScene", LoadSceneMode.Single);
             yield return null;
             yield return null;
+            Assert.AreEqual("SampleScene", SceneManager.GetActiveScene().name,
+                "PlayMode tests must explicitly load the shipped gameplay scene.");
             Type gameType = Type.GetType("Asadito.AsaditoGame, Assembly-CSharp");
             Assert.NotNull(gameType, "AsaditoGame must be present in Assembly-CSharp.");
             GameObject root = GameObject.Find("Asadito MVP");
             Assert.NotNull(root, "Build scene must contain the Asadito MVP root.");
-            setGame(root.GetComponent(gameType));
+            Component game = root.GetComponent(gameType);
+            Assert.NotNull(game);
+            Assert.NotNull(GameObject.Find("Asadito UI"),
+                "AsaditoGame.Start must construct its runtime Canvas in the shipped scene.");
+            GameObject menuRoot = (GameObject)GetField(game, "menuRoot");
+            Assert.NotNull(menuRoot, "BuildFrontEnd must create the title menu root.");
+            Assert.IsTrue(menuRoot.activeInHierarchy, "The title menu should be active immediately after loading the shipped scene.");
+            setGame(game);
         }
 
         private static void AssertGameplayGrillArtLoaded(Component game)

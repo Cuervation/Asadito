@@ -1,3 +1,3 @@
-# Referencia histórica — alcance de producto
+# Referencia histórica — alcance original
 
-La especificación normativa de alcance es [`mvp-scope.md`](mvp-scope.md). Conserva como contexto First Playable de dos comensales, chorizo y tira, bandeja, evaluación/reintento, y la progresión a cinco niveles. Reglas y límites vigentes están en la spec canónica y sus sistemas enlazados.
+La primera versión First Playable era nivel 1: dos comensales, chorizo y tira, servicio en bandeja, evaluación y reintento. Esa base permanece, pero la especificación vigente ya amplió el MVP a doce niveles y 18 comidas: consultar [`mvp-scope.md`](mvp-scope.md), los sistemas canónicos y [`docs/gameplay/food-catalog.md`](../../docs/gameplay/food-catalog.md). Las menciones a cinco niveles en documentos históricos describen exclusivamente el save/progresión anterior (migrado por el esquema v2), no el alcance actual.

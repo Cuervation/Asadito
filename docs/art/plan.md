@@ -1,30 +1,31 @@
-# Plan visual MVP — Asadito
+# Estado visual — Asadito
 
-Fuente de dirección/gates: [Visual Bible](../../specs/visual/art-direction.md), [estados de comida](../../specs/visual/food-states.md), [estados de fuego](../../specs/visual/fire-states.md) y [animación](../../specs/visual/animation.md). Concepto o asset integrado no equivale a `FINAL`: debe pasar import, inspección visual, responsive/táctil y device QA.
+El inventario vigente y sus límites están en [Visual Bible](../../specs/visual/art-direction.md), [asset manifest](asset-manifest.md), [animation manifest](animation-manifest.md) y [food catalog](../gameplay/food-catalog.md). `PROVISIONAL` significa conectado y verificable, pero sin aprobación artística/táctil final.
 
-## Slice visual ya integrado
+## Integrado
 
-- Fuentes estáticas Lilita One y Baloo 2 400/500/600/700/800, con licencias OFL; Canvas runtime usa Unity Legacy Text, no TMP.
-- Portada vertical ilustrada 3D semi-cartoon con parrilla estrictamente cenital (estilo coherente con el fondo de gameplay), logo propio Lilita One, botones `ENTRAR`/`SALIR`, estado de espera accesible durante la animación escalonada, botones redondeados/feedback, brillo ambiental y transición a selección. PNG 941×1672 y GUID conservados; composición revisada en GameView portrait, pendiente QA de device.
-- Icono adaptativo Android rediseñado como chorizo sobre parrilla; se conservó GUID y configuración de las seis densidades/12 capas.
-- Parrilla cenital ilustrada de gameplay, 16 estados de comida por atlas y nuevo atlas semi-cartoon de 24 retratos (seis identidades/cuatro expresiones); dimensiones y slicing 6×4 preservados, suite PlayMode pasa.
-- Level select, intro, HUD, resultados, score/estrellas/reacciones y navegación L1–L5 continúan sobre Canvas procedural; se verifican loops automáticos sin alterar sistemas de juego durante el polish visual.
+- Portada vertical semi-cartoon top-down, wordmark propio Lilita One, bajada `el sabor Argentino`, repasador con bandera integrada a la tela, CTA `ENTRAR`/`SALIR` centrados e iguales.
+- Fondo de parrilla top-down en gameplay, retratos de seis invitados × cuatro expresiones y 11 iconos vectoriales de UI.
+- Catálogo visual de 18 atlas RGBA, seis estados cada uno: 108 recortes dinámicos no-null, importados comprimidos para Android; cada estado térmico se proyecta durante cocción.
+- Doce tarjetas ilustradas independientes; el selector conserva solo la etiqueta `Nivel N`, sin datos secundarios.
+- Canvas procedural integrado para portada, navegación, botones, brasa/calor/humo, drag/place/flip/retirar/servir, invitados, resultados y estrellas; ocho one-shots sintéticos y sizzle loop.
+- La especificación [animation manifest](animation-manifest.md) distingue con precisión motion real procedural compartido de lo que no existe: clips authored por corte o simulación visual física.
 
-## Plan restante (prioridad MVP)
+## Validación técnica disponible
 
-1. Reconnectar el Editor MCP sin cerrar la instancia abierta; revisar portada/scene/console, encuadres y botones en layout portrait. El MCP HTTP reporta la sesión pero falla ping y consola (`Unity session not ready`).
-2. Inspeccionar en GUI el nuevo key art top-down ya revisado como PNG, wordmark/icono a tamaño real, CTA/SALIR, safe-area y crops Android; ajustar solo si el render lo requiere.
-3. Revisión de pantallas: level cards con jerarquía/info legible, iconos propios de comidas/navegación/estrellas/locks, HUD sin tapar parrilla, intro, score y feedback individual. Corregir layouts solo con evidencia de render, no reescribir gameplay.
-4. Cerrar motion dedicado de ignition/brasa/lift-contact/serve transition, elevar atlas de comida de cuatro intercambios a estados intermedios/por cara y ampliar fuego/tray/pinzas/VFX; conservar modelo térmico/scoring y mostrar claramente estado real.
-5. Medir build/dispositivo (resoluciones, touch, rendimiento/transparencias, audio/haptics); completar arte/animaciones solo tras aprobar lectura y balance de feedback.
+Unity 6000.6.3f1: EditMode 18/18 y PlayMode 6/6; los tests recorren los doce niveles, no solo L1–L5. `Tools/validate_food_content.py` confirma 18 perfiles distintos, 108 sprites, 12 tarjetas. APK Android ARM64 IL2CPP (1.1.0, min API 26, target API 36, portrait) compilado, verificado e instalado/lanzado en emulador Pixel 7a API 36. La portada se capturó en ese emulador; no equivale a certificar tacto, notch, perf/audio físicos ni aprobación artística. Evidencia y limitaciones en [current state](../ai/current-state.md) y [Android release](../android-release.md).
 
-## Validación actual
+## Próximas mejoras, sin bloquear el MVP técnico
 
-Unity 6000.6.3f1, copia aislada del proyecto: PlayMode full L1–L5 con portada, iconos propios y motion core 6/6 Passed (`/tmp/AsaditoFinalPlayTests.xml`); EditMode 13/13 (`/tmp/AsaditoFinalEditTests.xml`); referencia scan: 2 escenas, 0 prefabs, 14 componentes, 0 missing scripts y 0 GUIDs irresolubles. L1 ×30 dura ~44 s scripted, no en playtest humano. MCP del Editor original recupera información de proyecto/scene pero falla estado/consola/jerarquía, por lo que batch no se presenta como inspección GUI/device. Rebuild Android posterior a UI/motion: APK 47 MB, 0 errores/1 warning C++ no bloqueante, package y firma Debug v2 válidos (`/tmp/AsaditoFinalVisualUI.apk`); falta launcher/touch QA real y no se reemplazó `Builds/Android`.
+1. Probar gestos y zonas táctiles con dedos en un teléfono y distintas relaciones de aspecto/safe areas.
+2. Revisar legibilidad, contraste, crops y ritmo de animación con evaluación visual humana; todo arte sigue provisional.
+3. Medir FPS, memoria, transparencias, audio y háptica en hardware físico de baja/media gama.
+4. Incorporar una credencial Unity válida a GitHub Actions para ejecutar suites Unity de forma remota; el workflow ya separa validación estática de ese requisito.
+5. Hacer balance/playtest humano de dificultad de 12 niveles y revisar firma productiva solo cuando exista autorización/material del owner.
 
-## Restricciones
+## Límites de producción
 
-- No crear niveles, escenas, GameObjects ni contenido gameplay fuera del MVP ni variar simulación, scoring, allocator, guests o progression por motivo visual.
-- No copiar Pocket Chef ni juegos/artistas de referencia; usar solo el estándar de calidad/claridad casual mobile.
-- No importar paquetes visuales grandes ni fuentes/familias adicionales sin justificación y licencia. Nunito no se instala salvo que legibilidad móvil demuestre que Baloo 2 no alcanza.
-- Consultar [Asset Manifest](asset-manifest.md) y [Animation Manifest](animation-manifest.md); los estados permitidos son `FINAL`, `PROVISIONAL` y `BLOCKED`.
+- No imitar logos, sprites o personajes de juegos de referencia: se toma solo un lenguaje casual de lectura rápida.
+- Assets propios/creados para Asadito y fuentes Lilita One/Baloo 2 con OFL incluida. VFX y audio son soluciones procedurales provisionales.
+- Las seis fases térmicas son cambios discretos de sprite; cada lado guarda su estado, pero el flip anima un intercambio/arqueo 2D y no rota geometría 3D.
+- No se genera ni publica una release firmada. `Builds/Android` no se reemplaza; el APK validado temporal vive fuera del repositorio.

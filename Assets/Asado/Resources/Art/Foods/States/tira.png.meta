@@ -1,46 +1,46 @@
 fileFormatVersion: 2
-guid: f406e75af44dc4287b3aae085e637a48
+guid: 6fd1bcb772fe48c08867c8fa0adfa228
 TextureImporter:
   internalIDToNameTable:
   - first:
-      213: 4679865006171070012
-    second: FoodStateAtlas_0
+      213: -280287100790033092
+    second: tira_0
   - first:
-      213: -3752026016374310396
-    second: FoodStateAtlas_1
+      213: 3433293179238395734
+    second: tira_1
   - first:
-      213: 8500446025782131440
-    second: FoodStateAtlas_2
+      213: 1487932039291864164
+    second: tira_2
   - first:
-      213: -1228836409483475538
-    second: FoodStateAtlas_3
+      213: 4367073920569090532
+    second: tira_3
   - first:
-      213: 2446175961176381987
-    second: FoodStateAtlas_4
+      213: 9043191988305801662
+    second: tira_4
   - first:
-      213: 2002696059504944959
-    second: FoodStateAtlas_5
+      213: -3492531558389194836
+    second: tira_5
   - first:
-      213: 931007520937612276
-    second: FoodStateAtlas_6
+      213: 843646026649811279
+    second: tira_6
   - first:
-      213: 1165920844852834777
-    second: FoodStateAtlas_7
+      213: -8530056327748897582
+    second: tira_7
   - first:
-      213: 763550472194701109
-    second: FoodStateAtlas_8
+      213: 2327048524890120383
+    second: tira_8
   - first:
-      213: -7504000473252992226
-    second: FoodStateAtlas_9
+      213: 76155578063741282
+    second: tira_9
   - first:
-      213: -6804077521311584902
-    second: FoodStateAtlas_10
+      213: -1224345120118539490
+    second: tira_10
   - first:
-      213: 1241910601384633317
-    second: FoodStateAtlas_11
+      213: -7504922813474825378
+    second: tira_11
   - first:
-      213: 9172765667915318821
-    second: FoodStateAtlas_12
+      213: 3794657211636671280
+    second: tira_12
   externalObjects: {}
   serializedVersion: 13
   mipmaps:
@@ -82,7 +82,7 @@ TextureImporter:
   nPOTScale: 0
   lightmap: 0
   compressionQuality: 50
-  spriteMode: 2
+  spriteMode: 0
   spriteExtrude: 1
   spriteMeshType: 1
   alignment: 0
@@ -95,7 +95,7 @@ TextureImporter:
   spriteTessellationMethod: 0
   spriteTessellationDetail: -1
   spriteGeometrySubdivision: -1
-  textureType: 8
+  textureType: 0
   textureShape: 1
   singleChannelComponent: 0
   flipbookRows: 1
@@ -110,11 +110,11 @@ TextureImporter:
   platformSettings:
   - serializedVersion: 4
     buildTarget: DefaultTexturePlatform
-    maxTextureSize: 2048
+    maxTextureSize: 768
     resizeAlgorithm: 0
     textureFormat: -1
-    textureCompression: 1
-    compressionQuality: 50
+    textureCompression: 2
+    compressionQuality: 82
     crunchedCompression: 0
     allowsAlphaSplitting: 0
     overridden: 0
@@ -136,14 +136,14 @@ TextureImporter:
     forceMaximumCompressionQuality_BC6H_BC7: 0
   - serializedVersion: 4
     buildTarget: Android
-    maxTextureSize: 2048
+    maxTextureSize: 768
     resizeAlgorithm: 0
-    textureFormat: -1
-    textureCompression: 1
-    compressionQuality: 50
+    textureFormat: 47
+    textureCompression: 2
+    compressionQuality: 82
     crunchedCompression: 0
     allowsAlphaSplitting: 0
-    overridden: 0
+    overridden: 1
     ignorePlatformSupport: 0
     androidETC2FallbackOverride: 0
     forceMaximumCompressionQuality_BC6H_BC7: 0
@@ -164,13 +164,13 @@ TextureImporter:
     serializedVersion: 2
     sprites:
     - serializedVersion: 2
-      name: FoodStateAtlas_0
+      name: tira_0
       rect:
         serializedVersion: 2
         x: 0
-        y: 915
-        width: 308
-        height: 252
+        y: 375
+        width: 1024
+        height: 1131
       alignment: 0
       pivot: {x: 0, y: 0}
       border: {x: 0, y: 0, z: 0, w: 0}
@@ -179,20 +179,20 @@ TextureImporter:
       physicsShape: []
       tessellationDetail: -1
       bones: []
-      spriteID: c3e9b999d6832f040800000000000000
-      internalID: 4679865006171070012
+      spriteID: c35394aed583c1cf0800000000000000
+      internalID: -280287100790033092
       vertices: []
       indices:
       edges: []
       weights: []
     - serializedVersion: 2
-      name: FoodStateAtlas_1
+      name: tira_1
       rect:
         serializedVersion: 2
-        x: 314
-        y: 939
-        width: 312
-        height: 223
+        x: 0
+        y: 709
+        width: 5
+        height: 13
       alignment: 0
       pivot: {x: 0, y: 0}
       border: {x: 0, y: 0, z: 0, w: 0}
@@ -201,20 +201,20 @@ TextureImporter:
       physicsShape: []
       tessellationDetail: -1
       bones: []
-      spriteID: 40a3cf997302eebc0800000000000000
-      internalID: -3752026016374310396
+      spriteID: 65fa646c4f185af20800000000000000
+      internalID: 3433293179238395734
       vertices: []
       indices:
       edges: []
       weights: []
     - serializedVersion: 2
-      name: FoodStateAtlas_2
+      name: tira_2
       rect:
         serializedVersion: 2
-        x: 626
-        y: 938
-        width: 363
-        height: 269
+        x: 183
+        y: 545
+        width: 666
+        height: 239
       alignment: 0
       pivot: {x: 0, y: 0}
       border: {x: 0, y: 0, z: 0, w: 0}
@@ -223,20 +223,20 @@ TextureImporter:
       physicsShape: []
       tessellationDetail: -1
       bones: []
-      spriteID: 0faff178f96a7f570800000000000000
-      internalID: 8500446025782131440
+      spriteID: 4640aeb6e4236a410800000000000000
+      internalID: 1487932039291864164
       vertices: []
       indices:
       edges: []
       weights: []
     - serializedVersion: 2
-      name: FoodStateAtlas_3
+      name: tira_3
       rect:
         serializedVersion: 2
-        x: 1014
-        y: 947
-        width: 225
-        height: 227
+        x: 187
+        y: 287
+        width: 658
+        height: 243
       alignment: 0
       pivot: {x: 0, y: 0}
       border: {x: 0, y: 0, z: 0, w: 0}
@@ -245,85 +245,19 @@ TextureImporter:
       physicsShape: []
       tessellationDetail: -1
       bones: []
-      spriteID: ea5cba5dbcb42fee0800000000000000
-      internalID: -1228836409483475538
+      spriteID: 4e1a46fc796fa9c30800000000000000
+      internalID: 4367073920569090532
       vertices: []
       indices:
       edges: []
       weights: []
     - serializedVersion: 2
-      name: FoodStateAtlas_4
+      name: tira_4
       rect:
         serializedVersion: 2
-        x: 27
-        y: 603
-        width: 595
-        height: 269
-      alignment: 0
-      pivot: {x: 0, y: 0}
-      border: {x: 0, y: 0, z: 0, w: 0}
-      customData:
-      outline: []
-      physicsShape: []
-      tessellationDetail: -1
-      bones: []
-      spriteID: 32a9408831092f120800000000000000
-      internalID: 2446175961176381987
-      vertices: []
-      indices:
-      edges: []
-      weights: []
-    - serializedVersion: 2
-      name: FoodStateAtlas_5
-      rect:
-        serializedVersion: 2
-        x: 613
-        y: 638
-        width: 387
-        height: 276
-      alignment: 0
-      pivot: {x: 0, y: 0}
-      border: {x: 0, y: 0, z: 0, w: 0}
-      customData:
-      outline: []
-      physicsShape: []
-      tessellationDetail: -1
-      bones: []
-      spriteID: f37edd394710bcb10800000000000000
-      internalID: 2002696059504944959
-      vertices: []
-      indices:
-      edges: []
-      weights: []
-    - serializedVersion: 2
-      name: FoodStateAtlas_6
-      rect:
-        serializedVersion: 2
-        x: 1010
-        y: 352
-        width: 227
-        height: 259
-      alignment: 0
-      pivot: {x: 0, y: 0}
-      border: {x: 0, y: 0, z: 0, w: 0}
-      customData:
-      outline: []
-      physicsShape: []
-      tessellationDetail: -1
-      bones: []
-      spriteID: 4f314b8586a9bec00800000000000000
-      internalID: 931007520937612276
-      vertices: []
-      indices:
-      edges: []
-      weights: []
-    - serializedVersion: 2
-      name: FoodStateAtlas_7
-      rect:
-        serializedVersion: 2
-        x: 1012
-        y: 656
-        width: 227
+        x: 192
+        y: 811
+        width: 641
         height: 220
       alignment: 0
       pivot: {x: 0, y: 0}
@@ -333,20 +267,20 @@ TextureImporter:
       physicsShape: []
       tessellationDetail: -1
       bones: []
-      spriteID: 9d13da1c4de2e2010800000000000000
-      internalID: 1165920844852834777
+      spriteID: eb130a2533fdf7d70800000000000000
+      internalID: 9043191988305801662
       vertices: []
       indices:
       edges: []
       weights: []
     - serializedVersion: 2
-      name: FoodStateAtlas_8
+      name: tira_5
       rect:
         serializedVersion: 2
-        x: 27
-        y: 314
-        width: 599
-        height: 259
+        x: 195
+        y: 1047
+        width: 637
+        height: 227
       alignment: 0
       pivot: {x: 0, y: 0}
       border: {x: 0, y: 0, z: 0, w: 0}
@@ -355,20 +289,20 @@ TextureImporter:
       physicsShape: []
       tessellationDetail: -1
       bones: []
-      spriteID: 5373f37eb1da89a00800000000000000
-      internalID: 763550472194701109
+      spriteID: cafde574d09088fc0800000000000000
+      internalID: -3492531558389194836
       vertices: []
       indices:
       edges: []
       weights: []
     - serializedVersion: 2
-      name: FoodStateAtlas_9
+      name: tira_6
       rect:
         serializedVersion: 2
-        x: 625
-        y: 334
-        width: 371
-        height: 265
+        x: 688
+        y: 1045
+        width: 9
+        height: 11
       alignment: 0
       pivot: {x: 0, y: 0}
       border: {x: 0, y: 0, z: 0, w: 0}
@@ -377,20 +311,20 @@ TextureImporter:
       physicsShape: []
       tessellationDetail: -1
       bones: []
-      spriteID: e1b6465d35f6cd790800000000000000
-      internalID: -7504000473252992226
+      spriteID: f49b1a6679b35bb00800000000000000
+      internalID: 843646026649811279
       vertices: []
       indices:
       edges: []
       weights: []
     - serializedVersion: 2
-      name: FoodStateAtlas_10
+      name: tira_7
       rect:
         serializedVersion: 2
-        x: 25
-        y: 63
-        width: 599
-        height: 226
+        x: 916
+        y: 453
+        width: 43
+        height: 21
       alignment: 0
       pivot: {x: 0, y: 0}
       border: {x: 0, y: 0, z: 0, w: 0}
@@ -399,19 +333,85 @@ TextureImporter:
       physicsShape: []
       tessellationDetail: -1
       bones: []
-      spriteID: a7da00e3b8f0391a0800000000000000
-      internalID: -6804077521311584902
+      spriteID: 2d4347ec6f62f9980800000000000000
+      internalID: -8530056327748897582
       vertices: []
       indices:
       edges: []
       weights: []
     - serializedVersion: 2
-      name: FoodStateAtlas_11
+      name: tira_8
       rect:
         serializedVersion: 2
-        x: 624
-        y: 35
-        width: 368
+        x: 0
+        y: 105
+        width: 99
+        height: 179
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData:
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: fb02c2ddd465b4020800000000000000
+      internalID: 2327048524890120383
+      vertices: []
+      indices:
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: tira_9
+      rect:
+        serializedVersion: 2
+        x: 63
+        y: 91
+        width: 18
+        height: 24
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData:
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 2616722481f8e0100800000000000000
+      internalID: 76155578063741282
+      vertices: []
+      indices:
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: tira_10
+      rect:
+        serializedVersion: 2
+        x: 74
+        y: 201
+        width: 33
+        height: 43
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData:
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: e1bf9d0a990420fe0800000000000000
+      internalID: -1224345120118539490
+      vertices: []
+      indices:
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: tira_11
+      rect:
+        serializedVersion: 2
+        x: 188
+        y: 21
+        width: 659
         height: 262
       alignment: 0
       pivot: {x: 0, y: 0}
@@ -421,20 +421,20 @@ TextureImporter:
       physicsShape: []
       tessellationDetail: -1
       bones: []
-      spriteID: 5e3a25eac172c3110800000000000000
-      internalID: 1241910601384633317
+      spriteID: e5b9b14c67829d790800000000000000
+      internalID: -7504922813474825378
       vertices: []
       indices:
       edges: []
       weights: []
     - serializedVersion: 2
-      name: FoodStateAtlas_12
+      name: tira_12
       rect:
         serializedVersion: 2
-        x: 1012
-        y: 47
-        width: 225
-        height: 233
+        x: 918
+        y: 39
+        width: 51
+        height: 237
       alignment: 0
       pivot: {x: 0, y: 0}
       border: {x: 0, y: 0, z: 0, w: 0}
@@ -443,8 +443,8 @@ TextureImporter:
       physicsShape: []
       tessellationDetail: -1
       bones: []
-      spriteID: 526cdfb86c53c4f70800000000000000
-      internalID: 9172765667915318821
+      spriteID: 0336af701a459a430800000000000000
+      internalID: 3794657211636671280
       vertices: []
       indices:
       edges: []
@@ -463,19 +463,19 @@ TextureImporter:
     spriteCustomMetadata:
       entries: []
     nameFileIdTable:
-      FoodStateAtlas_0: 4679865006171070012
-      FoodStateAtlas_1: -3752026016374310396
-      FoodStateAtlas_10: -6804077521311584902
-      FoodStateAtlas_11: 1241910601384633317
-      FoodStateAtlas_12: 9172765667915318821
-      FoodStateAtlas_2: 8500446025782131440
-      FoodStateAtlas_3: -1228836409483475538
-      FoodStateAtlas_4: 2446175961176381987
-      FoodStateAtlas_5: 2002696059504944959
-      FoodStateAtlas_6: 931007520937612276
-      FoodStateAtlas_7: 1165920844852834777
-      FoodStateAtlas_8: 763550472194701109
-      FoodStateAtlas_9: -7504000473252992226
+      tira_0: -280287100790033092
+      tira_1: 3433293179238395734
+      tira_10: -1224345120118539490
+      tira_11: -7504922813474825378
+      tira_12: 3794657211636671280
+      tira_2: 1487932039291864164
+      tira_3: 4367073920569090532
+      tira_4: 9043191988305801662
+      tira_5: -3492531558389194836
+      tira_6: 843646026649811279
+      tira_7: -8530056327748897582
+      tira_8: 2327048524890120383
+      tira_9: 76155578063741282
   mipmapLimitGroupName:
   pSDRemoveMatte: 0
   userData:

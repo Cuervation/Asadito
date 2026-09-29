@@ -15,22 +15,37 @@ namespace Asadito.Runtime
     [Serializable]
     public sealed class MvpSaveData
     {
-        public const int CurrentVersion = 1;
+        public const int CurrentVersion = 2;
         public int Version = CurrentVersion;
         public int MaxUnlockedLevel = 1;
-        public int[] StarsByLevel = new int[5];
-        public int[] BestScoreByLevel = new int[5];
+        public int[] StarsByLevel = new int[MvpLevelCatalog.Count];
+        public int[] BestScoreByLevel = new int[MvpLevelCatalog.Count];
         public MvpSettings Settings = new MvpSettings();
 
         public void RecordLevelResult(int levelNumber, int score, int stars)
         {
-            int index = Mathf.Clamp(levelNumber - 1, 0, 4);
-            if (StarsByLevel == null || StarsByLevel.Length != 5) Array.Resize(ref StarsByLevel, 5);
-            if (BestScoreByLevel == null || BestScoreByLevel.Length != 5) Array.Resize(ref BestScoreByLevel, 5);
+            if (levelNumber < 1 || levelNumber > MvpLevelCatalog.Count) return;
+            int index = levelNumber - 1;
+            if (StarsByLevel == null || StarsByLevel.Length != MvpLevelCatalog.Count) Array.Resize(ref StarsByLevel, MvpLevelCatalog.Count);
+            if (BestScoreByLevel == null || BestScoreByLevel.Length != MvpLevelCatalog.Count) Array.Resize(ref BestScoreByLevel, MvpLevelCatalog.Count);
             StarsByLevel[index] = Mathf.Max(StarsByLevel[index], Mathf.Clamp(stars, 0, 3));
             BestScoreByLevel[index] = Mathf.Max(BestScoreByLevel[index], score);
-            if (stars >= 1 && levelNumber >= MaxUnlockedLevel && levelNumber < 5)
+            if (stars >= 1 && levelNumber >= MaxUnlockedLevel && levelNumber < MvpLevelCatalog.Count)
                 MaxUnlockedLevel = Mathf.Max(MaxUnlockedLevel, levelNumber + 1);
+        }
+
+        public static MvpSaveData Migrate(MvpSaveData data)
+        {
+            if (data == null || data.Version < 1 || data.Version > CurrentVersion) return new MvpSaveData();
+            if (data.StarsByLevel == null) data.StarsByLevel = new int[0];
+            if (data.BestScoreByLevel == null) data.BestScoreByLevel = new int[0];
+            Array.Resize(ref data.StarsByLevel, MvpLevelCatalog.Count);
+            Array.Resize(ref data.BestScoreByLevel, MvpLevelCatalog.Count);
+            data.MaxUnlockedLevel = Mathf.Clamp(data.MaxUnlockedLevel, 1, MvpLevelCatalog.Count);
+            if (data.Settings == null) data.Settings = new MvpSettings();
+            data.Settings.SimulationTimeScale = Mathf.Clamp(data.Settings.SimulationTimeScale, 20f, 40f);
+            data.Version = CurrentVersion;
+            return data;
         }
     }
 
@@ -47,14 +62,7 @@ namespace Asadito.Runtime
             try
             {
                 MvpSaveData loaded = JsonUtility.FromJson<MvpSaveData>(PlayerPrefs.GetString(Key));
-                if (loaded == null || loaded.Version != MvpSaveData.CurrentVersion)
-                    return cached = new MvpSaveData();
-                loaded.MaxUnlockedLevel = Mathf.Clamp(loaded.MaxUnlockedLevel, 1, 5);
-                if (loaded.StarsByLevel == null || loaded.StarsByLevel.Length != 5) loaded.StarsByLevel = new int[5];
-                if (loaded.BestScoreByLevel == null || loaded.BestScoreByLevel.Length != 5) loaded.BestScoreByLevel = new int[5];
-                if (loaded.Settings == null) loaded.Settings = new MvpSettings();
-                loaded.Settings.SimulationTimeScale = Mathf.Clamp(loaded.Settings.SimulationTimeScale, 20f, 40f);
-                return cached = loaded;
+                return cached = MvpSaveData.Migrate(loaded);
             }
             catch (ArgumentException)
             {

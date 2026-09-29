@@ -1,5 +1,5 @@
-# Animación y feedback
+# Animación y feedback runtime
 
-Procedural o por clips; cada movimiento confirma una acción, dura poco y deja el alimento visible. Prioridad: colocar/mover/voltear/retirar/servir, evolución de cocción, brasas y reacción de comensales. Humo/chispas ligeros; audio de carbón, sizzle y metal; háptica opcional, configurable y solo si la plataforma lo soporta.
+Motion es procedural y vive dentro de `AsaditoGame`, no hay secuencias authored por corte. Acciones y tiempos/responsables se inventarían en [`docs/art/animation-manifest.md`](../../docs/art/animation-manifest.md). Comida: apariciones/selección, lift/drag/release/place, flip con squash/arco/cambio de cara, transferencia a bandeja y servicio. Parrilla: entrada del fuego, transición de celdas, glow de brasas, brasas animadas y humo. UI/resultados: entrada/transiciones, botones con sfx, reacciones de invitados, score count, pop escalonado de estrellas. Audio: cues sintéticos más sizzle/haptics configurables.
 
-El estado, amplitud y duración concretos viven en [`docs/art/animation-manifest.md`](../../docs/art/animation-manifest.md). El criterio global visual está en [dirección de arte](art-direction.md) y el gate de First Playable en [mvp-gate.md](../acceptance/mvp-gate.md).
+Mantener efectos breves, aditivos al gameplay y legibles en mobile; no claim de VFX shader/clip individual si no existe. Estado actual PROVISIONAL; falta accesibilidad/touch perf en device.

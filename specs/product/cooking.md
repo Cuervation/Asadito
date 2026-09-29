@@ -1,3 +1,3 @@
-# Referencia histórica — cocción
+# Cocción de gameplay
 
-La especificación normativa de fuego y cocción está en [`fire-heat.md`](systems/fire-heat.md) y [`food-cooking.md`](systems/food-cooking.md). Se conserva el principio válido de que el calor impulsa el estado y que retirar una pieza no detiene instantáneamente su evolución. Rangos y campos vigentes se definen allí.
+La fuente normativa técnica es [`systems/food-cooking.md`](systems/food-cooking.md) y la matriz autoritativa editable es [`Assets/Asado/Resources/Definitions/FoodCatalog.json`](../../Assets/Asado/Resources/Definitions/FoodCatalog.json). El calor y `FoodCookProfile` impulsan estados térmicos por cara; el tiempo por sí solo no define calidad ni victoria. Todos los valores son tuning de gameplay, no instrucción de inocuidad.
