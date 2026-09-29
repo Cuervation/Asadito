@@ -146,6 +146,27 @@ namespace Asadito.Tests.PlayMode
         }
 
         [UnityTest]
+        public IEnumerator HeatGridColorTween_IsNotCancelledBySimulationUpdate()
+        {
+            ResetSaveCache();
+            MvpSave.Save(new MvpSaveData());
+            Component game = null;
+            yield return LoadGameScene(value => game = value);
+            Assert.NotNull(game);
+            yield return EnterLevelOne(game);
+
+            ClickButton("PRENDER CARBÓN");
+            object tween = GetField(game, "heatVisualRoutine");
+            Assert.NotNull(tween, "Igniting the grill should start the heat-cell color transition.");
+
+            MethodInfo update = game.GetType().GetMethod("Update", BindingFlags.Instance | BindingFlags.NonPublic);
+            Assert.NotNull(update);
+            update.Invoke(game, null);
+            Assert.AreSame(tween, GetField(game, "heatVisualRoutine"),
+                "The normal simulation update must not cancel the active heat-cell transition.");
+        }
+
+        [UnityTest]
         public IEnumerator VisualAssets_CatalogFoodsExposeSixThermalStatesPerFace()
         {
             ResetSaveCache();
@@ -472,7 +493,12 @@ namespace Asadito.Tests.PlayMode
             }
             Assert.AreEqual(Doneness.A_Punto, FoodCookingModel.GetDoneness(state, profile), profile.FoodId + " must reach a valid point band.");
             ClickButton(buttons[index]);
-            yield return new WaitForSecondsRealtime(.5f);
+            float plateElapsed = 0f;
+            while (ReadField<int>(game, "trayCount") < index + 1 && plateElapsed < 3f)
+            {
+                yield return new WaitForSecondsRealtime(.05f);
+                plateElapsed += .05f;
+            }
             Assert.IsTrue(ReadField<bool>(portion, "OnTray"), profile.FoodId + " must reach the serving tray.");
             Assert.AreEqual(index + 1, ReadField<int>(game, "trayCount"));
         }
@@ -560,6 +586,8 @@ namespace Asadito.Tests.PlayMode
             Assert.IsTrue(grill.IsLit);
             float sourceBefore = grill.Grid.GetCell(3, 2).EmberEnergy;
             float targetBefore = grill.Grid.GetCell(0, 2).EmberEnergy;
+            Image targetVisual = GameObject.Find("Brasa 0,2").GetComponent<Image>();
+            Color targetColorBefore = targetVisual.color;
             Vector2 targetPosition = new Vector2(.0625f, .4167f);
             float targetHeatBefore = grill.Sample(targetPosition, new Vector2(.14f, .14f)).x;
 
@@ -574,6 +602,8 @@ namespace Asadito.Tests.PlayMode
 
             Assert.Less(grill.Grid.GetCell(3, 2).EmberEnergy, sourceBefore);
             Assert.Greater(grill.Grid.GetCell(0, 2).EmberEnergy, targetBefore);
+            Assert.AreNotEqual(targetColorBefore, targetVisual.color,
+                "Raking must update the changed cell's color without waiting for a full-grid refresh.");
             Assert.Greater(grill.Sample(targetPosition, new Vector2(.14f, .14f)).x, targetHeatBefore + 5f,
                 "Moving embers must visibly change the target zone's sampled heat.");
             if (assertTutorialStep) Assert.That(FindText("Tutorial contextual").text, Does.Contain("Paso 3"));
@@ -632,7 +662,12 @@ namespace Asadito.Tests.PlayMode
             Assert.Greater(state.CoreTemperatureC, 0f);
 
             ClickButton(food); // The active cut's second tap removes it to the serving tray.
-            yield return new WaitForSecondsRealtime(.5f);
+            float plateElapsed = 0f;
+            while (ReadField<int>(game, "trayCount") < index + 1 && plateElapsed < 3f)
+            {
+                yield return new WaitForSecondsRealtime(.05f);
+                plateElapsed += .05f;
+            }
             Assert.IsTrue(ReadField<bool>(portion, "OnTray"), foodButton + " should be on the tray before service.");
             Assert.That(FindText("Tutorial contextual").text, Does.Contain("Repetí con la otra porción"));
         }

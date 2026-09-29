@@ -149,6 +149,8 @@ namespace Asadito
         private ProceduralSfx proceduralSfx;
         private Coroutine scoreAnimationRoutine;
         private Coroutine heatVisualRoutine;
+        private float heatGridVisualRefreshTimer;
+        private const float HeatGridVisualRefreshInterval = .25f;
 
         private void Start()
         {
@@ -207,7 +209,18 @@ namespace Asadito
             if (servingLocked) return;
             float minutes = Time.deltaTime * SimulationTimeScale / 60f;
             grill.Step(minutes);
-            RefreshHeatGridVisuals();
+            // Fuel decays continuously, but repainting all 48 UI cells every frame needlessly
+            // rebuilds the Canvas and cancels the ignition/ember color tween. Keep simulation
+            // precise while refreshing this slow-changing visual at a modest cadence.
+            if (heatVisualRoutine == null)
+            {
+                heatGridVisualRefreshTimer += Time.unscaledDeltaTime;
+                if (heatGridVisualRefreshTimer >= HeatGridVisualRefreshInterval)
+                {
+                    heatGridVisualRefreshTimer = 0f;
+                    RefreshHeatGridVisuals();
+                }
+            }
             for (int i = 0; i < portions.Length; i++)
             {
                 PlayablePortion portion = portions[i];
@@ -878,7 +891,16 @@ namespace Asadito
             int y = Mathf.Clamp(Mathf.FloorToInt(normalized.y * 6), 0, 5);
             if (grill.MoveEmbers(fromX, fromY, x, y))
             {
-                AnimateHeatGridTransition();
+                // Raking changes only two cells. Finish any ignition tween once, then update
+                // just these cells so a long drag doesn't continually reanimate all 48.
+                if (heatVisualRoutine != null)
+                {
+                    StopCoroutine(heatVisualRoutine);
+                    heatVisualRoutine = null;
+                    RefreshHeatGridVisuals();
+                }
+                RefreshHeatCellVisual(fromX, fromY);
+                RefreshHeatCellVisual(x, y);
                 AdvanceTutorial(2, "Paso 3: elegí el chorizo o la tira.");
             }
         }
@@ -956,6 +978,14 @@ namespace Asadito
             {
                 heatCellImages[y * 8 + x].color = HeatCellColor(x, y);
             }
+        }
+
+        private void RefreshHeatCellVisual(int x, int y)
+        {
+            if (x < 0 || x >= 8 || y < 0 || y >= 6 || heatCellImages.Count != 48) return;
+            int index = y * 8 + x;
+            if (heatCellImages[index] != null)
+                heatCellImages[index].color = HeatCellColor(x, y);
         }
 
         private Color HeatCellColor(int x, int y)
