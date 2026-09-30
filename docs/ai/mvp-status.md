@@ -17,7 +17,7 @@
 - Build Android de validación **PASS**: `/tmp/Asadito-mvp-1.2.0-arm64-final.apk`, ARM64 IL2CPP, API36, 1.2.0/code3; `aapt` configurado, firma debug; instalado y lanzado en emulador Pixel 7a API36. Se mostró L1, fuego y selección directa; captura `/tmp/Asadito-mvp-gameplay-selected.png`. Se eliminó spam de Bloom quitando referencia URP no usada.
 - **Riesgo bloqueante de QA pendiente:** el último swipe ADB del APK final produjo ANR input (~8 s) y no confirmó drag-to-tray. Traza apunta a espera `glUnmapBufferAEMU_enc` en renderer QEMU/Android x86-64 con APK ARM64 traducido; origen no resuelto ni se atribuye solo al emulador. No declarar MVP release-ready hasta validar drag continuo/emplatado y profiler en teléfono ARM64. AssetPackManager opcional reporta ClassNotFound al inicio, sin crash fatal observado.
 - Emulador no certifica rendimiento, batería, tacto humano, audio/haptics, cutout ni navbar físico. No se afirma QA física; la imagen demuestra solo un estado de interacción visible, no recorrido completo.
-- GitHub Actions [36592407375](https://github.com/Cuervation/Asadito/actions/runs/36592407375): static validator y whitespace PASS; Unity workflow SKIPPED por licencia/secretos no provistos por owner.
+- GitHub Actions [36650720830](https://github.com/Cuervation/Asadito/actions/runs/36650720830): static validator y whitespace PASS; Unity workflow SKIPPED por licencia/secretos no provistos por owner.
 
 ## Límites pendientes antes de un release de tienda
 
