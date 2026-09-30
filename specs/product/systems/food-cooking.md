@@ -2,7 +2,7 @@
 
 ## Estado del modelo
 
-`FoodState` mantiene temperatura de centro, temperatura superficial por cara, humedad, progreso Maillard, `Char`, `FatRendered`, `SplitRisk` y exposición de las dos caras. `FoodCookingModel.Step` genérico toma `FoodCookProfile`, calor local de `HeatGrid`, tiempo simulado y si está en grill; los valores térmicos no se usan para inocuidad.
+`FoodState` mantiene temperatura de centro, temperatura superficial por cara, humedad, progreso Maillard, `Char`, `FatRendered`, `SplitRisk` y exposición de las dos caras. `FoodCookingModel.Step` genérico toma `FoodCookProfile`, la temperatura uniforme de `GrillHeatModel` (210 °C inicial), tiempo simulado y si está en grill; los valores térmicos no se usan para inocuidad. No existen zonas térmicas ni brasas que mover.
 
 ## Catálogo y etapas
 

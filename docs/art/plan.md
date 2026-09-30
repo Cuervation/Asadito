@@ -5,10 +5,10 @@ El inventario vigente y sus límites están en [Visual Bible](../../specs/visual
 ## Integrado
 
 - Portada vertical semi-cartoon top-down, wordmark propio Lilita One, bajada `el sabor Argentino`, repasador con bandera integrada a la tela, CTA `ENTRAR`/`SALIR` centrados e iguales.
-- Fondo de parrilla top-down en gameplay, retratos de seis invitados × cuatro expresiones y 11 iconos vectoriales de UI.
+- Fondo de parrilla top-down en gameplay, retratos de seis invitados × cuatro expresiones y 10 iconos vectoriales de UI.
 - Catálogo visual de 18 atlas RGBA, seis estados cada uno: 108 recortes dinámicos no-null, importados comprimidos para Android; cada estado térmico se proyecta durante cocción.
 - Doce tarjetas ilustradas independientes; el selector conserva solo la etiqueta `Nivel N`, sin datos secundarios.
-- Canvas procedural integrado para portada, navegación, botones, brasa/calor/humo, drag/place/flip/retirar/servir, invitados, resultados y estrellas; ocho one-shots sintéticos y sizzle loop.
+- Canvas procedural integrado para portada, navegación, botones, tap/drag/place/flip/retirar a tabla/servir, invitados, resultados y estrellas; pinza/tabla PNG ilustradas, parrilla uniformemente caliente; siete one-shots sintéticos y sizzle loop, sin ignition/embers.
 - La especificación [animation manifest](animation-manifest.md) distingue con precisión motion real procedural compartido de lo que no existe: clips authored por corte o simulación visual física.
 
 ## Validación técnica disponible

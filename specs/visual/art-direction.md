@@ -4,7 +4,7 @@
 
 Asadito es un juego argentino de cocina casual premium: patio/quincho cálido, comida protagonista y lectura instantánea en móvil. Usar escenarios y comida 3D estilizados de formas suaves, materiales pintados/simplificados y luz de atardecer; no foto-realismo, ni caricatura infantil. Identidad propia: ritual compartido del asado, hierro y madera de patio, vocabulario rioplatense y pequeños acentos celeste/verde solo cuando ayuden a orientar.
 
-**Regla de producción:** la acción y el estado de cocción siempre ganan a la decoración. En toda parrilla de gameplay/key art, usar cámara cenital/top-down (recta u ortográfica levemente elevada, sin vista lateral/oblicua dominante), con rejilla, brasas, calor y alimentos legibles desde arriba. Cámara fija, composición vertical, siluetas limpias y contraste suficiente. Mantener Canvas UI mientras la transición visual sea incremental; no rehacer el gameplay ni el alcance del MVP para acomodar arte.
+**Regla de producción:** la acción y el estado de cocción siempre ganan a la decoración. En toda parrilla de gameplay/key art, usar cámara cenital/top-down (recta u ortográfica levemente elevada, sin vista lateral/oblicua dominante), con rejilla de hierro grafito, superficie de madera y alimentos legibles desde arriba; sin celdas/grid térmico, masa naranja ni affordances de carbón. Cámara fija, composición vertical, siluetas limpias y contraste suficiente. Mantener Canvas UI mientras la transición visual sea incremental; no rehacer el gameplay ni el alcance del MVP para acomodar arte.
 
 ## Paleta de trabajo
 
@@ -36,7 +36,7 @@ Usar colores cálidos con saturación moderada; fondo más oscuro y suave que la
 - **Selector de niveles:** reemplazar la lista de botones con información por una grilla visual de postales clickeables, dos columnas, cada una con ilustración propia y solo la etiqueta `Nivel 1`…`Nivel 12`. No mostrar nombre descriptivo, comensales, platos, estrellas, candados ni subtítulo por ahora; el bloqueo de niveles conserva su lógica y solo cambia la disponibilidad táctil.
 - **Tipografía:** Lilita One Regular para wordmark, títulos cortos y etiquetas de botón, en blanco con contorno/sombra tinta; Baloo 2 para texto corrido e instrucciones legibles (pesos 400/500/600/700/800). Las licencias OFL están dentro del proyecto. Canvas Legacy carga TTF desde `Resources` (no TMP); no se generan TMP assets mientras no se use TextMeshPro. Nunito queda como fallback futuro, no instalado sin evidencia de legibilidad insuficiente. Revisar ñ, tildes, números y tamaños mínimos en teléfono.
 - **Botones:** todos los botones de UI usan silueta arcade de esquinas moderadas, cara dorada degradada, marco tinta y relieve/sombra inferior; volver/salir usan coral-rojo. Etiqueta grande Lilita One blanca delineada y escalada con la altura del botón para conservar jerarquía entre CTA, controles de gameplay y tarjetas. Feedback de brillo/escala corto y accesible; deshabilitados conservan un estado apagado inequívoco.
-- **Tarjetas/paneles:** crema o carbón con radio amable, agrupación y encabezado inequívoco. HUD no debe tapar parrilla, alimento ni bandeja; safe area en contenido de juego.
+- **Tarjetas/paneles:** crema o carbón con radio amable, agrupación y encabezado inequívoco. HUD no debe tapar parrilla, alimento ni tabla; safe area en contenido de juego.
 
 ## Style, color y formas
 
@@ -47,10 +47,10 @@ Usar colores cálidos con saturación moderada; fondo más oscuro y suave que la
 ## Food, mundo, fuego y guests
 
 - Patio/quincho: señales argentinas sutiles y cálidas (hierbas, madera, faroles, hierro); fondo en profundidad con detalle limitado. La parrilla debe contrastar del patio y conservar lectura en pantallas pequeñas.
-- Parrilla: geometría simple de hierro, rejilla y brasero; brasas con núcleo dorado y borde naranja/rojo. Humo/chispas escasos y ligeros por rendimiento. Distribución de calor y estado deben seguir legibles incluso sin partículas.
+- Parrilla: fondo de juego top-down con rejilla oscura, hierro/grafito y quincho de madera cálida pero poco saturada. El heat model es uniforme e invisible. El alimento conserva prioridad visual; el humo de cocción es escaso y ligero. La pinza de metal/madera se comunica con sprites PNG originales abiertos/cerrados; la tabla es una superficie de madera ilustrada y el drop target, invisible, coincide con su área visual.
 - **Food:** silueta reconocible primero; jugosidad, brillo y textura pintada simplificada. Tira, chorizo, vacío y provoleta se distinguen por forma, no solo color. El catálogo integra 18 atlas individuales (uno por alimento), seis etapas térmicas cada uno (RAW, WARMING, BROWNING, IDEAL, OVERCOOKED, BURNT; 108 sprites dinámicos). Cada cara conserva etapa propia y el flip restaura el estado de la cara expuesta. El cambio visual es discreto por sprite, no blend de material.
 - **Guests:** caricatura suave casual premium, identidad y expresión legibles; texto/ícono acompaña la reacción. `GuestPortraitAtlas.png` ahora aporta 24 retratos 3D semi-cartoon (seis perfiles × cuatro expresiones); el runtime cambia retrato individual en reacción/resultados y pasa PlayMode. Recorte/escala inspeccionados en GameView portrait; falta validación de device.
-- **VFX:** pulso de brasas/color ligado a energía; humo ligero de círculos Canvas y glow de portada. Son recursos baratos/provisionales, no humo volumétrico ni sistema final de partículas; evaluar legibilidad/rendimiento móvil antes de sumar efectos.
+- **VFX:** humo ligero de círculos Canvas por cocción y glow de portada. No hay VFX/animación de encendido, carbón o distribución de calor. Son recursos baratos/provisionales, no humo volumétrico ni sistema final de partículas; evaluar legibilidad/rendimiento móvil antes de sumar efectos.
 - Bandeja, pinza y superficies: madera/metal coherentes con parrilla; utilería mínima y funcional. Feedback `PERFECTO`, advertencia, estrellas y puntaje con animación breve, sin cubrir alimento/órdenes.
 
 ## Motion, sonido y rendimiento

@@ -8,14 +8,16 @@ Inventario de contenido fuente en `Resources`; las rutas Unity omiten extensión
 | Ilustración de nivel | 12 PNG 1536×1024 | `Resources/Art/LevelCards/Nivel1`…`Nivel12` | Una ilustración por nivel; cards importadas a cap 512/ETC2; selector expone solo Nivel N | PROVISIONAL |
 | Retratos invitados | Atlas 1024×1536, 6 perfiles × 4 expresiones = 24 cortes | `Resources/Art/GuestPortraitAtlas` | Retratos neutral/feliz/muy feliz/decepcionado para seis guests; presentación de resultado usa corte por perfil/estado | PROVISIONAL |
 | Parrilla principal | 941×1672 | `Resources/Art/ParrillaTopDownStylized` | Imagen de fondo principal top-down en gameplay | PROVISIONAL |
+| Pinza ilustrada | 2 PNG RGBA 2172×724 | `Resources/Art/Tools/PinzaParrilleraOpen`, `PinzaParrilleraClosed` | Assets Sprite conectados por `AsaditoGame`, estado cambia entre selección/drag y release; sin barras blancas procedurales | PROVISIONAL |
+| Tabla asador | PNG RGBA 1536×1024 | `Resources/Art/Props/TablaAsador` | Imagen Sprite conectada al área visible/drop target; seis posiciones de porción se distribuyen sobre la tabla | PROVISIONAL |
 | Portada | 941×1672 | `Resources/Art/PortadaAsadito` | Fondo key art top-down, repasador de bandera impreso en tela; marca/títulos/CTA de UI separados | PROVISIONAL |
 | Fallbacks de fondo | varios PNG preexistentes | `ParrillaTopDownGameplay`, `PatioParrilla` | Retenidos por fallback en código; no son el camino visual principal | LEGACY retenido |
 | Wordmark | PNG transparente 1536×480 + Lilita One | `Resources/Art/AsaditoLogo`, `Resources/Fonts/LilitaOne-Regular` | Header/logo/menu. TTF dispone de `OFL-LilitaOne.txt` | PROVISIONAL |
 | Fuentes UI | Lilita One; Baloo 2 en 5 pesos | `Resources/Fonts/*` | Legacy `UnityEngine.UI.Text`; ambos paquetes de licencia OFL incluidos | PROVISIONAL |
 | Icono adaptativo | PNG original 1254×1254 y slots de launcher existentes | `AsaditoAppIcon`; `ProjectSettings/ProjectSettings.asset` | Configuración anterior conservada; revisitar launcher de APK después del build | PROVISIONAL |
-| Iconografía UI | 11 marcas vectoriales generadas/cacheadas como sprites 96×96 | `AsaditoUiIcons.Get` | flame/tray/stars/back/exit/warning/retry/next/flip y guests, código propio | PROVISIONAL |
-| VFX visuales | Procedural Canvas | `AsaditoGame`: brasa/glow, transición calor, humo/fade | Suficientes señales básicas; no shader/pipeline VFX dedicado | PROVISIONAL |
-| SFX one-shot | 8 clips mono sintetizados en memoria | `Assets/Asado/Scripts/Runtime/ProceduralSfx.cs` | UI, Ignite, FoodDrop, Flip, Plate, Serve, Result, Star | PROVISIONAL |
+| Iconografía UI | 10 marcas vectoriales generadas/cacheadas como sprites 96×96 | `AsaditoUiIcons.Get` | tray/stars/back/exit/warning/retry/next/flip, guest/locked; ya no incluye icono de ignition | PROVISIONAL |
+| VFX visuales | Procedural Canvas | `AsaditoGame`: humo/fade de cocción y glow de portada | No VFX de carbón/calor; sin shader/pipeline dedicado | PROVISIONAL |
+| SFX one-shot | 7 clips mono sintetizados en memoria | `Assets/Asado/Scripts/Runtime/ProceduralSfx.cs` | UI, FoodDrop, Flip, Plate, Serve, Result, Star; se eliminó Ignite | PROVISIONAL |
 | Sizzle / haptics | loop sintetizado y vibración de plataforma condicional | `AsaditoGame` | Activa durante cocción y cuando soportado/permitido | PROVISIONAL |
 | UI | canvas y componentes creados en runtime | `AsaditoGame` | Main, selección, intro, HUD, resultados/save/Retry/Next; referencias usan `Resources` | PROVISIONAL |
 
@@ -27,9 +29,9 @@ Inventario de contenido fuente en `Resources`; las rutas Unity omiten extensión
 | Guest portraits | `ana`, `tito`, `luz`, `beto`, `mora`, `rulo` (6/6) | Neutral, feliz, muy feliz, decepcionado (24 recortes) | Sí: diálogo/reacción y resultado por invitado | Sí: PlayMode comprueba el flujo y la suite valida atlas/reacciones |
 | Nivel ilustrado | `Nivel1`…`Nivel12` (12/12) | Una imagen exclusiva por nivel; el UI sobreimprime solo `Nivel N` | Sí: grilla del selector | Sí: dimensiones/archivos por validator y desbloqueo por PlayMode |
 | Marca/fondos | `AsaditoLogo`, `AsaditoAppIcon`, `PortadaAsadito`, `ParrillaTopDownStylized`; fallbacks conservados: `ParrillaTopDownGameplay`, `PatioParrilla` | Wordmark/icono; portada top-down con repasador argentino; fondo de parrilla | Sí: portada, launcher y gameplay/fallback | Sí: Android APK exporta adaptive icon; arranque renderizado en emulador |
-| Iconos UI | Guest, Locked, Star, Flame, Tray, Retry, Next, Flip, Back, Exit, Warning (11/11) | Marcas vectoriales rasterizadas/cacheadas a 96×96 | Sí: UI de intro, juego, resultados y acciones | Sí: escenas/tests de flujo y carga de iconos |
-| VFX | Glow/pulso de portada, transición de calor, pulso/desplazamiento de brasa, humo Canvas/fade, feedback de contacto y cambios visuales térmicos | Procedural y ligero; sin partículas volumétricas | Sí: portada y gameplay | Sí: tests de gameplay/render de estados; rendimiento físico pendiente |
-| Motion | Catálogo completo en [animation manifest](animation-manifest.md): entrada/CTA, botones, navegación, fuego, brasas/humo, comida(place/lift/drag/flip/cook/tray), reacciones y resultados/estrellas | Corutinas/canvas y sprites por datos; animaciones de comida genéricas compartidas, no clips authored por corte | Sí: integradas en runtime | Sí: 6 PlayMode; inspección táctil humana pendiente |
+| Iconos UI | Guest, Locked, Star, Tray, Retry, Next, Flip, Back, Exit, Warning (10/10) | Marcas vectoriales rasterizadas/cacheadas a 96×96 | Sí: UI de intro, juego, resultados y acciones | Sí: escenas/tests de flujo y carga de iconos |
+| VFX | Glow/pulso de portada, humo Canvas/fade de cocción, feedback de contacto y cambios visuales térmicos en alimento | Procedural y ligero; sin partículas volumétricas ni heatmap/fuego de UI | Sí: portada y gameplay | Tests PlayMode tras actualización; rendimiento físico pendiente |
+| Motion | Catálogo completo en [animation manifest](animation-manifest.md): entrada/CTA, botones, navegación, pinza, comida(place/lift/drag/flip/cook/table), reacciones y resultados/estrellas | Corutinas/canvas y sprites por datos; animaciones genéricas compartidas, no clips authored por corte | Sí: integradas en runtime | Tests PlayMode tras actualización; inspección táctil humana pendiente |
 
 ## Comprobaciones y límites
 

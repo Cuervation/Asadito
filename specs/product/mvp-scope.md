@@ -2,16 +2,16 @@
 
 ## Alcance
 
-El MVP implementado contiene doce niveles progresivos y un catálogo data-driven de 18 alimentos (siete cortes vacunos adicionales, tres achuras/embutidos, tres cortes porcinos y pollo deshuesado, además de tira, chorizo, vacío y provoleta). El primer nivel conserva First Playable: dos comensales, una porción de chorizo y una de tira, cocción, armado/servicio de bandeja, evaluación y retry. Los niveles posteriores introducen calor espacial y puntos distintos, luego vacío/provoleta, cortes finos, achuras, cerdo/ave y cortes premium antes del asado completo. El contenido por nivel está en `MvpLevelCatalog`; el menú enseña solo `Nivel N`.
+El MVP implementado contiene doce niveles progresivos y un catálogo data-driven de 18 alimentos (siete cortes vacunos adicionales, tres achuras/embutidos, tres cortes porcinos y pollo deshuesado, además de tira, chorizo, vacío y provoleta). El primer nivel conserva First Playable: dos comensales, una porción de chorizo y una de tira, cocción, armado/servicio de tabla, evaluación y retry. Los niveles posteriores enseñan más pedidos, puntos distintos, vacío/provoleta, cortes finos, achuras, cerdo/ave y cortes premium antes del asado completo; la parrilla mantiene calor uniforme siempre activo. El contenido por nivel está en `MvpLevelCatalog`; el menú enseña solo `Nivel N`.
 
-La experiencia enseña a leer y manejar un fuego de carbón, cocinar alimentos por sus estados térmicos, asignar porciones a comensales y servir. El jugador puede dar vuelta las piezas, retirar y servir cuando decida. Cada cara conserva su propia cocción. `SimulationTimeScale` inicia en 20: el QA térmico a 30× dejaba ventanas móviles demasiado estrechas en varios cortes rápidos; el valor se eligió para permitir una reacción táctil deliberada sin sustituir la cocción por timers. Las opciones de tuning 20/25/30/35/40 son independientes del nivel y solo el control interno aparece en Editor/development builds. Las metas de duración siguen siendo objetivos de tuning, no condiciones de victoria ni timers fijos de cocción.
+La experiencia enseña a tocar y manipular directamente alimentos con pinza, cocinarlos por sus estados térmicos, asignar porciones a comensales y servir en una tabla de asador. La parrilla ya está caliente al entrar; no se prende/apaga carbón ni se manipulan brasas. Cada cara conserva su propia cocción. `SimulationTimeScale` inicia en 20; las opciones de tuning 20/25/30/35/40 aparecen solo en Editor/development builds. Las metas de duración siguen siendo objetivos de tuning, no condiciones de victoria ni timers fijos de cocción.
 
 El MVP incluye menú principal, intro de nivel, tutorial, progresión local de estrellas, resultados, Retry/Next, guardado versionado y seis invitados diferenciados por edad/peso/apetito/punto/preferencias. No incluye economía.
 
 | Nivel | Introducción de gameplay | Invitados/porciones |
 |---|---|---:|
 | 1 — El debut | Chorizo + tira; tutorial | 2 |
-| 2 — Zonas de calor | Reparto sobre calor espacial | 3 |
+| 2 — Una tanda más | Selección y manejo de más piezas | 3 |
 | 3 — Puntos distintos | Diferentes preferencias de cocción | 4 |
 | 4 — El vacío | Corte grueso y más lento | 4 |
 | 5 — La gran juntada | Provoleta y sincronización de cortes | 6 |
@@ -25,7 +25,8 @@ El MVP incluye menú principal, intro de nivel, tutorial, progresión local de e
 
 ## Sistemas requeridos
 
-- Fuego de carbón con `HeatGrid` configurable, inicialmente 8×6, con campos `Heat`/`EmberEnergy` y consulta del calor por región ocupada por cada alimento.
+- `GrillHeatModel` siempre activo con temperatura uniforme configurable (210 °C por defecto); el área de interacción de parrilla es invisible y sirve solo para touch/drag.
+- Tap directo sobre comida, hit targets invisibles ampliados, pinza ilustrada con sprites abiertos/cerrados y drag-to-table sobre una tabla de asador.
 - Catálogo `FoodCatalog.json` → `FoodDefinition`/`FoodCookProfile`; motor térmico genérico y ajustable por datos. Cada atlas integrado presenta RAW, WARMING, BROWNING, IDEAL, OVERCOOKED y BURNT.
 - Estado de alimento `FoodState`: temperatura de centro/superficie, humedad, progreso Maillard, carbonización (`Char`), grasa rendida (`FatRendered`) y estado térmico independiente de las dos caras para volteo.
 - Parámetros de punto por alimento con rangos calibrables. El punto depende del estado de cocción, no del temporizador de estados visuales.
@@ -35,7 +36,7 @@ El MVP incluye menú principal, intro de nivel, tutorial, progresión local de e
 
 ## Fuera del MVP
 
-Carnicería, economía/monedas/compras, multijugador, caminar o navegación de NPC y métodos de cocción distintos de la parrilla de carbón. También quedan fuera la gestión de restaurante, inventario de combustible y selección libre de recetas/cortes por el jugador.
+Carnicería, economía/monedas/compras, multijugador, caminar o navegación de NPC y métodos de cocción distintos de la parrilla caliente. También quedan fuera gestión de restaurante, combustible y selección libre de recetas/cortes por el jugador.
 
 ## Autoridad
 

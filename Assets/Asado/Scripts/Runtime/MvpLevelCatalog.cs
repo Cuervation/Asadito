@@ -12,13 +12,13 @@ namespace Asadito.Runtime
         public float[] PortionAmounts;
     }
 
-    /// <summary>Progressive 12-level menu: teach heat and turning before mixing cuts, offal and proteins.</summary>
+    /// <summary>Progressive 12-level menu: teach direct food handling and turning before mixing cuts, offal and proteins.</summary>
     public static class MvpLevelCatalog
     {
         private static readonly MvpLevelDefinition[] Levels =
         {
             Create(1, "EL DEBUT", new[] { "tira", "chorizo" }, .065f),
-            Create(2, "ZONAS DE CALOR", new[] { "chorizo", "tira", "chorizo" }, .060f),
+            Create(2, "UNA TANDA MÁS", new[] { "chorizo", "tira", "chorizo" }, .060f),
             Create(3, "PUNTOS DISTINTOS", new[] { "tira", "chorizo", "tira", "chorizo" }, .060f),
             Create(4, "EL VACÍO", new[] { "vacio", "tira", "chorizo", "tira" }, .060f),
             Create(5, "LA GRAN JUNTADA", new[] { "tira", "chorizo", "vacio", "provoleta", "tira", "chorizo" }, .060f),

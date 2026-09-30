@@ -5,7 +5,7 @@ namespace Asadito
 {
     internal enum AsaditoUiIcon
     {
-        Guest, Locked, Star, Flame, Tray, Retry, Next, Flip, Back, Exit, Warning
+        Guest, Locked, Star, Tray, Retry, Next, Flip, Back, Exit, Warning
     }
 
     /// <summary>Small deterministic vector-like UI marks, rasterized once at runtime.</summary>
@@ -15,8 +15,6 @@ namespace Asadito
         private const int SamplesPerAxis = 4;
         private static readonly Dictionary<AsaditoUiIcon, Sprite> Cache = new Dictionary<AsaditoUiIcon, Sprite>();
         private static readonly Vector2[] StarShape = CreateStarShape();
-        private static readonly Vector2[] FlameShape = { new Vector2(0f, .92f), new Vector2(.1f, .46f), new Vector2(.49f, .72f), new Vector2(.43f, .12f), new Vector2(.69f, -.08f), new Vector2(.55f, -.62f), new Vector2(.2f, -.91f), new Vector2(-.34f, -.78f), new Vector2(-.65f, -.39f), new Vector2(-.58f, .03f), new Vector2(-.35f, .48f), new Vector2(-.14f, .16f) };
-        private static readonly Vector2[] FlameCore = { new Vector2(.04f, -.1f), new Vector2(.28f, -.43f), new Vector2(.08f, -.72f), new Vector2(-.19f, -.65f), new Vector2(-.27f, -.38f) };
         private static readonly Vector2[] TrayShape = { new Vector2(-.78f, .24f), new Vector2(.78f, .24f), new Vector2(.56f, -.58f), new Vector2(-.56f, -.58f) };
         private static readonly Vector2[] RetryArrow = { new Vector2(.72f, .33f), new Vector2(.26f, .40f), new Vector2(.55f, .77f) };
         private static readonly Vector2[] NextShape = { new Vector2(-.72f, -.58f), new Vector2(-.28f, -.58f), new Vector2(.48f, 0f), new Vector2(-.28f, .58f), new Vector2(-.72f, .58f), new Vector2(.04f, 0f) };
@@ -80,10 +78,6 @@ namespace Asadito
                     return (body || shackle) && !(body && Circle(x, y, 0f, -.19f, .055f));
                 case AsaditoUiIcon.Star:
                     return InPolygon(x, y, StarShape);
-                case AsaditoUiIcon.Flame:
-                    bool fire = InPolygon(x, y, FlameShape);
-                    bool flameCore = InPolygon(x, y, FlameCore);
-                    return fire && !flameCore;
                 case AsaditoUiIcon.Tray:
                     return InPolygon(x, y, TrayShape) ||
                            Line(x, y, -.82f, .35f, .82f, .35f, .085f) || Ellipse(x, y, -.34f, .48f, .25f, .13f) || Ellipse(x, y, 0f, .49f, .25f, .13f) || Ellipse(x, y, .34f, .48f, .25f, .13f);

@@ -1,31 +1,31 @@
-# Auditoría MVP / QA — 2026-09-29
+# Auditoría MVP / QA — 2026-09-30
 
-| Gate | Estado | Evidencia / límites |
+| Gate | Estado | Evidencia / límite |
 |---|---|---|
-| Fuente de verdad | PASS | Checkout Unity `/Users/celestino/Asadito`, `main`, remote `origin`; scope actual prevalece sobre notas heredadas de la visual slice. |
-| Interacción con alimentos | PASS automatizable | Sin botones por nombre/corte; hit target transparente con tamaño táctil ampliado y test de filtro de hit para pieza más cercana. Tap y drag alimentan flujo único de selección; pinza/feedback, movimiento con clamp/settle, flip explícito y retirar/arrastrar a bandeja. PlayMode cubre multi-input y flujo directo. |
-| Debug en release | PASS por código / build por confirmar | Control de escala se crea solo cuando `Debug.isDebugBuild`; tests distinguen Editor/dev y release. Confirmar luego en APK no-development que no exista control visible. |
-| Comida y perfiles térmicos | PASS automatizable, tuneado | 18 FoodIds únicos, perfiles distintos, JSON y conexión runtime; calor/capacidad/espesor/grasa/humedad/Maillard/char/split/queso verificados por catálogo/tests. A 20× y 210 °C, ventana A_Punto medida por un paso de simulación va ~1.9–18.1 s; esto valida thresholds de código, no diversión observada en test humano. |
-| Atlas / estados | PASS técnico, PROVISIONAL artístico | 18 atlas RGBA × 6 estados =108 sprites. Auditoría Python de PNG/alpha, frame no vacío, similitud de silueta adyacente e inventario; contact sheets inspeccionados para identidad, orientación y progresión. Sin frame cortado observado; no equivale a sign-off artístico/táctil humano. |
-| Niveles/progreso/save | PASS automatizable | 12 tarjetas/definiciones; todos los alimentos en L1–L12; flujo progresivo PlayMode, estrellas/puntajes, Retry, Next, save/migración. Guardado v3 migra v2 y v1; scale 30→20 en v2 solamente si era el default anterior. |
-| Cara/flip | PASS automatizable | Cooking state por cara independiente; flip conserva ambas, activa cara opuesta y hace transición 2D; tests de cara y runtime. |
-| Guests/scoring | PASS automatizable | Seis perfiles conservan edad/peso/apetito/punto/favoritos/gustados/rechazados; score 40/30/20/10; allocator y scoring tests. No se alteró la regla de diseño. |
-| Pausa / tutorial / opciones | PASS automatizable | Continuar, reiniciar, selector, SFX ON/OFF y vibración ON/OFF; pausa congela simulación/audio, Retry restablece alimento/parrilla. Tutorial contextual menciona contacto directo, pinza, calor, flip y bandeja. |
-| safe area / resoluciones | PASS implementado; QA físico pendiente | Tests y sesión previa revisaron 1080×2400, 720×1600, 720×1280, inset de cutout simulado 126 px, Screen.safeArea. No se probó navbar/gestos de un teléfono físico ni todos los modelos/notches. |
-| EditMode | PASS | **20 passed / 0 failed**, Unity 6000.6.3f1; retest `/tmp/asadito-final-rerun-editmode.xml`. Incluye tuning de ventana a 20×, perfiles/atlas, progreso, serving/scoring y migración. |
-| PlayMode | PASS | **10 passed / 0 failed**, Unity 6000.6.3f1; retest `/tmp/asadito-final-rerun-playmode.xml`. Recorre niveles, directo sobre comida, drag, bandeja, retry/next/save, pausa/debug y gameplay normal. No sustituye playtest humano. |
-| Validator / diff check | PASS | Corrida final `python3 Tools/validate_food_content.py`: 18 perfiles únicos, 108 estados visuales/coherentes, 12 ilustraciones, catálogo en L1–L12 y recursos obligatorios. `git diff --check` también ejecutado con éxito antes de entrega/commit. |
-| Android build/config | PASS | Unity 6000.6.3f1 `Succeeded`: `/tmp/Asadito-mvp-1.2.0-arm64-final.apk`, 52,615,236 bytes. `aapt` confirma package `com.cuervation.asadito`, version 1.2.0/code3, min26, target/compile36, ARM64 y actividad Unity portrait. Firma debug, sin release keys. |
-| Instalación/uso emulador | PASS parcial, drag abierto | Instalado/abierto en emulador Pixel 7a API36 1080×2400. Se llegó a portada, selector, intro L1, se prendió carbón y tap directo seleccionó chorizo; evidencia `/tmp/Asadito-mvp-gameplay-selected.png`. `Renderer2D.asset` dejó de cargar shader Bloom sin uso; en logcat posterior no hay warnings Bloom. Un ADB swipe a bandeja no confirmó drop y acabó con ANR; el estado final del flujo no se considera verificado. |
-| Rendimiento / ANR | RIESGO ABIERTO | Se evita repintar HeatGrid completo en cada frame y reordenar pinza por cada `OnDrag`, pero el último swipe sintético provocó ANR de input de ~8 s. Trace: Android 16 x86-64/QEMU con APK ARM64 traducido, thread esperando `glUnmapBufferAEMU_enc`/QEMU GL; causa no determinada, no atribuir exclusivamente al emulador. Requiere Development Build/Unity Profiler y repetición en teléfono ARM64 real; FPS/memoria no medidos con validez. |
-| Audio / arte | PROVISIONAL | SFX y sizzling procedural conectados, volumen configurable y crossfade loop revisados en código. Falta escucha en dispositivo/auriculares, medición subjetiva y aprobación visual humana. |
-| CI remoto Unity | PASS parcial documentado | [Run 36650720830](https://github.com/Cuervation/Asadito/actions/runs/36650720830): validator y whitespace check corrieron; job GameCI SKIPPED porque owner no habilitó licencia/secretos. No se falsifican tests remotos. |
-| Firma/publicación | Fuera de alcance | APK de validación con firma debug solamente. Sin keystore productivo, Play Console ni publicación. |
+| Base y alcance | PASS | HEAD inicial verificado: `f0a6126bca756f7f49ed5fdeacf56ce755d12962`, `main`. Se retira la manipulación de carbón sin expandir sistemas. |
+| Calor | PASS | `GrillHeatModel` entrega 210 °C uniforme al entrar; no existe requisito `IsLit`, combustible, decaimiento ni mapa térmico. `FoodCookingModel` y estados por cara permanecen activos. |
+| Interacción directa | PASS automatizable | `FoodPieceTouch` conduce tap/drag a una sola selección; pruebas PlayMode de tap directo, dueño de pointer/multitouch, drag, flip y emplatado. Sin botones por nombre de comida. |
+| Props de parrilla | PASS técnico / arte provisional | La pinza abierta/cerrada y `TablaAsador.png` se cargan como sprites runtime; test PlayMode comprueba asset/conexión; test de drag valida emplatado. Evaluación artística y tacto humano siguen pendientes. |
+| Perfil/atlas de comida | PASS técnico | 18 FoodIds/perfiles y 108 sprites (RAW/WARMING/BROWNING/IDEAL/OVERCOOKED/BURNT). Validator/auditoría técnica y tests validan dimensiones, alpha y disponibilidad por ID; no es aprobación visual profesional. |
+| Progresión/save | PASS automatizable | PlayMode cocina y sirve L1–L12, revisa resultados, estrellas, unlock/Next, regresa a selector; EditMode valida save/migración/allocator/scoring. |
+| Pause/tutorial/settings | PASS automatizable | PlayMode cubre pause/resume/restart/selector, sonido/vibración y onboarding de comida/pinza; sin pasos de carbón. |
+| Debug | PASS por código/config | `CONTROL DEBUG` sólo se construye en Editor/development (`Debug.isDebugBuild`); APK Android compilado como release no-development. La UI del player no pudo inspeccionarse en el AVD por incompatibilidad gráfica. |
+| EditMode | PASS | 19/19 en Unity 6000.6.3f1; XML `/tmp/asadito-always-hot-editmode.xml`. |
+| PlayMode | PASS | 10/10 en Unity 6000.6.3f1; 486.61 s, incluye `Mvp_AllTwelveLevels_CookServeResultsUnlockNextAndReturnToSelection`; XML `/Users/celestino/Library/Application Support/Cuervation/Asadito/TestResults.xml`. |
+| Validator | PASS | `python3 Tools/validate_food_content.py`: 18 perfiles, 108 estados, 12 cards, cobertura de niveles y recursos conectados. |
+| Console Unity | PASS al fin de tests | `read_console(error, warning)` recuperó 0 mensajes. Un intento anterior de PlayMode tuvo un error del runner/editor; se reinició el editor y el suite final terminó 10/10. |
+| Android build | PASS | Unity 6000.6.3f1 compiló APK ARM64 IL2CPP; package/version/code, min26/target36, ABI ARM64 y firma v2 verificadas (`/tmp/Asadito-always-hot-1.2.0-arm64.apk`, 53 MiB). |
+| Android install | PASS | ADB instaló correctamente en AVD `Asadito_Pixel_7a_API_36` (API36, 1080×2400); esto confirma empaquetado/instalación, no compatibilidad física ARM64. |
+| Android runtime smoke | BLOQUEADO POR AVD | Imagen de AVD x86_64; al abrir el APK ARM64, Unity reportó que no pudo inicializar Unity Engine Graphics API. SwiftShader expone GLES 3.1, incompatible con los contextos ES 3.2/3.1 solicitados por Unity. No hubo menú, gameplay ni captura de gameplay. |
+| Drag continuo / ANR | NO VERIFICADO EN NUEVO APK | El ANR de swipe/drop no confirmado corresponde al APK anterior. La nueva build no llegó a gameplay en este emulador, por lo que el cambio de parrilla no lo confirma ni lo reproduce. Repetir con teléfono ARM64 y profiler. |
+| Dispositivo físico / arte y audio | PENDIENTE | No se ha validado touch humano, notch/navbar reales, rendimiento sostenido en ARM64, SFX/haptics en dispositivo ni aprobación visual final. |
+| CI Unity remoto | SIN VERIFICAR EN ESTE CAMBIO | El antecedente de GitHub Actions omitió GameCI por licencia/secrets del owner; no confundirlo con los tests locales actuales. Revisar el workflow luego del push. |
+| Signing/publicación | Fuera de alcance | Se usa firma debug de validación; no hay keystore productivo ni publicación. |
 
-## Riesgos/acciones post-MVP
+## Riesgos / siguiente QA
 
-1. Probar con manos/dedos y multitoque real la selección, drag sostenido, brasas, flip, drag al plato, overlaps y bordes; validar en 720×1280 hasta 1080×2400 con barra gestual/notch real.
-2. Capturar profiler Android de Development Build en gama media para investigar ANR anterior, CPU/GC/frame pacing, memoria de texturas/audio y heat-grid; no inferir rendimiento de SwiftShader.
-3. Playtest humano para medir ritmo/ventana por alimento, progreso L1–L12, tutorial, audio y legibilidad; targets de cocción son gameplay, no recomendación sanitaria.
-4. Habilitar secreto Unity del owner para GameCI cuando sea apropiado; luego repetir Unity suites remotas.
-5. Revisar arte/audio y signing solo con recursos y autorización de release.
+1. Repetir runtime smoke en teléfono ARM64: abrir, recorrer Nivel 1 con tap, drag continuo, flip, tabla, servicio, resultados, Retry y pausa.
+2. Capturar evidencia visual Android del gameplay con pieza seleccionada, pinza, tabla y parrilla top-down; la captura del AVD actual solo contiene bloqueo gráfico.
+3. Si swipe causa ANR en un dispositivo compatible, obtener trace/profiler y medir memoria/FPS/GC antes de atribuirlo.
+4. Probar notch/nav gesture, audio/haptics y sign-off artístico con teléfono real; tests automatizados no lo sustituyen.
+5. Revisar CI remoto posterior al push; Unity CI puede permanecer omitido por licencia/secrets sin que eso invalide tests locales.

@@ -1,14 +1,5 @@
-# Estados visuales del fuego
+# Parrilla caliente — dirección visual
 
-El carbón se representa con estados graduales que acompañan `HeatGrid`/`EmberEnergy`. Deben poder leerse en pantalla móvil y no tapar la comida.
+El MVP no representa fuego/carbón como sistema de gameplay. La parrilla está lista al ingresar y `GrillHeatModel` mantiene una temperatura uniforme. El arte debe mostrar una rejilla cenital de hierro/grafito sobre madera de quincho, sin bloques anaranjados, heatmap, celdas, controles ni estados de encendido/apagado.
 
-| Estado | Brasa y parrilla | Feedback |
-|---|---|---|
-| Apagado | Carbón gris, sin emisión | Sin sizzle |
-| Encendido | Núcleos rojos aislados | Chispa breve |
-| Calentando | Resplandor naranja creciente | Crepitar leve |
-| Fuerte | Brasas vivas y calor concentrado | Ondulación/humo discreto |
-| En descenso | Menos celdas calientes | Pulso más lento |
-| Casi agotado | Puntos rojos apagándose | Lectura clara de baja energía |
-
-El mapa térmico de celdas afecta la visualización en regiones; no crear una luz en tiempo real por celda. La hoja de estados en `docs/art/concepts/fire-states.png` es referencia, no sprite final.
+El humo tenue puede aparecer por cocción activa, pero no debe sugerir ignition, energía de brasas ni zonas térmicas. El fondo de parrilla mantiene contraste más bajo que la comida y no tapa sus estados. La tabla y la pinza ilustrada son utilería funcional conectada al runtime.

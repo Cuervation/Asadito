@@ -6,41 +6,20 @@ namespace Asadito.Tests
     public sealed class HeatAndCookingTests
     {
         [Test]
-        public void CharcoalGrill_MoveEmbersConservesEnergy_AndFuelDecaysOverTime()
+        public void GrillHeatModel_IsAlwaysHotAndClampsConfiguredTemperature()
         {
-            var grill = new Asadito.Runtime.CharcoalGrillModel();
-            grill.Reset();
-            grill.Ignite();
-            float totalBefore = SumEmbers(grill.Grid);
-            float sourceBefore = grill.Grid.GetCell(0, 2).EmberEnergy;
-            float targetBefore = grill.Grid.GetCell(1, 2).EmberEnergy;
-
-            Assert.IsTrue(grill.MoveEmbers(0, 2, 1, 2));
-            Assert.AreEqual(totalBefore, SumEmbers(grill.Grid), .001f);
-            Assert.Less(grill.Grid.GetCell(0, 2).EmberEnergy, sourceBefore);
-            Assert.Greater(grill.Grid.GetCell(1, 2).EmberEnergy, targetBefore);
-
-            float fuelBefore = grill.FuelEnergy;
-            grill.Step(10f);
-            Assert.Less(grill.FuelEnergy, fuelBefore);
+            var grill = new Asadito.Runtime.GrillHeatModel();
+            Assert.AreEqual(210f, grill.GetTemperatureC(), .001f);
+            grill.TemperatureC = 250f;
+            Assert.AreEqual(250f, grill.GetTemperatureC(), .001f);
+            grill.TemperatureC = 500f;
+            Assert.AreEqual(300f, grill.GetTemperatureC(), .001f);
+            grill.TemperatureC = -10f;
+            Assert.AreEqual(100f, grill.GetTemperatureC(), .001f);
         }
 
         [Test]
-        public void HeatGrid_DefaultsToEightBySix_AndSamplesOnlyOccupiedRegion()
-        {
-            var grid = new Asadito.Runtime.HeatGrid();
-            Assert.AreEqual(8, grid.Width);
-            Assert.AreEqual(6, grid.Height);
-            grid.SetCell(0, 0, new Asadito.Runtime.HeatCell(100f, 40f));
-            grid.SetCell(1, 0, new Asadito.Runtime.HeatCell(200f, 80f));
-
-            Vector2 sample = grid.SampleRegion(new Rect(0f, 0f, .25f, 1f / 6f));
-            Assert.AreEqual(150f, sample.x, .01f);
-            Assert.AreEqual(60f, sample.y, .01f);
-        }
-
-        [Test]
-        public void FoodCooking_RespondsToLocalHeat_AndTracksBurnOnExposedSide()
+        public void FoodCooking_RespondsToAlwaysHotGrill_AndTracksBurnOnExposedSide()
         {
             var state = new Asadito.Runtime.FoodState { CoreTemperatureC = 20f, SurfaceTemperatureC = 20f };
             var profile = new Asadito.Runtime.FoodCookProfile
@@ -53,7 +32,7 @@ namespace Asadito.Tests
                 CharStartsAtC = 150f
             };
 
-            Asadito.Runtime.FoodCookingModel.Step(state, profile, 240f, 5f, true);
+            Asadito.Runtime.FoodCookingModel.Step(state, profile, new Asadito.Runtime.GrillHeatModel().GetTemperatureC(), 5f, true);
             Asadito.Runtime.FoodFaceState firstSide = state.CurrentFace;
             Assert.Greater(state.CoreTemperatureC, 20f);
             Assert.Greater(firstSide.Maillard, 0f);
@@ -61,7 +40,7 @@ namespace Asadito.Tests
             Assert.AreEqual(0f, state.Faces[1].Char);
 
             state.Flip();
-            Asadito.Runtime.FoodCookingModel.Step(state, profile, 240f, 1f, true);
+            Asadito.Runtime.FoodCookingModel.Step(state, profile, new Asadito.Runtime.GrillHeatModel().GetTemperatureC(), 2.5f, true);
             Assert.Greater(state.CurrentFace.Char, 0f);
             Assert.Greater(state.Faces[0].Char, 0f);
         }
@@ -109,13 +88,5 @@ namespace Asadito.Tests
             Assert.Greater(cheese.SurfaceTransferRate, tira.SurfaceTransferRate);
         }
 
-        private static float SumEmbers(Asadito.Runtime.HeatGrid grid)
-        {
-            float total = 0f;
-            for (int y = 0; y < grid.Height; y++)
-            for (int x = 0; x < grid.Width; x++)
-                total += grid.GetCell(x, y).EmberEnergy;
-            return total;
-        }
     }
 }

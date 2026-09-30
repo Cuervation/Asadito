@@ -3,7 +3,7 @@ using UnityEngine;
 
 namespace Asadito.Runtime
 {
-    public enum AsaditoSfxCue { UiTap, Ignite, FoodDrop, Flip, Plate, Serve, Result, Star }
+    public enum AsaditoSfxCue { UiTap, FoodDrop, Flip, Plate, Serve, Result, Star }
 
     /// <summary>Small deterministic one-shot sound set synthesized locally, avoiding external audio dependencies.</summary>
     public sealed class ProceduralSfx : MonoBehaviour
@@ -20,9 +20,8 @@ namespace Asadito.Runtime
             source.loop = false;
             source.spatialBlend = 0f;
             source.volume = volume;
-            clips = new AudioClip[8];
+            clips = new AudioClip[7];
             clips[(int)AsaditoSfxCue.UiTap] = Tone("UI tap", .065f, 900f, 620f, .04f, .14f, 1);
-            clips[(int)AsaditoSfxCue.Ignite] = Tone("Charcoal ignition", .28f, 170f, 64f, .74f, .35f, 2);
             clips[(int)AsaditoSfxCue.FoodDrop] = Tone("Food on grill", .11f, 180f, 92f, .34f, .34f, 3);
             clips[(int)AsaditoSfxCue.Flip] = Tone("Meat flip", .13f, 650f, 330f, .15f, .4f, 4);
             clips[(int)AsaditoSfxCue.Plate] = Tone("Food to tray", .15f, 260f, 155f, .26f, .32f, 5);

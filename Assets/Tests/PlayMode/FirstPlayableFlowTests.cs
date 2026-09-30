@@ -24,6 +24,8 @@ namespace Asadito.Tests.PlayMode
         {
             hadSave = PlayerPrefs.HasKey(SaveKey);
             originalSave = PlayerPrefs.GetString(SaveKey, string.Empty);
+            ResetSaveCache();
+            MvpSave.Save(new MvpSaveData());
             yield return null;
         }
 
@@ -47,7 +49,7 @@ namespace Asadito.Tests.PlayMode
             SetField(game, "SimulationTimeScale", 1200f); // Accelerate simulation only for deterministic test duration.
 
             yield return EnterLevelOne(game);
-            IgniteAndMoveEmbers(game);
+            AssertGrillReadyWithoutCoal(game);
 
             yield return CookAndPlate(game, 0, "tira", 25f, true);
             yield return CookAndPlate(game, 1, "chorizo", 25f, true);
@@ -87,7 +89,7 @@ namespace Asadito.Tests.PlayMode
         }
 
         [UnityTest]
-        public IEnumerator FirstPlayable_RetryResetsFireFoodAndTray()
+        public IEnumerator FirstPlayable_RetryResetsFoodAndTable()
         {
             Component game = null;
             yield return LoadGameScene(value => game = value);
@@ -96,7 +98,7 @@ namespace Asadito.Tests.PlayMode
             SetField(game, "SimulationTimeScale", 1200f);
 
             yield return EnterLevelOne(game);
-            IgniteAndMoveEmbers(game);
+            AssertGrillReadyWithoutCoal(game);
             yield return CookAndPlate(game, 0, "tira", 25f, true);
             yield return CookAndPlate(game, 1, "chorizo", 25f, true);
             ClickButton("SERVIR");
@@ -107,8 +109,8 @@ namespace Asadito.Tests.PlayMode
             ClickButton(retry);
             yield return new WaitForSecondsRealtime(.1f);
 
-            CharcoalGrillModel grill = (CharcoalGrillModel)GetField(game, "grill");
-            Assert.IsFalse(grill.IsLit, "Retry must extinguish/reset the tanda's fire.");
+            GrillHeatModel grill = (GrillHeatModel)GetField(game, "grillHeat");
+            Assert.AreEqual(210f, grill.GetTemperatureC(), .001f, "Retry keeps the always-hot grill ready for the next tanda.");
             Assert.AreEqual(0, ReadField<int>(game, "trayCount"));
             Assert.IsNull(GameObject.Find("Fin de nivel"));
             Array portions = (Array)GetField(game, "portions");
@@ -118,7 +120,7 @@ namespace Asadito.Tests.PlayMode
                 Assert.IsFalse(ReadField<bool>(portion, "Started"), "Retry must reset portion state.");
                 Assert.IsFalse(ReadField<bool>(portion, "OnTray"), "Retry must clear the tray assignment.");
             }
-            Assert.NotNull(GameObject.Find("PRENDER CARBÓN"));
+            Assert.IsNull(GameObject.Find("PRENDER CARBÓN"));
         }
 
         [UnityTest]
@@ -173,10 +175,12 @@ namespace Asadito.Tests.PlayMode
             Assert.AreEqual(Debug.isDebugBuild, GameObject.Find("CONTROL DEBUG") != null,
                 "Only Editor/development builds may expose the simulation debug control.");
 
-            IgniteAndMoveEmbers(game);
+            AssertGrillReadyWithoutCoal(game);
             TapFoodPiece(game, 0, 41);
             Assert.IsTrue(ReadField<bool>(portions.GetValue(0), "Started"), "A pointer tap directly on a food piece must select/start it.");
             Assert.AreEqual(0, ReadField<int>(game, "activePortion"));
+            Assert.AreEqual(GetField(game, "tongsClosedSprite"), GetField(game, "tongsImage") is Image selectedTongs ? selectedTongs.sprite : null,
+                "Selecting food must use the generated closed tong art.");
             TapFoodPiece(game, 1, 42);
             Assert.IsFalse(ReadField<bool>(portions.GetValue(1), "Started"),
                 "A second piece cannot steal the active tong while a piece is still being cooked.");
@@ -193,8 +197,8 @@ namespace Asadito.Tests.PlayMode
             Component game = null;
             yield return LoadGameScene(value => game = value);
             yield return EnterLevelOne(game);
-            ClickButton("PRENDER CARBÓN");
             TapFoodPiece(game, 0, 51);
+            AssertGrillReadyWithoutCoal(game, false);
 
             ClickButton("PAUSA");
             Assert.AreEqual(0f, Time.timeScale);
@@ -210,7 +214,7 @@ namespace Asadito.Tests.PlayMode
             ClickButton("REINICIAR NIVEL");
             Assert.AreEqual(1f, Time.timeScale);
             Assert.IsFalse(((GameObject)GetField(game, "pauseRoot")).activeInHierarchy);
-            Assert.IsFalse(((CharcoalGrillModel)GetField(game, "grill")).IsLit);
+            Assert.AreEqual(210f, ((GrillHeatModel)GetField(game, "grillHeat")).GetTemperatureC());
             Assert.IsFalse(ReadField<bool>(((Array)GetField(game, "portions")).GetValue(0), "Started"));
             Assert.AreEqual(0f, MvpSave.Load().Settings.SfxVolume, "Restart must preserve settings.");
             Assert.IsFalse(MvpSave.Load().Settings.HapticsEnabled, "Restart must preserve haptics preference.");
@@ -230,7 +234,7 @@ namespace Asadito.Tests.PlayMode
             Component game = null;
             yield return LoadGameScene(value => game = value);
             yield return EnterLevelOne(game);
-            IgniteAndMoveEmbers(game);
+            AssertGrillReadyWithoutCoal(game);
 
             RectTransform[] targets = (RectTransform[])GetField(game, "portionHitTargets");
             Component firstTouch = FindComponent(targets[0].gameObject, "Asadito.Runtime.FoodPieceTouch");
@@ -254,7 +258,7 @@ namespace Asadito.Tests.PlayMode
         }
 
         [UnityTest]
-        public IEnumerator HeatGridColorTween_IsNotCancelledBySimulationUpdate()
+        public IEnumerator AlwaysHotGrill_DirectFoodTapHeatsWithoutIgnitionAndUsesGeneratedProps()
         {
             ResetSaveCache();
             MvpSave.Save(new MvpSaveData());
@@ -263,15 +267,32 @@ namespace Asadito.Tests.PlayMode
             Assert.NotNull(game);
             yield return EnterLevelOne(game);
 
-            ClickButton("PRENDER CARBÓN");
-            object tween = GetField(game, "heatVisualRoutine");
-            Assert.NotNull(tween, "Igniting the grill should start the heat-cell color transition.");
+            AssertGrillReadyWithoutCoal(game);
+            Sprite boardSprite = (Sprite)GetField(game, "servingBoardSprite");
+            Sprite openTongsSprite = (Sprite)GetField(game, "tongsOpenSprite");
+            Sprite closedTongsSprite = (Sprite)GetField(game, "tongsClosedSprite");
+            Assert.NotNull(boardSprite);
+            Assert.NotNull(openTongsSprite);
+            Assert.NotNull(closedTongsSprite);
+            Assert.AreEqual("TablaAsador_0", boardSprite.name);
+            Assert.AreEqual("PinzaParrilleraOpen_0", openTongsSprite.name);
+            Assert.AreEqual("PinzaParrilleraClosed_0", closedTongsSprite.name);
+            Assert.AreSame(boardSprite, ((Image)GetField(game, "servingBoardImage")).sprite);
 
-            MethodInfo update = game.GetType().GetMethod("Update", BindingFlags.Instance | BindingFlags.NonPublic);
-            Assert.NotNull(update);
-            update.Invoke(game, null);
-            Assert.AreSame(tween, GetField(game, "heatVisualRoutine"),
-                "The normal simulation update must not cancel the active heat-cell transition.");
+            Array portions = (Array)GetField(game, "portions");
+            object portion = portions.GetValue(0);
+            FoodState state = (FoodState)GetField(portion, "State");
+            float initialCore = state.CoreTemperatureC;
+            TapFoodPiece(game, 0, 71);
+            Assert.IsTrue(ReadField<bool>(portion, "Started"));
+            Assert.AreSame(closedTongsSprite, ((Image)GetField(game, "tongsImage")).sprite);
+            yield return new WaitForSecondsRealtime(.2f);
+            Assert.Greater(state.CoreTemperatureC, initialCore, "Food must heat directly without an ignition step.");
+            RectTransform[] targets = (RectTransform[])GetField(game, "portionHitTargets");
+            Vector2 grillPoint = RectTransformUtility.WorldToScreenPoint(null, ((RectTransform)GetField(game, "grillAreaRect")).position);
+            DragFoodPiece(game, 0, grillPoint, 72);
+            Assert.AreSame(openTongsSprite, ((Image)GetField(game, "tongsImage")).sprite,
+                "After release, the visible tongs settle open around the selected food.");
         }
 
         [UnityTest]
@@ -473,7 +494,7 @@ namespace Asadito.Tests.PlayMode
 
             DateTime started = DateTime.UtcNow;
             yield return EnterLevelOne(game);
-            IgniteAndMoveEmbers(game);
+            AssertGrillReadyWithoutCoal(game);
             yield return CookAndPlate(game, 0, "tira", 100f, true);
             yield return CookAndPlate(game, 1, "chorizo", 60f, true);
             Assert.IsTrue(FindButton("SERVIR").interactable);
@@ -487,6 +508,7 @@ namespace Asadito.Tests.PlayMode
         }
 
         [UnityTest]
+        [Timeout(600000)]
         public IEnumerator Mvp_AllTwelveLevels_CookServeResultsUnlockNextAndReturnToSelection()
         {
             ResetSaveCache();
@@ -495,7 +517,7 @@ namespace Asadito.Tests.PlayMode
             yield return LoadGameScene(value => game = value);
             Assert.NotNull(game);
             AssertGameplayGrillArtLoaded(game);
-            SetField(game, "SimulationTimeScale", 1200f);
+            SetField(game, "SimulationTimeScale", 120f); // Accelerate 6× while retaining the thermal window at the editor's background frame rate.
 
             yield return new WaitForSecondsRealtime(.6f);
             ClickButton("ENTRAR");
@@ -514,7 +536,7 @@ namespace Asadito.Tests.PlayMode
                 Assert.AreEqual(expectedPortions[level - 1], portions.Length, "L" + level + " order size must match its MVP definition.");
                 Assert.AreEqual(expectedPortions[level - 1], guests.Length, "Each portion must serve a guest in L" + level + ".");
 
-                IgniteAndMoveEmbers(game, assertTutorialStep: level == 1);
+                AssertGrillReadyWithoutCoal(game, assertTutorialStep: level == 1);
                 for (int portionIndex = 0; portionIndex < portions.Length; portionIndex++)
                     yield return CookAndPlateByIndex(game, portionIndex, 35f);
 
@@ -570,8 +592,8 @@ namespace Asadito.Tests.PlayMode
             TapFoodPiece(game, index, 100 + index);
             yield return null;
 
-            RectTransform grid = GameObject.Find("Mapa de calor carbón 8x6").GetComponent<RectTransform>();
-            Vector3 centerWorld = grid.TransformPoint(new Vector3(grid.rect.width * .03f, -grid.rect.height * .015f, 0f));
+            RectTransform grillArea = (RectTransform)GetField(game, "grillAreaRect");
+            Vector3 centerWorld = grillArea.TransformPoint(new Vector3(grillArea.rect.width * .03f, -grillArea.rect.height * .015f, 0f));
             Vector2 centerScreen = RectTransformUtility.WorldToScreenPoint(null, centerWorld);
             DragFoodPiece(game, index, centerScreen, 200 + index);
 
@@ -602,6 +624,7 @@ namespace Asadito.Tests.PlayMode
             }
             Assert.IsTrue(ReadField<bool>(portion, "OnTray"), profile.FoodId + " must reach the serving tray.");
             Assert.AreEqual(index + 1, ReadField<int>(game, "trayCount"));
+            SetField(game, "SimulationTimeScale", 120f);
         }
 
         private static IEnumerator LoadGameScene(Action<Component> setGame)
@@ -668,53 +691,31 @@ namespace Asadito.Tests.PlayMode
             yield return new WaitForSecondsRealtime(.45f);
             ClickButton("IR A LA PARRILLA");
             yield return new WaitForSecondsRealtime(.45f);
-            Assert.NotNull(GameObject.Find("Mapa de calor carbón 8x6"));
-            Assert.That(FindText("Tutorial contextual").text, Does.Contain("Paso 1"));
+            AssertGrillReadyWithoutCoal(game);
+            Assert.That(FindText("Tutorial contextual").text, Does.Contain("pieza"));
             Assert.AreEqual(2, ((Array)GetField(game, "portions")).Length);
             Assert.AreEqual(2, ((Array)GetField(game, "activeGuests")).Length);
-            CharcoalGrillModel grill = (CharcoalGrillModel)GetField(game, "grill");
-            Assert.AreEqual(8, grill.Grid.Width);
-            Assert.AreEqual(6, grill.Grid.Height);
         }
 
-        private static void IgniteAndMoveEmbers(Component game, bool assertTutorialStep = true)
+        private static void AssertGrillReadyWithoutCoal(Component game, bool assertTutorialStep = true)
         {
-            ClickButton("PRENDER CARBÓN");
-            Image ignitionFlame = GameObject.Find("Destello de encendido").GetComponent<Image>();
-            Assert.AreEqual("Asadito UI Icon Flame", ignitionFlame.sprite.name);
-            if (assertTutorialStep) Assert.That(FindText("Tutorial contextual").text, Does.Contain("Paso 2"));
-            CharcoalGrillModel grill = (CharcoalGrillModel)GetField(game, "grill");
-            Assert.IsTrue(grill.IsLit);
-            float sourceBefore = grill.Grid.GetCell(3, 2).EmberEnergy;
-            float targetBefore = grill.Grid.GetCell(0, 2).EmberEnergy;
-            Image targetVisual = GameObject.Find("Brasa 0,2").GetComponent<Image>();
-            Color targetColorBefore = targetVisual.color;
-            Vector2 targetPosition = new Vector2(.0625f, .4167f);
-            float targetHeatBefore = grill.Sample(targetPosition, new Vector2(.14f, .14f)).x;
-
-            RectTransform grid = GameObject.Find("Mapa de calor carbón 8x6").GetComponent<RectTransform>();
-            Vector3 targetWorld = grid.TransformPoint(new Vector3((0 - 3.5f) * 102f, (2 - 2.5f) * 46f, 0f));
-            Vector2 targetScreen = RectTransformUtility.WorldToScreenPoint(null, targetWorld);
-            Component emberTouch = FindComponent(GameObject.Find("Brasa 3,2"), "Asadito.Runtime.EmberCellTouch");
-            PointerEventData emberPointer = new PointerEventData(EventSystem.current);
-            Assert.IsTrue(ExecuteEvents.Execute(emberTouch.gameObject, emberPointer, ExecuteEvents.pointerDownHandler));
-            emberPointer.position = targetScreen;
-            Assert.IsTrue(ExecuteEvents.Execute(emberTouch.gameObject, emberPointer, ExecuteEvents.dragHandler));
-
-            Assert.Less(grill.Grid.GetCell(3, 2).EmberEnergy, sourceBefore);
-            Assert.Greater(grill.Grid.GetCell(0, 2).EmberEnergy, targetBefore);
-            Assert.AreNotEqual(targetColorBefore, targetVisual.color,
-                "Raking must update the changed cell's color without waiting for a full-grid refresh.");
-            Assert.Greater(grill.Sample(targetPosition, new Vector2(.14f, .14f)).x, targetHeatBefore + 5f,
-                "Moving embers must visibly change the target zone's sampled heat.");
-            if (assertTutorialStep) Assert.That(FindText("Tutorial contextual").text, Does.Contain("Paso 3"));
+            Assert.IsNull(GameObject.Find("PRENDER CARBÓN"));
+            Assert.IsNull(GameObject.Find("CARBÓN ENCENDIDO"));
+            Assert.IsNull(GameObject.Find("Mapa de calor carbón 8x6"));
+            Assert.IsNull(GameObject.Find("Destello de encendido"));
+            for (int y = 0; y < 6; y++)
+            for (int x = 0; x < 8; x++)
+                Assert.IsNull(GameObject.Find("Brasa " + x + "," + y));
+            Assert.AreEqual(210f, ((GrillHeatModel)GetField(game, "grillHeat")).GetTemperatureC(), .001f);
+            if (assertTutorialStep)
+                Assert.That(FindText("Tutorial contextual").text, Does.Contain("pieza"));
         }
 
         private static IEnumerator CookAndPlate(Component game, int index, string foodId, float timeoutSeconds, bool flip)
         {
             string foodName = FoodCatalog.Get(foodId).DisplayName;
             TapFoodPiece(game, index, 300 + index);
-            if (index == 0) Assert.That(FindText("Tutorial contextual").text, Does.Contain("Paso 4"));
+            if (index == 0) Assert.That(FindText("Tutorial contextual").text, Does.Contain("Paso 2"));
             Array portions = (Array)GetField(game, "portions");
             object portion = portions.GetValue(index);
             FoodState state = (FoodState)GetField(portion, "State");
@@ -723,13 +724,13 @@ namespace Asadito.Tests.PlayMode
             Vector2 startingPosition = ReadField<Vector2>(portion, "Position");
 
             // Exercise the same public handlers used by the touch-drag component.
-            RectTransform grid = GameObject.Find("Mapa de calor carbón 8x6").GetComponent<RectTransform>();
-            Vector3 moveWorld = grid.TransformPoint(new Vector3(grid.rect.width * .03f, -grid.rect.height * .015f, 0f));
+            RectTransform grillArea = (RectTransform)GetField(game, "grillAreaRect");
+            Vector3 moveWorld = grillArea.TransformPoint(new Vector3(grillArea.rect.width * .03f, -grillArea.rect.height * .015f, 0f));
             Vector2 moveScreen = RectTransformUtility.WorldToScreenPoint(null, moveWorld);
             DragFoodPiece(game, index, moveScreen, 400 + index);
             Assert.Greater(Vector2.Distance(startingPosition, ReadField<Vector2>(portion, "Position")), .1f,
                 "Dragging the portion must change its normalized grill position.");
-            if (index == 0) Assert.That(FindText("Tutorial contextual").text, Does.Contain("Mové la pieza"));
+            if (index == 0) Assert.That(FindText("Tutorial contextual").text, Does.Contain("Paso 3"));
 
             if (flip)
             {

@@ -143,6 +143,20 @@ def audit_progression(food_ids):
     assert present_foods == food_ids, f"Every food must appear in progression; missing {sorted(food_ids - present_foods)}"
 
 
+def audit_transparent_sprite(resource_path: str, expected_size):
+    path = ROOT / "Assets/Asado/Resources" / resource_path
+    assert path.is_file(), f"Missing generated gameplay sprite: {resource_path}"
+    width, height, bit_depth, color_type, _ = png_header(path)
+    assert (width, height) == expected_size, f"Unexpected dimensions for {resource_path}: {width}x{height}"
+    assert bit_depth == 8 and color_type == 6, f"{resource_path} must be 8-bit RGBA with alpha"
+    meta = Path(str(path) + ".meta")
+    assert meta.is_file(), f"Missing Unity import settings: {meta.relative_to(ROOT)}"
+    settings = meta.read_text(encoding="utf-8")
+    assert re.search(r"(?m)^  textureType: 8$", settings), f"{resource_path} must import as Sprite"
+    assert re.search(r"(?m)^    enableMipMap: 0$", settings), f"{resource_path} must not generate mipmaps"
+    assert re.search(r"(?m)^  spriteMode: 2$", settings), f"{resource_path} must have a full-rect Sprite subasset"
+
+
 def main():
     data = json.loads(CATALOG.read_text(encoding="utf-8"))
     foods = data.get("Foods", [])
@@ -209,6 +223,18 @@ def main():
     resources = ROOT / "Assets/Asado/Resources"
     for resource in required_resources:
         assert (resources / resource).is_file(), f"Missing required runtime resource: {resource}"
+    audit_transparent_sprite("Art/Tools/PinzaParrilleraOpen.png", (2172, 724))
+    audit_transparent_sprite("Art/Tools/PinzaParrilleraClosed.png", (2172, 724))
+    audit_transparent_sprite("Art/Props/TablaAsador.png", (1536, 1024))
+    game_source = (ROOT / "Assets/Asado/Scripts/AsaditoGame.cs").read_text(encoding="utf-8")
+    for runtime_connection in (
+        'LoadSingleSpriteResource("Art/Tools/PinzaParrilleraOpen")',
+        'LoadSingleSpriteResource("Art/Tools/PinzaParrilleraClosed")',
+        'LoadSingleSpriteResource("Art/Props/TablaAsador")',
+        'MakeImage("Pinza parrillera ilustrada"',
+        'MakeImage("Tabla de asador"',
+    ):
+        assert runtime_connection in game_source, f"Generated visual is not connected to gameplay: {runtime_connection}"
     all_atlases = {path.stem for path in ATLAS_DIR.glob("*.png")}
     assert all_atlases == REQUIRED_IDS, f"Unexpected cooking atlas set: missing={sorted(REQUIRED_IDS-all_atlases)}, extra={sorted(all_atlases-REQUIRED_IDS)}"
     print(f"Food content OK: {len(foods)} unique profiles, {len(foods) * 6} visible/coherent cooking frames, {len(cards)} level illustrations, all foods in L1–L12, runtime art/fonts present.")

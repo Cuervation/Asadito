@@ -13,8 +13,7 @@ namespace Asadito
     public sealed class AsaditoGame : MonoBehaviour
     {
         [Min(0f)] public float SimulationTimeScale = 20f;
-        [Range(100f, 300f)] public float FireTemperature = 210f;
-        [SerializeField] private CharcoalGrillModel grill = new CharcoalGrillModel();
+        [SerializeField] private GrillHeatModel grillHeat = new GrillHeatModel();
         private static readonly Color Cream = new Color32(255, 239, 205, 255);
         private static readonly Color Gold = new Color32(245, 177, 72, 255);
         private static readonly Color Green = new Color32(67, 106, 73, 255);
@@ -91,13 +90,12 @@ namespace Asadito
         private Image[] portionSelectionHalos;
         private Shadow[] portionSelectionShadows;
         private Image cookFill;
-        private Image fireGlow;
-        private RectTransform heatGridRect;
+        private RectTransform grillAreaRect;
         private RectTransform trayRect;
         private RectTransform trayDropRect;
         private RectTransform tongsVisual;
-        private RectTransform[] tongsArms = new RectTransform[2];
-        private readonly System.Collections.Generic.List<Image> heatCellImages = new System.Collections.Generic.List<Image>(48);
+        private Image tongsImage;
+        private Image servingBoardImage;
         private Text guestName;
         private Text guestOrder;
         private Text progressText;
@@ -122,7 +120,6 @@ namespace Asadito
         private Button flipButton;
         private Button plateButton;
         private Button serveButton;
-        private Button igniteButton;
         private Button debugScaleButton;
         private Button pauseButton;
         private Button pauseSoundButton;
@@ -137,7 +134,6 @@ namespace Asadito
         private int activeFoodPointerId = int.MinValue;
         private int activeFoodPointerIndex = -1;
         private Coroutine tongsMoveRoutine;
-        private Coroutine tongsGripRoutine;
         private GameObject avatar;
         private Sprite whiteSprite;
         private Sprite circleSprite;
@@ -169,10 +165,10 @@ namespace Asadito
         private AudioClip sizzleClip;
         private ProceduralSfx proceduralSfx;
         private Coroutine scoreAnimationRoutine;
-        private Coroutine heatVisualRoutine;
-        private float heatGridVisualRefreshTimer;
         private float sfxVolumeBeforeMute = .8f;
-        private const float HeatGridVisualRefreshInterval = .25f;
+        private Sprite servingBoardSprite;
+        private Sprite tongsOpenSprite;
+        private Sprite tongsClosedSprite;
 
         private void Start()
         {
@@ -200,6 +196,9 @@ namespace Asadito
                 gameplayGrillTexture = Resources.Load<Texture2D>("Art/ParrillaTopDownGameplay");
             if (gameplayGrillTexture != null)
                 gameplayGrillSprite = Sprite.Create(gameplayGrillTexture, new Rect(0, 0, gameplayGrillTexture.width, gameplayGrillTexture.height), new Vector2(.5f, .5f), 100f);
+            servingBoardSprite = LoadSingleSpriteResource("Art/Props/TablaAsador");
+            tongsOpenSprite = LoadSingleSpriteResource("Art/Tools/PinzaParrilleraOpen");
+            tongsClosedSprite = LoadSingleSpriteResource("Art/Tools/PinzaParrilleraClosed");
             Texture2D titleTexture = Resources.Load<Texture2D>("Art/PortadaAsadito");
             if (titleTexture != null)
                 titleSprite = Sprite.Create(titleTexture, new Rect(0, 0, titleTexture.width, titleTexture.height), new Vector2(.5f, .5f), 100f);
@@ -221,8 +220,7 @@ namespace Asadito
             Texture2D guestPortraitAtlas = Resources.Load<Texture2D>("Art/GuestPortraitAtlas");
             if (guestPortraitAtlas != null) guestPortraitSprites = CreateGuestPortraitSprites(guestPortraitAtlas);
             BuildSizzleAudio();
-            grill.HeatWhenLitC = FireTemperature;
-            grill.Reset();
+            if (grillHeat == null) grillHeat = new GrillHeatModel();
             BuildInterface();
             RefreshOrder();
         }
@@ -236,26 +234,13 @@ namespace Asadito
             }
             if (paused || servingLocked) return;
             float minutes = Time.deltaTime * SimulationTimeScale / 60f;
-            grill.Step(minutes);
-            // Fuel decays continuously, but repainting all 48 UI cells every frame needlessly
-            // rebuilds the Canvas and cancels the ignition/ember color tween. Keep simulation
-            // precise while refreshing this slow-changing visual at a modest cadence.
-            if (heatVisualRoutine == null)
-            {
-                heatGridVisualRefreshTimer += Time.unscaledDeltaTime;
-                if (heatGridVisualRefreshTimer >= HeatGridVisualRefreshInterval)
-                {
-                    heatGridVisualRefreshTimer = 0f;
-                    RefreshHeatGridVisuals();
-                }
-            }
             for (int i = 0; i < portions.Length; i++)
             {
                 PlayablePortion portion = portions[i];
                 if (!portion.Started || portion.OnTray) continue;
                 bool onGrill = portion.Position.x >= 0f && portion.Position.x <= 1f && portion.Position.y >= 0f && portion.Position.y <= 1f;
-                float localHeat = grill.Sample(portion.Position, new Vector2(.14f, .14f)).x;
-                FoodCookingModel.Step(portion.State, portion.Profile, localHeat, minutes, onGrill && grill.IsLit);
+                float grillTemperatureC = grillHeat.GetTemperatureC();
+                FoodCookingModel.Step(portion.State, portion.Profile, grillTemperatureC, minutes, onGrill);
             }
             if (cooking) UpdateCookFeedback();
             else if (trayCount > 0)
@@ -364,14 +349,14 @@ namespace Asadito
             guestName = MakeText("Nombre comensal", gameplayRoot, "", 30, Cream, TextAnchor.MiddleLeft, .49f, .818f, 490, 50, true);
             guestOrder = MakeText("Pedido de carne", gameplayRoot, "", 25, new Color32(243, 197, 121, 255), TextAnchor.MiddleLeft, .49f, .773f, 490, 46, true);
 
-            fireGlow = MakeImage("Resplandor de brasas", gameplayRoot, circleSprite, new Color(1f, .35f, .07f, .16f), new Vector2(.5f, .57f), new Vector2(.5f, .57f), new Vector2(330, 170));
-            fireGlow.raycastTarget = false;
-            BuildHeatGrid();
-            Image tray = MakeImage("Bandeja de madera", gameplayRoot, circleSprite, new Color32(105, 63, 43, 255), new Vector2(.5f, .468f), new Vector2(.5f, .468f), new Vector2(344, 112));
-            trayRect = tray.rectTransform;
-            MakeImage("Plato de servir", gameplayRoot, circleSprite, new Color32(238, 222, 187, 255), new Vector2(.5f, .468f), new Vector2(.5f, .468f), new Vector2(286, 78));
-            Image trayDrop = MakeImage("Zona tactil bandeja", gameplayRoot, whiteSprite, new Color(1f, 1f, 1f, 0f),
-                new Vector2(.5f, .468f), new Vector2(.5f, .468f), new Vector2(520f, 190f));
+            BuildGrillInteractionArea();
+            servingBoardImage = MakeImage("Tabla de asador", gameplayRoot, servingBoardSprite, Color.white,
+                new Vector2(.5f, .25f), new Vector2(.5f, .25f), new Vector2(620f, 414f));
+            servingBoardImage.preserveAspect = true;
+            servingBoardImage.raycastTarget = false;
+            trayRect = servingBoardImage.rectTransform;
+            Image trayDrop = MakeImage("Zona tactil tabla", gameplayRoot, whiteSprite, new Color(1f, 1f, 1f, 0f),
+                new Vector2(.5f, .25f), new Vector2(.5f, .25f), new Vector2(660f, 440f));
             trayDrop.raycastTarget = false;
             trayDropRect = trayDrop.rectTransform;
             MakePanel("Indicador coccion", gameplayRoot, new Color32(39, 34, 28, 230), .5f, .405f, 890, 132);
@@ -399,18 +384,24 @@ namespace Asadito
                     new Color32(58, 65, 56, 230), CycleSimulationScale);
             pauseButton = MakeButton("PAUSA", gameplayRoot, .91f, .945f, 142, 72, Green, PauseGame);
             MakeText("Ayuda", gameplayRoot, "Cociná, retirá cada pieza y serví la bandeja.", 18, new Color32(255, 224, 177, 255), TextAnchor.MiddleCenter, .5f, .022f, 960, 38, false);
-            igniteButton = MakeButton("PRENDER CARBÓN", gameplayRoot, .5f, .315f, 620, 86, new Color32(132, 64, 39, 255), IgniteCharcoal);
             UpdateGameplayActionButtons();
-            StartCoroutine(AnimateEmbers());
             BuildFrontEnd();
             if (Debug.isDebugBuild) RefreshDebugScaleLabel();
             BuildPauseMenu();
         }
 
+        private void BuildGrillInteractionArea()
+        {
+            var area = new GameObject("Límites de cocción parrilla", typeof(RectTransform));
+            grillAreaRect = area.GetComponent<RectTransform>();
+            grillAreaRect.SetParent(gameplayRoot, false);
+            SetRect(grillAreaRect, .5f, .57f, 780f, 700f);
+        }
+
         private void BuildFoodInteractionLayer()
         {
             // Food and tongs move every pointer event. Keep their geometry/raycast rebuilds
-            // isolated from the large static gameplay canvas (heat cells, labels, buttons).
+            // isolated from the large static gameplay canvas (labels and buttons).
             var layer = new GameObject("Interacción carne Canvas", typeof(RectTransform), typeof(Canvas), typeof(GraphicRaycaster));
             foodInteractionRoot = layer.GetComponent<RectTransform>();
             foodInteractionRoot.SetParent(gameplayRoot, false);
@@ -425,19 +416,12 @@ namespace Asadito
 
         private void BuildTongsVisual()
         {
-            var root = new GameObject("Pinza de parrilla", typeof(RectTransform));
-            root.transform.SetParent(foodInteractionRoot, false);
-            tongsVisual = root.GetComponent<RectTransform>();
-            tongsVisual.anchorMin = tongsVisual.anchorMax = new Vector2(.5f, .5f);
-            tongsVisual.sizeDelta = new Vector2(150f, 90f);
-            Image handle = MakeImage("Mango de pinza", root.transform, whiteSprite, new Color32(93, 65, 45, 255), new Vector2(.2f, .42f), new Vector2(.82f, .58f), new Vector2(115f, 10f));
-            handle.rectTransform.localRotation = Quaternion.Euler(0, 0, -12f);
-            for (int i = 0; i < 2; i++)
-            {
-                Image arm = MakeImage("Brazo metal " + i, root.transform, whiteSprite, new Color32(190, 185, 165, 255), new Vector2(i == 0 ? .72f : .72f, i == 0 ? .63f : .38f), new Vector2(.98f, i == 0 ? .88f : .62f), new Vector2(56f, 5f));
-                arm.rectTransform.localRotation = Quaternion.Euler(0, 0, i == 0 ? 16f : -16f);
-                tongsArms[i] = arm.rectTransform;
-            }
+            tongsImage = MakeImage("Pinza parrillera ilustrada", foodInteractionRoot, tongsOpenSprite,
+                Color.white, new Vector2(.5f, .5f), new Vector2(.5f, .5f), new Vector2(220f, 74f));
+            tongsImage.preserveAspect = true;
+            tongsImage.raycastTarget = false;
+            tongsVisual = tongsImage.rectTransform;
+            tongsVisual.pivot = new Vector2(.965f, .5f);
             tongsVisual.gameObject.SetActive(false);
         }
 
@@ -525,7 +509,7 @@ namespace Asadito
             UpdateGameplayActionButtons();
             tutorialText.text = saveData.Settings.TutorialCompleted
                 ? "Tocá la carne y la pinza la acompaña."
-                : "Paso 1: prendé el carbón para empezar.";
+                : "Paso 1: tocá una pieza para agarrarla con la pinza.";
         }
 
         private void ReturnToLevelsFromPause()
@@ -666,11 +650,11 @@ namespace Asadito
             StartCoroutine(AnimateMenuEntrance(subtitle.rectTransform, subtitleEntrance, .08f, .34f, 14f));
             StartCoroutine(AnimateMenuEntrance(enterButton.GetComponent<RectTransform>(), enterEntrance, .14f, .34f, 22f));
             StartCoroutine(AnimateMenuEntrance(exitButton.GetComponent<RectTransform>(), exitEntrance, .22f, .34f, 18f));
-            Image emberGlow = MakeImage("Resplandor ambiental portada", menuRoot.transform, circleSprite,
+            Image titleGlow = MakeImage("Resplandor ambiental portada", menuRoot.transform, circleSprite,
                 new Color(1f, .29f, .07f, .055f), new Vector2(.5f, .48f), new Vector2(.5f, .48f), new Vector2(650, 300));
-            emberGlow.transform.SetSiblingIndex(2);
-            emberGlow.raycastTarget = false;
-            StartCoroutine(AnimateTitleGlow(emberGlow));
+            titleGlow.transform.SetSiblingIndex(2);
+            titleGlow.raycastTarget = false;
+            StartCoroutine(AnimateTitleGlow(titleGlow));
 
             levelSelectRoot = CreateFullScreenOverlay("Seleccion de nivel");
             levelSelectCanvasGroup = levelSelectRoot.AddComponent<CanvasGroup>();
@@ -780,7 +764,7 @@ namespace Asadito
                 icon.gameObject.SetActive(false);
                 introFoodIcons[i] = icon;
             }
-            introObjectiveText = MakeText("Intro objetivo", introRoot.transform, "Prendé el carbón, repartí las brasas y cociná.\nRetirá todo a punto y serví la bandeja.", 25, Cream, TextAnchor.MiddleCenter, .5f, .415f, 850, 118, false);
+            introObjectiveText = MakeText("Intro objetivo", introRoot.transform, "Tocá una pieza con la pinza, cocinala por ambas caras y llevala a la tabla.", 25, Cream, TextAnchor.MiddleCenter, .5f, .415f, 850, 118, false);
             MakeButton("IR A LA PARRILLA", introRoot.transform, .5f, .35f, 550, 115, new Color32(199, 139, 54, 255), StartLevel);
             gameplayCanvasGroup.alpha = 0f;
             gameplayCanvasGroup.interactable = false;
@@ -883,8 +867,8 @@ namespace Asadito
             introMenuText.text = BuildOrderSummary(currentLevel);
             RefreshIntroFoodIcons(currentLevel);
             introObjectiveText.text = currentLevelNumber == 1
-                ? "Prendé el carbón, repartí las brasas y cociná.\nDale vuelta, retiralo a la bandeja y serví."
-                : "Leé los pedidos, repartí el calor por zonas y cociná cada pieza.\nRetirá todas a la bandeja y serví la juntada.";
+                ? "Tocá una pieza y agarrala con la pinza.\nDale vuelta y llevala a la tabla cuando esté lista."
+                : "Leé los pedidos y cociná cada pieza en la parrilla caliente.\nRetiralas a la tabla y serví la juntada.";
             StartCoroutine(TransitionToIntro());
         }
 
@@ -1031,64 +1015,9 @@ namespace Asadito
             gameplayCanvasGroup.blocksRaycasts = true;
             menuTransitionActive = false;
             tutorialStep = 0;
-            tutorialText.text = saveData.Settings.TutorialCompleted ? "El carbón responde a dónde agrupás las brasas." : "Paso 1: prendé el carbón para empezar.";
-        }
-
-        private void BuildHeatGrid()
-        {
-            Image root = MakeImage("Mapa de calor carbón 8x6", gameplayRoot, whiteSprite, new Color(0, 0, 0, 0), new Vector2(.5f, .575f), new Vector2(.5f, .575f), new Vector2(820, 276));
-            root.raycastTarget = false;
-            heatGridRect = root.rectTransform;
-            for (int y = 0; y < 6; y++)
-            for (int x = 0; x < 8; x++)
-            {
-                Image cell = MakeImage("Brasa " + x + "," + y, root.transform, whiteSprite, new Color(.16f, .14f, .12f, .75f), new Vector2(.5f, .5f), new Vector2(.5f, .5f), new Vector2(99, 43));
-                cell.rectTransform.anchoredPosition = new Vector2((x - 3.5f) * 102f, (y - 2.5f) * 46f);
-                cell.color = new Color(.16f, .14f, .12f, .75f);
-                cell.raycastTarget = true;
-                EmberCellTouch touch = cell.gameObject.AddComponent<EmberCellTouch>();
-                touch.Owner = this; touch.X = x; touch.Y = y;
-                heatCellImages.Add(cell);
-            }
-            RefreshHeatGridVisuals();
-        }
-
-        private void IgniteCharcoal()
-        {
-            if (servingLocked || grill.IsLit) return;
-            PlaySfx(AsaditoSfxCue.Ignite);
-            grill.HeatWhenLitC = FireTemperature;
-            grill.Ignite();
-            igniteButton.interactable = false;
-            igniteButton.GetComponentInChildren<Text>().text = "CARBÓN ENCENDIDO";
-            UpdateGameplayActionButtons();
-            feedbackText.text = "Las brasas están listas. Arrastrá las celdas para repartir el calor.";
-            AdvanceTutorial(1, "Paso 2: arrastrá brasas para cambiar el calor por zona.");
-            AnimateHeatGridTransition();
-            StartCoroutine(PlayIgnitionCue());
-        }
-
-        public void DragEmbers(int fromX, int fromY, Vector2 screenPosition)
-        {
-            if (!grill.IsLit || heatGridRect == null) return;
-            if (!RectTransformUtility.ScreenPointToLocalPointInRectangle(heatGridRect, screenPosition, null, out Vector2 local)) return;
-            Vector2 normalized = new Vector2(local.x / heatGridRect.rect.width + .5f, local.y / heatGridRect.rect.height + .5f);
-            int x = Mathf.Clamp(Mathf.FloorToInt(normalized.x * 8), 0, 7);
-            int y = Mathf.Clamp(Mathf.FloorToInt(normalized.y * 6), 0, 5);
-            if (grill.MoveEmbers(fromX, fromY, x, y))
-            {
-                // Raking changes only two cells. Finish any ignition tween once, then update
-                // just these cells so a long drag doesn't continually reanimate all 48.
-                if (heatVisualRoutine != null)
-                {
-                    StopCoroutine(heatVisualRoutine);
-                    heatVisualRoutine = null;
-                    RefreshHeatGridVisuals();
-                }
-                RefreshHeatCellVisual(fromX, fromY);
-                RefreshHeatCellVisual(x, y);
-                AdvanceTutorial(2, "Paso 3: tocá directamente una pieza para agarrarla.");
-            }
+            tutorialText.text = saveData.Settings.TutorialCompleted
+                ? "Tocá una pieza para agarrarla con la pinza."
+                : "Paso 1: tocá una pieza para agarrarla con la pinza.";
         }
 
         public void BeginFoodDrag(int index)
@@ -1108,26 +1037,23 @@ namespace Asadito
         {
             if (pointerId != int.MinValue && !IsActiveFoodPointer(index, pointerId)) return;
             if (paused || servingLocked || platingInProgress || !cooking || activePortion != index ||
-                !portions[index].Started || portions[index].OnTray || heatGridRect == null) return;
-            if (!RectTransformUtility.ScreenPointToLocalPointInRectangle(heatGridRect, screenPosition, null, out Vector2 local)) return;
-            Vector2 size = heatGridRect.rect.size;
+                !portions[index].Started || portions[index].OnTray || grillAreaRect == null) return;
+            if (!RectTransformUtility.ScreenPointToLocalPointInRectangle(grillAreaRect, screenPosition, null, out Vector2 local)) return;
+            Vector2 size = grillAreaRect.rect.size;
             Vector2 normalized = new Vector2(local.x / size.x + .5f, local.y / size.y + .5f);
-            portions[index].Position = normalized;
-            portionHitTargets[index].position = heatGridRect.TransformPoint(local);
+            SetFoodTargetPosition(index, normalized);
             if (tongsVisual != null)
             {
-                tongsVisual.position = screenPosition + new Vector2(38f, 45f);
+                tongsVisual.position = screenPosition + new Vector2(26f, 30f);
                 if (!tongsVisual.gameObject.activeSelf)
                 {
-                    // Keep the tong sprite above the food, but don't reorder the Canvas on
-                    // every pointer-move event during a drag.
                     tongsVisual.gameObject.SetActive(true);
                     tongsVisual.SetAsLastSibling();
                 }
             }
             activePortion = index;
             cooking = true;
-            AdvanceTutorial(4, "Mové la pieza por la parrilla y observá el calor de cada zona.");
+            AdvanceTutorial(2, "Paso 3: dale vuelta para cocinar la otra cara.");
         }
 
         public void EndFoodDrag(int index, Vector2 screenPosition)
@@ -1159,7 +1085,7 @@ namespace Asadito
         {
             Vector2 position = portions[index].Position;
             Vector2 targetHalf = portionHitTargets[index].rect.size * .5f;
-            Vector2 margin = new Vector2(targetHalf.x / heatGridRect.rect.width, targetHalf.y / heatGridRect.rect.height);
+            Vector2 margin = new Vector2(targetHalf.x / grillAreaRect.rect.width, targetHalf.y / grillAreaRect.rect.height);
             position.x = Mathf.Clamp(position.x, margin.x, 1f - margin.x);
             position.y = Mathf.Clamp(position.y, margin.y, 1f - margin.y);
             SetFoodTargetPosition(index, position);
@@ -1168,109 +1094,13 @@ namespace Asadito
         private void AdvanceTutorial(int step, string message)
         {
             if (tutorialText == null || saveData == null || saveData.Settings.TutorialCompleted) return;
-            // Drag handlers may call this once per pointer-move. Rewriting the same Text
-            // and CanvasGroup on every event dirties the whole gameplay canvas needlessly.
             if (step <= tutorialStep) return;
             tutorialStep = step;
             tutorialText.text = message;
         }
 
-        private void RefreshHeatGridVisuals()
-        {
-            if (heatVisualRoutine != null)
-            {
-                StopCoroutine(heatVisualRoutine);
-                heatVisualRoutine = null;
-            }
-            if (heatCellImages.Count != 48) return;
-            for (int y = 0; y < 6; y++)
-            for (int x = 0; x < 8; x++)
-            {
-                heatCellImages[y * 8 + x].color = HeatCellColor(x, y);
-            }
-        }
-
-        private void RefreshHeatCellVisual(int x, int y)
-        {
-            if (x < 0 || x >= 8 || y < 0 || y >= 6 || heatCellImages.Count != 48) return;
-            int index = y * 8 + x;
-            if (heatCellImages[index] != null)
-                heatCellImages[index].color = HeatCellColor(x, y);
-        }
-
-        private Color HeatCellColor(int x, int y)
-        {
-            HeatCell cell = grill.Grid.GetCell(x, y);
-            float ember = Mathf.Clamp01(cell.EmberEnergy);
-            return grill.IsLit
-                ? Color.Lerp(new Color32(77, 57, 44, 215), new Color32(247, 93, 31, 245), ember)
-                : (Color)new Color32(64, 58, 49, 200);
-        }
-
-        private void AnimateHeatGridTransition()
-        {
-            if (heatCellImages.Count != 48) return;
-            if (heatVisualRoutine != null) StopCoroutine(heatVisualRoutine);
-            heatVisualRoutine = StartCoroutine(TransitionHeatGridColors());
-        }
-
-        private IEnumerator TransitionHeatGridColors()
-        {
-            const float duration = .18f;
-            var starts = new Color[48];
-            var targets = new Color[48];
-            for (int y = 0; y < 6; y++)
-            for (int x = 0; x < 8; x++)
-            {
-                int index = y * 8 + x;
-                starts[index] = heatCellImages[index].color;
-                targets[index] = HeatCellColor(x, y);
-            }
-            float elapsed = 0f;
-            while (elapsed < duration)
-            {
-                elapsed += Time.unscaledDeltaTime;
-                float t = Mathf.SmoothStep(0f, 1f, Mathf.Clamp01(elapsed / duration));
-                for (int i = 0; i < heatCellImages.Count; i++)
-                    if (heatCellImages[i] != null) heatCellImages[i].color = Color.Lerp(starts[i], targets[i], t);
-                yield return null;
-            }
-            for (int i = 0; i < heatCellImages.Count; i++)
-                if (heatCellImages[i] != null) heatCellImages[i].color = targets[i];
-            heatVisualRoutine = null;
-        }
-
-        private IEnumerator PlayIgnitionCue()
-        {
-            if (heatGridRect == null) yield break;
-            Image flame = MakeImage("Destello de encendido", heatGridRect, AsaditoUiIcons.Get(AsaditoUiIcon.Flame),
-                new Color32(255, 194, 93, 245), new Vector2(.5f, .5f), new Vector2(.5f, .5f), new Vector2(54f, 54f));
-            flame.preserveAspect = true;
-            float elapsed = 0f;
-            const float duration = .42f;
-            while (elapsed < duration && flame != null)
-            {
-                elapsed += Time.unscaledDeltaTime;
-                float p = Mathf.Clamp01(elapsed / duration);
-                flame.rectTransform.localScale = Vector3.one * Mathf.Lerp(.45f, 1.45f, Mathf.SmoothStep(0f, 1f, p));
-                Color color = flame.color;
-                color.a = Mathf.Sin(p * Mathf.PI) * .96f;
-                flame.color = color;
-                yield return null;
-            }
-            if (flame != null) Destroy(flame.gameObject);
-        }
-
         private void RefreshOrder()
         {
-            grill.Reset();
-            grill.HeatWhenLitC = FireTemperature;
-            if (igniteButton != null)
-            {
-                igniteButton.interactable = true;
-                igniteButton.GetComponentInChildren<Text>().text = "PRENDER CARBÓN";
-            }
-            RefreshHeatGridVisuals();
             guestName.text = BuildGuestNamesSummary();
             guestOrder.text = BuildOrderSummary();
             scoreText.text = "NIVEL " + currentLevelNumber + "  •  BANDEJA 0 / " + portions.Length + "  •  " + activeGuests.Length + " COMENSALES";
@@ -1359,7 +1189,7 @@ namespace Asadito
                     Mathf.Max(180f, visualSize.y * .92f));
                 Image hitGraphic = MakeImage("Food hit target " + (index + 1), foodInteractionRoot, whiteSprite,
                     new Color(1f, 1f, 1f, 0f), new Vector2(.5f, .5f), new Vector2(.5f, .5f), touchSize);
-                hitGraphic.rectTransform.position = heatGridRect.TransformPoint(GridLocalPosition(home));
+                hitGraphic.rectTransform.position = grillAreaRect.TransformPoint(GrillLocalPosition(home));
                 hitGraphic.raycastTarget = true;
                 CanvasGroup hitGroup = hitGraphic.gameObject.AddComponent<CanvasGroup>();
                 hitGroup.alpha = 1f;
@@ -1407,10 +1237,10 @@ namespace Asadito
             return new Vector2(new[] { .18f, .5f, .82f }[index % 3], index < 3 ? .75f : .25f);
         }
 
-        private Vector2 GridLocalPosition(Vector2 normalizedPosition)
+        private Vector2 GrillLocalPosition(Vector2 normalizedPosition)
         {
-            return new Vector2((normalizedPosition.x - .5f) * heatGridRect.rect.width,
-                (normalizedPosition.y - .5f) * heatGridRect.rect.height);
+            return new Vector2((normalizedPosition.x - .5f) * grillAreaRect.rect.width,
+                (normalizedPosition.y - .5f) * grillAreaRect.rect.height);
         }
 
         private void SetFoodTargetPosition(int index, Vector2 normalizedPosition)
@@ -1418,7 +1248,7 @@ namespace Asadito
             portions[index].Position = normalizedPosition;
             if (portionHitTargets == null || index < 0 || index >= portionHitTargets.Length || portionHitTargets[index] == null)
                 return;
-            portionHitTargets[index].position = heatGridRect.TransformPoint(GridLocalPosition(normalizedPosition));
+            portionHitTargets[index].position = grillAreaRect.TransformPoint(GrillLocalPosition(normalizedPosition));
         }
 
         public bool IsFoodTargetClosest(int index, Vector2 screenPoint, Camera eventCamera)
@@ -1517,11 +1347,6 @@ namespace Asadito
             if (index < 0 || portions == null || index >= portions.Length || paused || servingLocked || platingInProgress)
                 return false;
             if (portions[index].OnTray) return false;
-            if (!grill.IsLit)
-            {
-                if (feedbackText != null) feedbackText.text = "Prendé el carbón antes de cocinar.";
-                return false;
-            }
             if (cooking && activePortion != index)
             {
                 if (feedbackText != null) feedbackText.text = "Terminá la pieza que está en la pinza primero.";
@@ -1544,7 +1369,7 @@ namespace Asadito
             AnimateTongsGrip(true);
             UpdateGameplayActionButtons();
             if (feedbackText != null) feedbackText.text = "La pinza la sostiene: arrastrala, dale vuelta o llevala a la bandeja.";
-            AdvanceTutorial(3, "Paso 4: tocá una pieza y arrastrala con la pinza.");
+            AdvanceTutorial(1, "Paso 2: arrastrá la pieza por la parrilla.");
             return true;
         }
 
@@ -1569,7 +1394,7 @@ namespace Asadito
         {
             if (tongsVisual == null || portionHitTargets == null || portionHitTargets[index] == null) return;
             if (tongsMoveRoutine != null) StopCoroutine(tongsMoveRoutine);
-            Vector3 destination = portionHitTargets[index].position + new Vector3(34f, 34f, 0f);
+            Vector3 destination = portionHitTargets[index].position + new Vector3(26f, 30f, 0f);
             bool wasHidden = !tongsVisual.gameObject.activeSelf;
             tongsVisual.gameObject.SetActive(true);
             if (wasHidden) tongsVisual.SetAsLastSibling();
@@ -1579,29 +1404,9 @@ namespace Asadito
 
         private void AnimateTongsGrip(bool gripping)
         {
-            if (tongsGripRoutine != null) StopCoroutine(tongsGripRoutine);
-            tongsGripRoutine = StartCoroutine(AnimateTongsGripRoutine(gripping));
-        }
-
-        private IEnumerator AnimateTongsGripRoutine(bool gripping)
-        {
-            if (tongsArms == null || tongsArms.Length < 2 || tongsArms[0] == null || tongsArms[1] == null)
-                yield break;
-            float[] starts = { tongsArms[0].localRotation.eulerAngles.z, tongsArms[1].localRotation.eulerAngles.z };
-            float targetMagnitude = gripping ? 7f : 16f;
-            float[] targets = { targetMagnitude, -targetMagnitude };
-            float elapsed = 0f;
-            while (elapsed < .1f)
-            {
-                elapsed += Time.unscaledDeltaTime;
-                float t = Mathf.SmoothStep(0f, 1f, Mathf.Clamp01(elapsed / .1f));
-                for (int i = 0; i < 2; i++)
-                    tongsArms[i].localRotation = Quaternion.Euler(0f, 0f, Mathf.LerpAngle(starts[i], targets[i], t));
-                yield return null;
-            }
-            for (int i = 0; i < 2; i++)
-                if (tongsArms[i] != null) tongsArms[i].localRotation = Quaternion.Euler(0f, 0f, targets[i]);
-            tongsGripRoutine = null;
+            if (tongsImage == null) return;
+            tongsImage.sprite = gripping ? tongsClosedSprite : tongsOpenSprite;
+            tongsImage.rectTransform.localScale = gripping ? new Vector3(.96f, .92f, 1f) : Vector3.one;
         }
 
         private IEnumerator MoveTongsTo(Vector3 destination)
@@ -1655,8 +1460,8 @@ namespace Asadito
             feedbackText.text = trayCount == portions.Length
                 ? "Todo listo: serví la bandeja a los comensales."
                 : "Elegí directamente otra pieza sobre la parrilla.";
-            AdvanceTutorial(trayCount == portions.Length ? 6 : 5,
-                trayCount == portions.Length ? "Paso 6: serví la bandeja." : "Tocá la próxima pieza para continuar.");
+            AdvanceTutorial(trayCount == portions.Length ? 5 : 4,
+                trayCount == portions.Length ? "Paso 5: serví cuando todas las porciones estén en la tabla." : "Tocá la próxima pieza para continuar.");
             UpdateGameplayActionButtons();
         }
 
@@ -1668,9 +1473,9 @@ namespace Asadito
             StartCoroutine(FlipAnimation(PortionImage(activePortion).rectTransform));
             RefreshFoodVisual(activePortion);
             PositionTongsAtFood(activePortion, true);
-            AdvanceTutorial(5, "La otra cara ya está al fuego. Retirala cuando llegue al punto pedido.");
+            AdvanceTutorial(3, "Paso 4: cuando esté lista, llevala a la tabla.");
             VibrateFeedback();
-            feedbackText.text = "La cara fría queda hacia las brasas.";
+            feedbackText.text = "La otra cara ya está sobre la parrilla.";
         }
 
         private void VibrateFeedback()
@@ -1756,7 +1561,7 @@ namespace Asadito
         {
             if (target == null || trayRect == null) yield break;
             Vector3 start = target.position;
-            Vector3 destination = trayRect.position + new Vector3((index % 3 - 1) * 48f, (index / 3) % 2 == 0 ? 12f : -12f, 0f);
+            Vector3 destination = TrayPortionPosition(index);
             Vector3 startScale = target.localScale;
             float elapsed = 0f;
             while (elapsed < .42f)
@@ -1765,11 +1570,26 @@ namespace Asadito
                 float p = Mathf.Clamp01(elapsed / .42f);
                 float eased = Mathf.SmoothStep(0f, 1f, p);
                 target.position = Vector3.Lerp(start, destination, eased) + Vector3.up * (36f * Mathf.Sin(p * Mathf.PI));
-                target.localScale = Vector3.Lerp(startScale, Vector3.one * .68f, eased);
+                target.localScale = Vector3.Lerp(startScale, Vector3.one * .44f, eased);
                 yield return null;
             }
             target.position = destination;
-            target.localScale = Vector3.one * .68f;
+            target.localScale = Vector3.one * .44f;
+        }
+
+        private Vector3 TrayPortionPosition(int index)
+        {
+            int columns = portions.Length <= 2 ? 2 : 3;
+            int rows = Mathf.CeilToInt(portions.Length / (float)columns);
+            int column = index % columns;
+            int row = index / columns;
+            float xStep = trayRect.rect.width * .29f;
+            float yStep = trayRect.rect.height * .28f;
+            Vector3 localOffset = new Vector3(
+                (column - (columns - 1) * .5f) * xStep,
+                ((rows - 1) * .5f - row) * yStep,
+                0f);
+            return trayRect.TransformPoint(localOffset);
         }
 
         private void Serve()
@@ -2050,7 +1870,7 @@ namespace Asadito
 
             PlayablePortion portion = portions[activePortion];
             cookFill.rectTransform.sizeDelta = new Vector2(760f * Mathf.Clamp01(portion.State.CoreTemperatureC / 80f), 18f);
-            progressText.text = Mathf.RoundToInt(portion.State.CoreTemperatureC) + " °C  •  " + portion.Point + "  •  zona " + Mathf.RoundToInt(grill.Sample(portion.Position, new Vector2(.14f, .14f)).x) + " °C";
+            progressText.text = Mathf.RoundToInt(portion.State.CoreTemperatureC) + " °C  •  " + portion.Point;
             RefreshFoodVisual(activePortion);
         }
 
@@ -2074,20 +1894,6 @@ namespace Asadito
             {
                 Color burnt = new Color32(46, 36, 31, 255);
                 image.color = Color.Lerp(Color.white, burnt, charAmount);
-            }
-        }
-
-        private IEnumerator AnimateEmbers()
-        {
-            while (true)
-            {
-                if (fireGlow != null)
-                {
-                    float pulse = .12f + Mathf.PingPong(Time.time * .12f, .12f);
-                    fireGlow.color = new Color(1f, .34f, .06f, pulse);
-                    fireGlow.rectTransform.localScale = Vector3.one * (1f + pulse * .3f);
-                }
-                yield return null;
             }
         }
 
@@ -2169,6 +1975,12 @@ namespace Asadito
                 sprites[guest, expression].name = guestIds[guest] + "_" + expressions[expression];
             }
             return sprites;
+        }
+
+        private static Sprite LoadSingleSpriteResource(string resourcePath)
+        {
+            Sprite[] loaded = Resources.LoadAll<Sprite>(resourcePath);
+            return loaded != null && loaded.Length > 0 ? loaded[0] : null;
         }
 
         private Sprite FoodStateSprite(string foodId, int stage)
@@ -2348,9 +2160,6 @@ namespace Asadito
                 case "VOLVER":
                 case "NIVELES":
                     icon = AsaditoUiIcon.Back;
-                    return true;
-                case "PRENDER CARBÓN":
-                    icon = AsaditoUiIcon.Flame;
                     return true;
                 case "DAR VUELTA":
                     icon = AsaditoUiIcon.Flip;

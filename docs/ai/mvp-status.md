@@ -1,28 +1,32 @@
-# Estado del MVP — finalización y QA (2026-09-29)
+# Estado MVP ASADITO — 2026-09-30
 
 ## Implementado
 
-- Comida como interacción primaria: toque/drag directamente sobre cada pieza y target táctil transparente mínimo de 190×180; selección unificada, lift/halo/sombra y pinza animada; movimiento/settle, flip, bandeja por botón universal o drag-to-tray. Sin botones nombrados por alimento.
-- Flujo L1–L12, 18 alimentos data-driven con perfil térmico distinto, 18 atlas y seis estados progresivos c/u (108 sprites), cara independiente, fuego/carbón, bandeja, comensales y scoring 40/30/20/10.
-- Ritmo inicial ajustado de 30× a **20×** después de medir ventanas A_Punto en cada corte rápido: mínimo ~1.9 s para provoleta y máximo ~18.1 s para vacío a grilla de 210 °C; conserva entraña rápida y vacío lento. Guardado v3 migra los defaults previos sin sobrescribir elecciones custom.
-- Menú pausa móvil (continuar, retry, selector, SFX y vibración), tutorial actualizado a manipulación directa, control debug solo en Editor/development.
-- Audio sizzle/SFX procedural con volumen/pausa; safe area y dimensiones revisadas en simulación previa. Estos elementos aún necesitan validación humana/física.
-- Validator ampliado verifica catálogo, 108 frames y consistencia alfa/silueta, niveles, perfiles y recursos de runtime.
+- Parrilla always-hot uniforme a 210 °C; se eliminaron carbón/encendido, combustible, heat-grid/brasas táctiles, glow de gameplay, SFX de ignition y tutorial asociado. Cocción de alimentos, caras/flip, Maillard, humedad, char y perfiles siguen conectados.
+- Tocar comida directamente selecciona la pieza; hitbox invisible ampliada, pinza ilustrada abierta/cerrada y movimiento/flip; tabla de asador ilustrada como destino por drag o acción universal. No existen botones individuales por corte.
+- Catálogo data-driven de 18 alimentos, 108 estados visuales y progresión de 12 niveles; pause/settings mínimos, scoring, save y debug oculto fuera de Editor/development.
+- Specs, arquitectura y manifests documentan la regla y los assets conectados.
 
-## Verificación
+## Verificación local
 
-- Unity 6000.6.3f1 local: EditMode **20/20 PASS**; PlayMode **10/10 PASS**; tras el ajuste idempotente del tutorial se repitieron ambas suites: `/tmp/asadito-final-rerun-editmode.xml` y `/tmp/asadito-final-rerun-playmode.xml`.
-- `python3 Tools/validate_food_content.py`: PASS, 18 perfiles, 108 estados coherentes, 12 tarjetas y progresión completa.
-- `git diff --check`: se repetirá después de la actualización de auditoría/documentación.
-- Build Android de validación **PASS**: `/tmp/Asadito-mvp-1.2.0-arm64-final.apk`, ARM64 IL2CPP, API36, 1.2.0/code3; `aapt` configurado, firma debug; instalado y lanzado en emulador Pixel 7a API36. Se mostró L1, fuego y selección directa; captura `/tmp/Asadito-mvp-gameplay-selected.png`. Se eliminó spam de Bloom quitando referencia URP no usada.
-- **Riesgo bloqueante de QA pendiente:** el último swipe ADB del APK final produjo ANR input (~8 s) y no confirmó drag-to-tray. Traza apunta a espera `glUnmapBufferAEMU_enc` en renderer QEMU/Android x86-64 con APK ARM64 traducido; origen no resuelto ni se atribuye solo al emulador. No declarar MVP release-ready hasta validar drag continuo/emplatado y profiler en teléfono ARM64. AssetPackManager opcional reporta ClassNotFound al inicio, sin crash fatal observado.
-- Emulador no certifica rendimiento, batería, tacto humano, audio/haptics, cutout ni navbar físico. No se afirma QA física; la imagen demuestra solo un estado de interacción visible, no recorrido completo.
-- GitHub Actions [36650720830](https://github.com/Cuervation/Asadito/actions/runs/36650720830): static validator y whitespace PASS; Unity workflow SKIPPED por licencia/secretos no provistos por owner.
+- EditMode Unity 6000.6.3f1: **19/19 PASS** (`/tmp/asadito-always-hot-editmode.xml`).
+- PlayMode Unity 6000.6.3f1: **10/10 PASS** (486.61 s), incluye cocinar/servir todos los niveles L1–L12; XML en `/Users/celestino/Library/Application Support/Cuervation/Asadito/TestResults.xml`.
+- Validator `python3 Tools/validate_food_content.py`: **PASS**, 18 perfiles, 108 sprites, 12 cartas, progresión y recursos runtime.
+- Console Unity al final de la suite: 0 errors/warnings.
 
-## Límites pendientes antes de un release de tienda
+## Pendiente antes de declarar release/QA físico
 
-- Teléfono real y Unity Profiler; prueba con dedos de arrastre y drop a bandeja, brasas, multitoque, solapes, gestos y safe areas.
-- Revisión humana de artwork/audio y balance real del juego completo.
-- Firma y publicación no están en el scope ni se generaron credenciales productivas.
+- Build actual del refactor: Android ARM64 IL2CPP, API36, package/version/code verificados; firma v2 debug. APK `/tmp/Asadito-always-hot-1.2.0-arm64.apk` (53 MiB); `aapt`, `unzip` y `apksigner` pasaron.
+- Instalación ADB en `Asadito_Pixel_7a_API_36` pasó, pero el AVD es x86_64, no ARM64. Unity no pudo inicializar Graphics API (SwiftShader anuncia GLES 3.1 y el player intenta ES 3.2/3.1); no alcanzó menú ni gameplay y no hay captura Android de gameplay. Evidencia del error: `/tmp/asadito-qa/02-after-hardware-warning.png`.
+- El ANR histórico de swipe pertenece al APK previo al refactor; no se declara ni resuelto ni reproducido en la nueva build, porque ésta no llegó a renderizar en el AVD.
+- Faltan pruebas con dedos/hardware físico (drag/multitouch/notch/navbar), audio/haptics real, rendimiento sostenido y sign-off humano de arte.
+- El resultado del CI remoto se verificará luego del push; no se atribuye PASS al pipeline Unity remoto si está limitado por licencia/secrets del owner.
 
-Ver [auditoría](mvp-audit.md), [estado detallado](current-state.md) y [build Android](../android-release.md).
+## QA local completado
+
+- EditMode 19/19 PASS y PlayMode 10/10 PASS (incluye L1–L12); `Tools/validate_food_content.py` PASS; consola Unity limpia al final de tests.
+- `git diff --check`, commit/push: registrar resultado final en el cierre de esta ejecución.
+
+API36 es el target configurado para Android 16 y cubre el requisito actual de envíos a Google Play desde el 31-08-2026 ([documentación oficial](https://support.google.com/googleplay/android-developer/answer/11926878?hl=es)). Build de validación debug; no hay firma productiva/publicación.
+
+Ver [auditoría](mvp-audit.md), [estado técnico](current-state.md) y [build Android](../android-release.md).

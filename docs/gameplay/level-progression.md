@@ -4,8 +4,8 @@ Fuente de verdad de runtime: [`MvpLevelCatalog.cs`](../../Assets/Asado/Scripts/R
 
 | Nivel | Nombre de diseño | Porciones / comensales | Contenido (IDs del catálogo) | Aprendizaje principal |
 |---:|---|---:|---|---|
-| 1 | El debut | 2 | `tira`, `chorizo` | Tutorial; primero aprender a iniciar y gestionar la parrilla. |
-| 2 | Zonas de calor | 3 | `chorizo`, `tira`, `chorizo` | Colocar piezas en distintas zonas y priorizar tiempos. |
+| 1 | El debut | 2 | `tira`, `chorizo` | Tutorial de pinza, tap directo, drag, flip y tabla. |
+| 2 | Una tanda más | 3 | `chorizo`, `tira`, `chorizo` | Manejar más piezas y mantener el ritmo de servicio. |
 | 3 | Puntos distintos | 4 | `tira`, `chorizo`, `tira`, `chorizo` | Resolver varios puntos solicitados. |
 | 4 | El vacío | 4 | `vacio`, `tira`, `chorizo`, `tira` | Incorporar corte grueso y lento. |
 | 5 | La gran juntada | 6 | `tira`, `chorizo`, `vacio`, `provoleta`, `tira`, `chorizo` | Sincronizar cortes y queso con ritmos muy distintos. |
@@ -13,8 +13,8 @@ Fuente de verdad de runtime: [`MvpLevelCatalog.cs`](../../Assets/Asado/Scripts/R
 | 7 | Punto justo | 4 | `lomo`, `colita_cuadril`, `vacio`, `lomo` | Equilibrar carne magra sensible con cortes más lentos. |
 | 8 | Achuras | 5 | `chinchulines`, `morcilla`, `morcilla_vasca`, `chorizo`, `tira` | Vigilar dorado, grasa y riesgo de rotura de morcilla. |
 | 9 | Otras carnes | 5 | `matambre_cerdo`, `costillita_cerdo`, `pollo_deshuesado` ×2, `provoleta` | Cambiar de familia térmica y combinar proteína animal con queso. |
-| 10 | Cortes premium | 6 | `bife_ancho`, `bife_chorizo`, `ojo_bife`, `bife_angosto`, `lomo`, `colita_cuadril` | Ajustar zonas a perfiles vacunos de grasa/espesor diferentes. |
+| 10 | Cortes premium | 6 | `bife_ancho`, `bife_chorizo`, `ojo_bife`, `bife_angosto`, `lomo`, `colita_cuadril` | Ajustar el manejo a perfiles vacunos de grasa/espesor diferentes. |
 | 11 | Fogón criollo | 6 | `pollo_deshuesado`, `matambre_cerdo`, `solomillo_cerdo`, `costillita_cerdo`, `morcilla_vasca`, `entrana` | Combinar las familias previamente aprendidas. |
-| 12 | El asado completo | 6 | `vacio`, `ojo_bife`, `entrana`, `morcilla_vasca`, `provoleta`, `pollo_deshuesado` | Síntesis de proteínas, zonas, puntos y ventanas térmicas. |
+| 12 | El asado completo | 6 | `vacio`, `ojo_bife`, `entrana`, `morcilla_vasca`, `provoleta`, `pollo_deshuesado` | Síntesis de proteínas, puntos y ventanas térmicas. |
 
 Los niveles 1–5 conservan el recorrido/tutorial original. `MvpSaveData` v3 conserva las tablas de 12 niveles y migra v1 (progreso de cinco niveles) y v2; la migración ajusta el default térmico legado de 30× a 20× sin sobrescribir un valor custom. EditMode valida cantidades/perfiles válidos y cobertura de las 18 definiciones; PlayMode recorre cooking→serving→results/desbloqueo→volver para los doce.

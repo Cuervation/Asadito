@@ -2,9 +2,9 @@
 
 ## First Playable y contenido
 
-- Menú → nivel → intro → parrilla con HeatGrid 8×6, brasas y calor espacial; arrastrar/posicionar/voltear comida, estado independiente por cara, retirar a bandeja, servir, evaluar, guardar, retry/next.
+- Menú → nivel → intro → parrilla cenital ya caliente (210 °C uniforme por `GrillHeatModel`); sin controls/mecánica/celdas de carbón. Tap/drag directo de carne con pinza de arte real, cara independiente/flip, arrastre o acción universal a tabla de asador, servir, evaluar, guardar, retry/next.
 - 18 IDs únicos con perfil térmico configurable y completo, 6 representaciones visuales por alimento (108 sprite recortados de 18 atlas), sin recurso obligatorio faltante; perfiles son tuning de gameplay y no reglas sanitarias.
-- 12 niveles progresivos enseñan zonas/puntos/cortes/achuras/cerdo/ave/premium y asado combinado; unlock y migración de progreso preexistente.
+- 12 niveles progresivos enseñan manipulación directa/puntos/cortes/achuras/cerdo/ave/premium y asado combinado; unlock y migración de progreso preexistente.
 - 6 comensales diferenciados en edad/peso/apetito/preferencias/punto; género fuera de fórmulas. Asignador no debe saltear invitados por repetición antes de asignar primera porción a todos.
 - Scoring 0–100 y ponderado (40/30/20/10) con food preference 0/40/70/100, favorito máximo.
 - Safe area aplicado al Canvas; `gameplayRoot` deactivado sin apagar overlays/menú.
@@ -17,4 +17,4 @@
 
 ## Feedback/runtime
 
-Implementaciones runtime básicas/procedurales de interacción, fire/ember/smoke, guest reactions, results score/stars y eight synthesized cues exist. Asset concepts alone are not completion; `docs/art/*manifest` reporta integración/provisionalidad.
+Interacción/selección/lift/drag/flip/tabla, humo de cocción, guest reactions, results score/stars y siete cues sintetizados existen en runtime. No existe sistema visual o interactivo de carbón/brasas/ignition; `docs/art/*manifest` reporta integración/provisionalidad.

@@ -14,4 +14,4 @@ Repositorio oficial: [Cuervation/Asadito](https://github.com/Cuervation/Asadito)
 
 ## Alcance
 
-First Playable: dos comensales, chorizo y tira de asado, parrilla a carbón, bandeja, evaluación y retry. No desarrollar sistemas fuera del [scope del MVP](specs/product/mvp-scope.md).
+First Playable: dos comensales, chorizo y tira de asado, parrilla caliente al entrar, interacción táctil directa con pinza, tabla de asador, evaluación y retry. No desarrollar sistemas fuera del [scope del MVP](specs/product/mvp-scope.md).
