@@ -17,6 +17,10 @@ namespace Asadito
         private static readonly Color Cream = new Color32(255, 239, 205, 255);
         private static readonly Color Gold = new Color32(245, 177, 72, 255);
         private static readonly Color Green = new Color32(67, 106, 73, 255);
+        // The procedural aluminum tray's flat center is 84%×71% of the full sprite.
+        private const float RawTrayFoodAreaWidth = .84f;
+        private const float RawTrayFoodAreaHeight = .71f;
+        private const float RawTrayFoodGap = 8f;
         // The board sprite's usable cutting surface is the inset wood area; leave its raised rim
         // and handle clear when packing cooked portions.
         private const float ServingBoardFoodAreaWidth = .74f;
@@ -101,6 +105,7 @@ namespace Asadito
         private bool[] rawTrayPortionStacked = System.Array.Empty<bool>();
         private Vector2[] servingBoardPortionCenters = System.Array.Empty<Vector2>();
         private bool[] servingBoardPortionStacked = System.Array.Empty<bool>();
+        private readonly List<int> servingBoardPlateOrder = new List<int>();
         private float servingBoardPortionScale = 1f;
         private Image[] portionSelectionHalos;
         private Shadow[] portionSelectionShadows;
@@ -710,7 +715,7 @@ namespace Asadito
                 int levelNumber = i + 1;
                 int row = i / 2;
                 int column = i % 2;
-                float x = column == 0 ? .275f : .725f;
+                float x = column == 0 ? .25f : .75f;
                 float y = 1f - (row * levelCardStride + 160f) / levelContent.sizeDelta.y;
 
                 Image cardFrame = MakeImage("Marco nivel " + levelNumber, levelContent,
@@ -778,7 +783,7 @@ namespace Asadito
             introCanvasGroup = introRoot.AddComponent<CanvasGroup>();
             introCanvasGroup.alpha = 0f;
             introRoot.SetActive(false);
-            Image introBackdrop = MakePanel("Sombra intro", introRoot.transform, new Color32(12, 15, 13, 190), .5f, .5f, 1080, 1920);
+            Image introBackdrop = MakePanel("Sombra intro", introRoot.transform, new Color32(12, 15, 13, 145), .5f, .5f, 1080, 1920);
             introBackdrop.sprite = whiteSprite;
             var popup = new GameObject("Popup nivel", typeof(RectTransform), typeof(CanvasRenderer), typeof(Image));
             popup.transform.SetParent(introRoot.transform, false);
@@ -787,49 +792,63 @@ namespace Asadito
             Image popupImage = popup.GetComponent<Image>();
             popupImage.sprite = roundedButtonSprite != null ? roundedButtonSprite : whiteSprite;
             popupImage.type = roundedButtonSprite != null ? Image.Type.Sliced : Image.Type.Simple;
-            popupImage.color = new Color(1f, 1f, 1f, .7f);
+            popupImage.color = new Color(1f, 1f, 1f, .58f);
             popupImage.raycastTarget = true;
             var popupShadow = popup.AddComponent<Shadow>();
             popupShadow.effectColor = new Color(0f, 0f, 0f, .65f);
             popupShadow.effectDistance = new Vector2(0f, -14f);
             var glassRim = popup.AddComponent<Outline>();
             glassRim.effectColor = new Color(1f, 1f, 1f, .92f);
-            glassRim.effectDistance = new Vector2(2f, -2f);
+            glassRim.effectDistance = new Vector2(1.5f, -1.5f);
             introPopup = popup.transform;
             Image glassSheen = MakeImage("Reflejo vidrio popup", introPopup, popupImage.sprite,
-                new Color(1f, 1f, 1f, .18f), new Vector2(.025f, .84f), new Vector2(.975f, .98f), Vector2.zero);
+                new Color(1f, 1f, 1f, .12f), new Vector2(.025f, .94f), new Vector2(.975f, .99f), Vector2.zero);
             glassSheen.type = Image.Type.Sliced;
             glassSheen.raycastTarget = false;
             Image ruleLeft = MakeImage("Regla vidrio izquierda", introPopup, whiteSprite,
-                new Color32(190, 146, 61, 220), new Vector2(.15f, .86f), new Vector2(.41f, .86f), new Vector2(0f, 2f));
+                new Color32(190, 146, 61, 220), new Vector2(.12f, .88f), new Vector2(.42f, .88f), new Vector2(0f, 2f));
             ruleLeft.raycastTarget = false;
             Image glassFire = MakeImage("Icono fuego vidrio", introPopup, AsaditoUiIcons.Get(AsaditoUiIcon.Fire),
-                new Color32(191, 143, 60, 255), new Vector2(.5f, .86f), new Vector2(.5f, .86f), new Vector2(26f, 26f));
+                new Color32(191, 143, 60, 255), new Vector2(.5f, .88f), new Vector2(.5f, .88f), new Vector2(40f, 40f));
             glassFire.preserveAspect = true;
             Image ruleRight = MakeImage("Regla vidrio derecha", introPopup, whiteSprite,
-                new Color32(190, 146, 61, 220), new Vector2(.59f, .86f), new Vector2(.85f, .86f), new Vector2(0f, 2f));
+                new Color32(190, 146, 61, 220), new Vector2(.58f, .88f), new Vector2(.88f, .88f), new Vector2(0f, 2f));
             ruleRight.raycastTarget = false;
-            introTitleText = MakeText("Intro título", introPopup, "EL DEBUT", 56, new Color32(44, 55, 44, 255), TextAnchor.MiddleCenter, .5f, .68f, 700, 112, true);
+            introTitleText = MakeText("Intro título", introPopup, "EL DEBUT", 68, new Color32(34, 55, 43, 255), TextAnchor.MiddleCenter, .5f, .78f, 710, 130, false);
+            introTitleText.font = semiBoldFont;
             introTitleText.resizeTextForBestFit = true;
-            introTitleText.resizeTextMinSize = 38;
-            introTitleText.resizeTextMaxSize = 56;
-            introGuestsText = MakeText("Intro comensales", introPopup, "2 COMENSALES", 31, new Color32(171, 112, 33, 255), TextAnchor.MiddleCenter, .5f, .56f, 470, 64, true);
+            introTitleText.resizeTextMinSize = 44;
+            introTitleText.resizeTextMaxSize = 68;
+            introGuestsText = MakeText("Intro comensales", introPopup, "2 COMENSALES", 40, new Color32(47, 63, 48, 255), TextAnchor.MiddleCenter, .535f, .665f, 360, 64, false);
+            introGuestsText.font = semiBoldFont;
+            introGuestsText.resizeTextForBestFit = true;
+            introGuestsText.resizeTextMinSize = 34;
+            introGuestsText.resizeTextMaxSize = 42;
             Image introGuestIcon = MakeImage("Icon comensales intro", introPopup, AsaditoUiIcons.Get(AsaditoUiIcon.Guest), Gold,
-                new Vector2(.29f, .56f), new Vector2(.29f, .56f), new Vector2(32f, 32f));
+                new Vector2(.26f, .665f), new Vector2(.26f, .665f), new Vector2(40f, 40f));
             introGuestIcon.preserveAspect = true;
-            introMenuText = MakeText("Intro menu", introPopup, "CHORIZO ×1   ·   TIRA DE ASADO ×1", 24, new Color32(70, 69, 62, 255), TextAnchor.MiddleCenter, .5f, .48f, 700, 74, true);
+            introMenuText = MakeText("Intro menu", introPopup, "CHORIZO ×1   ·   TIRA DE ASADO ×1", 34, new Color32(45, 60, 46, 255), TextAnchor.MiddleCenter, .5f, .39f, 700, 78, false);
+            introMenuText.font = semiBoldFont;
+            introMenuText.resizeTextForBestFit = true;
+            introMenuText.resizeTextMinSize = 27;
+            introMenuText.resizeTextMaxSize = 35;
             introFoodIcons = new Image[4];
             for (int i = 0; i < introFoodIcons.Length; i++)
             {
                 Image icon = MakeImage("Icon comida intro " + (i + 1), introPopup, whiteSprite, Color.white,
-                    new Vector2(.5f, .40f), new Vector2(.5f, .40f), new Vector2(42f, 42f));
-                icon.rectTransform.anchoredPosition = new Vector2((i - 1.5f) * 52f, 0f);
+                    new Vector2(.5f, .50f), new Vector2(.5f, .50f), new Vector2(144f, 116f));
                 icon.preserveAspect = true;
                 icon.gameObject.SetActive(false);
                 introFoodIcons[i] = icon;
             }
-            introObjectiveText = MakeText("Intro objetivo", introPopup, "Arrastrá toda la carne a la parrilla.\nDespués, cociná y serví cada pieza.", 32, new Color32(58, 63, 55, 255), TextAnchor.MiddleCenter, .5f, .30f, 700, 132, false);
-            MakeButton("IR A LA PARRILLA", introPopup, .5f, .16f, 500, 108, new Color32(199, 139, 54, 255), StartLevel);
+            Image menuDivider = MakeImage("Separador menu popup", introPopup, whiteSprite,
+                new Color32(190, 146, 61, 190), new Vector2(.11f, .325f), new Vector2(.89f, .325f), new Vector2(0f, 2f));
+            menuDivider.raycastTarget = false;
+            introObjectiveText = MakeText("Intro objetivo", introPopup, "Arrastrá la carne a la parrilla,\ncocinala y servila.", 36, new Color32(45, 56, 47, 255), TextAnchor.MiddleCenter, .5f, .245f, 690, 128, false);
+            introObjectiveText.resizeTextForBestFit = true;
+            introObjectiveText.resizeTextMinSize = 31;
+            introObjectiveText.resizeTextMaxSize = 38;
+            MakeButton("IR A LA PARRILLA", introPopup, .5f, .115f, 500, 108, new Color32(199, 139, 54, 255), StartLevel);
             gameplayCanvasGroup.alpha = 0f;
             gameplayCanvasGroup.interactable = false;
             gameplayCanvasGroup.blocksRaycasts = false;
@@ -981,6 +1000,8 @@ namespace Asadito
                 if (!visible) continue;
                 introFoodIcons[i].sprite = FoodStateSprite(foods[i], 3) ?? FoodStateSprite(foods[i], 0) ?? whiteSprite;
                 introFoodIcons[i].name = "Icon comida intro " + FoodDisplayName(foods[i]);
+                introFoodIcons[i].rectTransform.anchoredPosition =
+                    new Vector2((i - (foods.Length - 1) * .5f) * 170f, 0f);
             }
         }
 
@@ -1284,6 +1305,7 @@ namespace Asadito
             activeFoodPointerIndex = -1;
             activeFoodPointerDragging = false;
             trayCount = totalScore = 0;
+            servingBoardPlateOrder.Clear();
             for (int i = 0; i < portions.Length; i++)
                 portions[i].Reset();
             for (int i = 0; i < portionImages.Length; i++)
@@ -1366,13 +1388,31 @@ namespace Asadito
                     spriteAspect, definition.FootprintAreaMultiplier);
             }
 
-            Vector2 trayArea = rawTrayRect != null ? rawTrayRect.rect.size : Vector2.zero;
-            // Pack by rendered food footprints; larger invisible hit targets are allowed to
-            // overlap because FoodPieceTouch resolves competing hits by nearest piece center.
+            // Keep a single food size on grill, tray and board. If an individual cut cannot fit
+            // inside both real surfaces, uniformly scale this order's art just enough; if the
+            // complete order still cannot fit, TryPackOrStack places overflow on top.
+            float sharedSurfaceScale = 1f;
+            if (rawTrayRect != null)
+                sharedSurfaceScale = Mathf.Min(sharedSurfaceScale, FoodFootprintLayout.GetMaxUniformFitScale(
+                    RawTrayFoodAreaSize(), portionVisualSizes, RawTrayFoodGap));
+            if (trayRect != null)
+                sharedSurfaceScale = Mathf.Min(sharedSurfaceScale, FoodFootprintLayout.GetMaxUniformFitScale(
+                    ServingBoardFoodAreaSize(), portionVisualSizes, ServingBoardFoodGap));
+            if (sharedSurfaceScale <= 0f)
+            {
+                Debug.LogError("Could not fit food portions inside the raw tray and serving board for level " + currentLevelNumber + ".");
+                sharedSurfaceScale = 1f;
+            }
+            for (int i = 0; i < portionVisualSizes.Length; i++)
+                portionVisualSizes[i] *= sharedSurfaceScale;
+
+            Vector2 trayArea = RawTrayFoodAreaSize();
+            // Pack by rendered food footprints; larger invisible hit targets may overlap because
+            // FoodPieceTouch resolves competing hits by nearest piece center.
             var trayFoodSizes = new Vector2[portionVisualSizes.Length];
             for (int i = 0; i < trayFoodSizes.Length; i++)
                 trayFoodSizes[i] = portionVisualSizes[i] * RawTrayPortionScale(i);
-            if (!FoodFootprintLayout.TryPackOrStack(trayArea, trayFoodSizes, 8f,
+            if (!FoodFootprintLayout.TryPackOrStack(trayArea, trayFoodSizes, RawTrayFoodGap,
                 out rawTrayPortionCenters, out rawTrayPortionStacked))
             {
                 Debug.LogError("Could not lay out the raw-food tray for level " + currentLevelNumber + ".");
@@ -1437,9 +1477,7 @@ namespace Asadito
             servingBoardPortionStacked = System.Array.Empty<bool>();
             if (trayRect == null || portionVisualSizes == null || portionVisualSizes.Length == 0) return;
 
-            Vector2 boardSize = trayRect.rect.size;
-            Vector2 foodArea = new Vector2(boardSize.x * ServingBoardFoodAreaWidth,
-                boardSize.y * ServingBoardFoodAreaHeight);
+            Vector2 foodArea = ServingBoardFoodAreaSize();
             if (!FoodFootprintLayout.TryPackOrStack(foodArea, portionVisualSizes, ServingBoardFoodGap,
                 out servingBoardPortionCenters, out servingBoardPortionStacked))
             {
@@ -1460,15 +1498,30 @@ namespace Asadito
             if (rawTrayPortionCenters == null || index < 0 || index >= rawTrayPortionCenters.Length)
                 return rawTrayRect.TransformPoint(Vector3.zero);
             Vector2 normalized = rawTrayPortionCenters[index];
-            Vector3 local = new Vector3((normalized.x - .5f) * rawTrayRect.rect.width,
-                (normalized.y - .5f) * rawTrayRect.rect.height, 0f);
+            Vector2 foodArea = RawTrayFoodAreaSize();
+            Vector3 local = new Vector3((normalized.x - .5f) * foodArea.x,
+                (normalized.y - .5f) * foodArea.y, 0f);
             return rawTrayRect.TransformPoint(local);
+        }
+
+        private Vector2 RawTrayFoodAreaSize()
+        {
+            if (rawTrayRect == null) return Vector2.zero;
+            return new Vector2(rawTrayRect.rect.width * RawTrayFoodAreaWidth,
+                rawTrayRect.rect.height * RawTrayFoodAreaHeight);
+        }
+
+        private Vector2 ServingBoardFoodAreaSize()
+        {
+            if (trayRect == null) return Vector2.zero;
+            return new Vector2(trayRect.rect.width * ServingBoardFoodAreaWidth,
+                trayRect.rect.height * ServingBoardFoodAreaHeight);
         }
 
         private float RawTrayPortionScale(int index)
         {
-            // A cut has one world/UI size from the source tray through cooking; shrinking
-            // it to fit the aluminum pan caused a visible pop when the drag began.
+            // Shared surface fitting is applied to portionVisualSizes before controls are built;
+            // never add a tray-only scale that would pop when food is dragged to the grill.
             return 1f;
         }
 
@@ -1720,6 +1773,8 @@ namespace Asadito
             if (portionSelectionHalos[index] != null) portionSelectionHalos[index].gameObject.SetActive(false);
             UpdateFoodSelectionVisuals();
             UpdateGameplayActionButtons();
+            servingBoardPlateOrder.Add(index);
+            if (portionHitTargets[index] != null) portionHitTargets[index].SetAsLastSibling();
             PlaySfx(AsaditoSfxCue.Plate);
             VibrateFeedback();
             if (smokeRoutine != null) StopCoroutine(smokeRoutine);
@@ -1901,8 +1956,7 @@ namespace Asadito
             if (trayRect == null || servingBoardPortionCenters == null ||
                 index < 0 || index >= servingBoardPortionCenters.Length) return Vector3.zero;
             Vector2 normalized = servingBoardPortionCenters[index];
-            Vector2 foodArea = new Vector2(trayRect.rect.width * ServingBoardFoodAreaWidth,
-                trayRect.rect.height * ServingBoardFoodAreaHeight);
+            Vector2 foodArea = ServingBoardFoodAreaSize();
             Vector3 areaCenter = new Vector3(
                 (ServingBoardFoodAreaCenterX - .5f) * trayRect.rect.width,
                 (ServingBoardFoodAreaCenterY - .5f) * trayRect.rect.height, 0f);
@@ -1919,14 +1973,16 @@ namespace Asadito
 
         private void RefreshServingBoardOrder()
         {
-            if (portionHitTargets == null || servingBoardPortionStacked == null) return;
-            for (int stackedPass = 0; stackedPass <= 1; stackedPass++)
-            for (int i = 0; i < portionHitTargets.Length; i++)
+            if (portionHitTargets == null || portions == null) return;
+            // A stack flag only says that footprints have to overlap; it must not force a
+            // large earlier cut to obscure a smaller portion plated afterward. Preserve
+            // actual plating order so the latest arrival is always drawn on top.
+            for (int i = 0; i < servingBoardPlateOrder.Count; i++)
             {
-                if (!portions[i].OnTray || portionHitTargets[i] == null ||
-                    i >= servingBoardPortionStacked.Length || servingBoardPortionStacked[i] != (stackedPass == 1))
-                    continue;
-                portionHitTargets[i].SetAsLastSibling();
+                int portionIndex = servingBoardPlateOrder[i];
+                if (portionIndex < 0 || portionIndex >= portionHitTargets.Length ||
+                    !portions[portionIndex].OnTray || portionHitTargets[portionIndex] == null) continue;
+                portionHitTargets[portionIndex].SetAsLastSibling();
             }
         }
 

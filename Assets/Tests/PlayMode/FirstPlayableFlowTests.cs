@@ -164,6 +164,7 @@ namespace Asadito.Tests.PlayMode
             Assert.AreEqual(portions.Length, targets.Length);
             Assert.AreEqual(portions.Length, rawTrayStacked.Length);
             RectTransform rawTray = ((Image)GetField(game, "rawTrayImage")).rectTransform;
+            Vector2 rawTrayFoodArea = new Vector2(rawTray.rect.width * .84f, rawTray.rect.height * .71f);
             var rawTrayCenters = new Vector2[portions.Length];
             var rawTrayFoodSizes = new Vector2[portions.Length];
             for (int i = 0; i < portions.Length; i++)
@@ -181,9 +182,8 @@ namespace Asadito.Tests.PlayMode
                 Vector3 localCenter = rawTray.InverseTransformPoint(targets[i].position);
                 rawTrayCenters[i] = new Vector2(localCenter.x, localCenter.y);
                 rawTrayFoodSizes[i] = images[i].rectTransform.sizeDelta;
-                if (!rawTrayStacked[i])
-                    Assert.IsTrue(FoodFootprintLayout.FitsInside(rawTray.rect.size, rawTrayFoodSizes[i], rawTrayCenters[i]),
-                        foodId + " unstacked food art should fit inside the aluminum tray.");
+                Assert.IsTrue(FoodFootprintLayout.FitsInside(rawTrayFoodArea, rawTrayFoodSizes[i], rawTrayCenters[i]),
+                    foodId + " food art, including stacked layers, must stay inside the aluminum tray's flat center.");
                 Assert.IsNotNull(FindComponent(targets[i].gameObject, "Asadito.Runtime.FoodPieceTouch"));
                 Assert.IsNull(GameObject.Find(FoodCatalog.Get(foodId).DisplayName),
                     foodId + " must not be presented as a separate food-name button.");
@@ -405,6 +405,21 @@ namespace Asadito.Tests.PlayMode
             yield return new WaitForSecondsRealtime(.55f);
             Assert.That(targets[1].localScale.x, Is.EqualTo(1f).Within(.001f),
                 "Every cut on the board keeps the same multiplier, regardless of sprite aspect.");
+            RectTransform servingBoard = ((Image)GetField(game, "servingBoardImage")).rectTransform;
+            Image[] platedImages = (Image[])GetField(game, "portionImages");
+            Vector2 boardFoodArea = new Vector2(servingBoard.rect.width * .74f, servingBoard.rect.height * .56f);
+            Vector2 boardFoodAreaCenter = new Vector2((.45f - .5f) * servingBoard.rect.width,
+                (.505f - .5f) * servingBoard.rect.height);
+            for (int i = 0; i < targets.Length; i++)
+            {
+                Vector3 boardLocalCenter3 = servingBoard.InverseTransformPoint(targets[i].position);
+                Vector2 boardLocalCenter = new Vector2(boardLocalCenter3.x, boardLocalCenter3.y) - boardFoodAreaCenter;
+                Vector2 displayedSize = platedImages[i].rectTransform.rect.size * targets[i].localScale.x;
+                Assert.IsTrue(FoodFootprintLayout.FitsInside(boardFoodArea, displayedSize, boardLocalCenter),
+                    targets[i].name + " food art, including stacked layers, must stay on the board's flat cutting surface.");
+            }
+            Assert.Greater(targets[1].GetSiblingIndex(), targets[0].GetSiblingIndex(),
+                "When food footprints collide on the board, the portion plated last must render above the earlier cut.");
             Assert.IsTrue(CanServeFromBoard(game));
             TapBoard(game);
             Assert.IsTrue(ReadField<bool>(game, "servingLocked"), "A single tap on the ready board serves the order.");
@@ -514,6 +529,12 @@ namespace Asadito.Tests.PlayMode
                 levelTwo.transform.Find("Imagen representativa nivel 2").GetComponent<Image>().sprite.name);
             Assert.AreEqual(1, levelTwo.GetComponentsInChildren<Text>().Length);
             Assert.IsFalse(levelTwo.interactable);
+            RectTransform levelOneRect = levelOne.GetComponent<RectTransform>();
+            RectTransform levelTwoRect = levelTwo.GetComponent<RectTransform>();
+            float levelContentWidth = levelOneRect.parent.GetComponent<RectTransform>().rect.width;
+            float levelCardGap = levelTwoRect.anchorMin.x * levelContentWidth + levelTwoRect.anchoredPosition.x - levelTwoRect.rect.width * .5f
+                - (levelOneRect.anchorMax.x * levelContentWidth + levelOneRect.anchoredPosition.x + levelOneRect.rect.width * .5f);
+            Assert.GreaterOrEqual(levelCardGap, 50f, "The two selector cards need a clear finger-sized gap.");
             Assert.IsFalse(levelOne.transform.Find("Candado nivel 1").gameObject.activeSelf);
             Assert.IsFalse(levelOne.transform.Find("Disabled nivel 1").gameObject.activeSelf);
             Assert.IsTrue(levelTwo.transform.Find("Candado nivel 2").gameObject.activeSelf);
@@ -535,13 +556,34 @@ namespace Asadito.Tests.PlayMode
             Transform introPopup = GameObject.Find("Popup nivel").transform;
             Assert.AreEqual(new Vector2(774f, 1000f), introPopup.GetComponent<RectTransform>().rect.size,
                 "Level intro should use the narrower, shorter centered popup.");
-            Assert.AreEqual(.7f, introPopup.GetComponent<Image>().color.a, .001f, "The white popup should be 30% transparent.");
+            Assert.AreEqual(.58f, introPopup.GetComponent<Image>().color.a, .001f, "The white popup should be more translucent than the previous 30%-transparent version.");
             Assert.NotNull(introPopup.GetComponent<Outline>(), "Frosted glass should have a subtle bright rim.");
             Assert.NotNull(introPopup.Find("Reflejo vidrio popup"), "The translucent card should have a soft glass sheen.");
             Assert.NotNull(introPopup.Find("Icono fuego vidrio"), "Glass style should use the small centered warm accent.");
+            Assert.NotNull(introPopup.Find("Separador menu popup"), "The order and instructions need a clear visual divider.");
             Assert.AreEqual(introPopup, GameObject.Find("Intro título").transform.parent);
             Assert.AreEqual(introPopup, GameObject.Find("IR A LA PARRILLA").transform.parent);
+            Text popupTitle = GameObject.Find("Intro título").GetComponent<Text>();
+            Text popupGuests = GameObject.Find("Intro comensales").GetComponent<Text>();
+            Text popupMenu = GameObject.Find("Intro menu").GetComponent<Text>();
+            Text popupObjective = GameObject.Find("Intro objetivo").GetComponent<Text>();
+            Assert.GreaterOrEqual(popupTitle.fontSize, 66, "The title must be large enough to read on a phone.");
+            Assert.GreaterOrEqual(popupGuests.fontSize, 38, "The guest count must remain comfortably legible.");
+            Assert.GreaterOrEqual(popupMenu.fontSize, 32, "Order copy must not be tiny.");
+            Assert.GreaterOrEqual(popupObjective.fontSize, 34, "Instructions must be comfortably legible.");
+            Assert.LessOrEqual(popupTitle.preferredHeight, popupTitle.rectTransform.rect.height + 1f, "The level title must fit without clipping.");
+            Assert.LessOrEqual(popupGuests.preferredHeight, popupGuests.rectTransform.rect.height + 1f, "The guest count must fit without clipping.");
+            Assert.LessOrEqual(popupMenu.preferredHeight, popupMenu.rectTransform.rect.height + 1f, "The order must fit without clipping.");
+            Assert.LessOrEqual(popupObjective.preferredHeight, popupObjective.rectTransform.rect.height + 1f, "The instructions must fit without clipping.");
+            Assert.AreEqual(new Vector2(144f, 116f), GameObject.Find("Icon comida intro TIRA DE ASADO").GetComponent<RectTransform>().sizeDelta,
+                "Food illustrations should be large enough to match the concept treatment.");
             Button introStart = FindButton("IR A LA PARRILLA");
+            var objectiveCorners = new Vector3[4];
+            var ctaCorners = new Vector3[4];
+            popupObjective.rectTransform.GetWorldCorners(objectiveCorners);
+            introStart.GetComponent<RectTransform>().GetWorldCorners(ctaCorners);
+            Assert.Greater(objectiveCorners[0].y, ctaCorners[1].y,
+                "The instructions need breathing room above the CTA and must not overlap it.");
             Assert.AreEqual("Asadito UI Icon Next", introStart.transform.Find("Icono accion IR A LA PARRILLA").GetComponent<Image>().sprite.name);
             Assert.AreEqual("Arcade Gold Button", ((Image)introStart.targetGraphic).sprite.name,
                 "The selected glass style must preserve the app's current CTA button styling.");

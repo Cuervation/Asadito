@@ -43,6 +43,29 @@ namespace Asadito.Runtime
             return new Vector2(Mathf.Max(128f, visualSize.x * 1.08f), Mathf.Max(128f, visualSize.y * 1.08f));
         }
 
+        /// <summary>
+        /// Returns one shared scale that guarantees every full food footprint can fit inside
+        /// one surface with the requested edge clearance. It does not try to fit the whole order;
+        /// excess portions are still stacked by TryPackOrStack.
+        /// </summary>
+        public static float GetMaxUniformFitScale(Vector2 area, Vector2[] itemSizes, float edgeGap)
+        {
+            if (!IsFinitePositive(area.x) || !IsFinitePositive(area.y) || itemSizes == null ||
+                edgeGap < 0f || area.x <= edgeGap * 2f || area.y <= edgeGap * 2f) return 0f;
+            if (itemSizes.Length == 0) return 1f;
+
+            float availableWidth = area.x - edgeGap * 2f;
+            float availableHeight = area.y - edgeGap * 2f;
+            float scale = 1f;
+            for (int i = 0; i < itemSizes.Length; i++)
+            {
+                if (!IsFinitePositive(itemSizes[i].x) || !IsFinitePositive(itemSizes[i].y)) return 0f;
+                scale = Mathf.Min(scale, Mathf.Min(availableWidth / itemSizes[i].x,
+                    availableHeight / itemSizes[i].y));
+            }
+            return Mathf.Clamp01(scale);
+        }
+
         public static bool FitsInside(Vector2 area, Vector2 itemSize, Vector2 center)
         {
             if (!IsFinitePositive(area.x) || !IsFinitePositive(area.y) ||
