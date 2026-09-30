@@ -20,12 +20,12 @@
 - Instalación ADB en `Asadito_Pixel_7a_API_36` pasó, pero el AVD es x86_64, no ARM64. Unity no pudo inicializar Graphics API (SwiftShader anuncia GLES 3.1 y el player intenta ES 3.2/3.1); no alcanzó menú ni gameplay y no hay captura Android de gameplay. Evidencia del error: `/tmp/asadito-qa/02-after-hardware-warning.png`.
 - El ANR histórico de swipe pertenece al APK previo al refactor; no se declara ni resuelto ni reproducido en la nueva build, porque ésta no llegó a renderizar en el AVD.
 - Faltan pruebas con dedos/hardware físico (drag/multitouch/notch/navbar), audio/haptics real, rendimiento sostenido y sign-off humano de arte.
-- El resultado del CI remoto se verificará luego del push; no se atribuye PASS al pipeline Unity remoto si está limitado por licencia/secrets del owner.
+- GitHub Actions del push `df081bc`: workflow `36664620467` concluyó `success`; validator/whitespace PASS, job Unity EditMode/PlayMode `skipped` (no se atribuye como ejecución remota).
 
 ## QA local completado
 
 - EditMode 19/19 PASS y PlayMode 10/10 PASS (incluye L1–L12); `Tools/validate_food_content.py` PASS; consola Unity limpia al final de tests.
-- `git diff --check`, commit/push: registrar resultado final en el cierre de esta ejecución.
+- `git diff --check`: **PASS**; commit principal `df081bc` se empujó a `origin/main`. La ejecución CI resultante está documentada en esta actualización.
 
 API36 es el target configurado para Android 16 y cubre el requisito actual de envíos a Google Play desde el 31-08-2026 ([documentación oficial](https://support.google.com/googleplay/android-developer/answer/11926878?hl=es)). Build de validación debug; no hay firma productiva/publicación.
 

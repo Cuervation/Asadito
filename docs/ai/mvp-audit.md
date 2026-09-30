@@ -19,7 +19,7 @@
 | Android runtime smoke | BLOQUEADO POR AVD | Imagen de AVD x86_64; al abrir el APK ARM64, Unity reportó que no pudo inicializar Unity Engine Graphics API. SwiftShader expone GLES 3.1, incompatible con los contextos ES 3.2/3.1 solicitados por Unity. No hubo menú, gameplay ni captura de gameplay. |
 | Drag continuo / ANR | NO VERIFICADO EN NUEVO APK | El ANR de swipe/drop no confirmado corresponde al APK anterior. La nueva build no llegó a gameplay en este emulador, por lo que el cambio de parrilla no lo confirma ni lo reproduce. Repetir con teléfono ARM64 y profiler. |
 | Dispositivo físico / arte y audio | PENDIENTE | No se ha validado touch humano, notch/navbar reales, rendimiento sostenido en ARM64, SFX/haptics en dispositivo ni aprobación visual final. |
-| CI Unity remoto | SIN VERIFICAR EN ESTE CAMBIO | El antecedente de GitHub Actions omitió GameCI por licencia/secrets del owner; no confundirlo con los tests locales actuales. Revisar el workflow luego del push. |
+| CI posterior al push | PASS PARCIAL | GitHub Actions `36664620467` concluyó `success`; job “Validate authored content” (validator + `git diff --check`) PASS. El job “Unity EditMode and PlayMode” quedó `skipped`; no cuenta como prueba remota. Tests locales Unity 19/19 y 10/10 sí corrieron. [Ejecución](https://github.com/Cuervation/Asadito/actions/runs/36664620467). |
 | Signing/publicación | Fuera de alcance | Se usa firma debug de validación; no hay keystore productivo ni publicación. |
 
 ## Riesgos / siguiente QA
