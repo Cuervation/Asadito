@@ -75,6 +75,7 @@ namespace Asadito
         private Canvas canvas;
         private RectTransform contentRoot;
         private RectTransform gameplayRoot;
+        private RectTransform foodInteractionRoot;
         private GameObject menuRoot;
         private GameObject levelSelectRoot;
         private GameObject introRoot;
@@ -383,6 +384,7 @@ namespace Asadito
             feedbackText = MakeText("Feedback", gameplayRoot, "", 25, Cream, TextAnchor.MiddleCenter, .5f, .36f, 850, 60, true);
             tutorialText = MakeText("Tutorial contextual", gameplayRoot, "", 19, new Color32(255, 213, 146, 255), TextAnchor.MiddleCenter, .5f, .70f, 830, 58, true);
 
+            BuildFoodInteractionLayer();
             BuildPortionControls();
             BuildTongsVisual();
 
@@ -405,10 +407,26 @@ namespace Asadito
             BuildPauseMenu();
         }
 
+        private void BuildFoodInteractionLayer()
+        {
+            // Food and tongs move every pointer event. Keep their geometry/raycast rebuilds
+            // isolated from the large static gameplay canvas (heat cells, labels, buttons).
+            var layer = new GameObject("Interacción carne Canvas", typeof(RectTransform), typeof(Canvas), typeof(GraphicRaycaster));
+            foodInteractionRoot = layer.GetComponent<RectTransform>();
+            foodInteractionRoot.SetParent(gameplayRoot, false);
+            foodInteractionRoot.anchorMin = Vector2.zero;
+            foodInteractionRoot.anchorMax = Vector2.one;
+            foodInteractionRoot.offsetMin = foodInteractionRoot.offsetMax = Vector2.zero;
+
+            Canvas interactionCanvas = layer.GetComponent<Canvas>();
+            interactionCanvas.overrideSorting = true;
+            interactionCanvas.sortingOrder = 1;
+        }
+
         private void BuildTongsVisual()
         {
             var root = new GameObject("Pinza de parrilla", typeof(RectTransform));
-            root.transform.SetParent(gameplayRoot, false);
+            root.transform.SetParent(foodInteractionRoot, false);
             tongsVisual = root.GetComponent<RectTransform>();
             tongsVisual.anchorMin = tongsVisual.anchorMax = new Vector2(.5f, .5f);
             tongsVisual.sizeDelta = new Vector2(150f, 90f);
@@ -1339,7 +1357,7 @@ namespace Asadito
                 Vector2 visualSize = new Vector2(260f, 190f) * definition.DisplayScale;
                 Vector2 touchSize = new Vector2(Mathf.Max(190f, visualSize.x * .72f),
                     Mathf.Max(180f, visualSize.y * .92f));
-                Image hitGraphic = MakeImage("Food hit target " + (index + 1), gameplayRoot, whiteSprite,
+                Image hitGraphic = MakeImage("Food hit target " + (index + 1), foodInteractionRoot, whiteSprite,
                     new Color(1f, 1f, 1f, 0f), new Vector2(.5f, .5f), new Vector2(.5f, .5f), touchSize);
                 hitGraphic.rectTransform.position = heatGridRect.TransformPoint(GridLocalPosition(home));
                 hitGraphic.raycastTarget = true;
