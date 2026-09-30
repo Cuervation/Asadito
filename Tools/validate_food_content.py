@@ -141,6 +141,49 @@ def audit_progression(food_ids):
         seen.add(level)
     assert seen == set(range(1, 13)), "All levels 1–12 must be present exactly once"
     assert present_foods == food_ids, f"Every food must appear in progression; missing {sorted(food_ids - present_foods)}"
+    return [[food_id for food_id in re.findall(r'"([a-z0-9_]+)"', raw_foods)]
+            for _, (_, _, raw_foods, _) in enumerate(definitions)]
+
+
+def try_pack(area, sizes, gap):
+    """Deterministic fixed-orientation MaxRects equivalent to FoodFootprintLayout.TryPack."""
+    free = [[-area[0] / 2 + gap / 2, -area[1] / 2 + gap / 2, area[0] - gap, area[1] - gap]]
+    centers = [None] * len(sizes)
+    order = sorted(range(len(sizes)), key=lambda i: (-sizes[i][0] * sizes[i][1], i))
+    for index in order:
+        width, height = sizes[index]
+        padded = (width + gap, height + gap)
+        best = None
+        for slot_index, (x, y, sw, sh) in enumerate(free):
+            dx, dy = sw - padded[0], sh - padded[1]
+            if dx < -0.001 or dy < -0.001:
+                continue
+            score = (min(dx, dy), max(dx, dy), slot_index)
+            if best is None or score < best[0]:
+                best = (score, slot_index, (x, y, padded[0], padded[1]))
+        if best is None:
+            return None
+        _, _, used = best
+        ux, uy, uw, uh = used
+        centers[index] = (ux + gap / 2 + width / 2, uy + gap / 2 + height / 2)
+        next_free = []
+        for x, y, sw, sh in free:
+            if x >= ux + uw or x + sw <= ux or y >= uy + uh or y + sh <= uy:
+                next_free.append([x, y, sw, sh])
+                continue
+            candidates = [
+                [x, y, sw, uy - y], [x, uy + uh, sw, y + sh - (uy + uh)],
+                [x, y, ux - x, sh], [ux + uw, y, x + sw - (ux + uw), sh],
+            ]
+            next_free.extend(rect for rect in candidates if rect[2] > 0.001 and rect[3] > 0.001)
+        free = []
+        for i, rect in enumerate(next_free):
+            x, y, w, h = rect
+            if any(i != j and other[0] <= x and other[1] <= y and other[0] + other[2] >= x + w and other[1] + other[3] >= y + h
+                   for j, other in enumerate(next_free)):
+                continue
+            free.append(rect)
+    return centers
 
 
 def audit_transparent_sprite(resource_path: str, expected_size):
@@ -161,7 +204,11 @@ def main():
     data = json.loads(CATALOG.read_text(encoding="utf-8"))
     foods = data.get("Foods", [])
     ids = [food.get("Id", "") for food in foods]
-    assert data.get("SchemaVersion") == 1, "Unsupported FoodCatalog schema"
+    assert data.get("SchemaVersion") == 2, "Unsupported FoodCatalog schema"
+    reference = data.get("VisualReference") or {}
+    assert reference == {"FoodId": "chorizo", "LegacyRectWidth": 236.0, "LegacyRectHeight": 176.0, "LegacyDisplayScale": 0.92}, (
+        "The exact legacy chorizo sizing must remain the catalog's visual reference"
+    )
     assert len(foods) == 18 and set(ids) == REQUIRED_IDS, f"Expected all 18 required foods, got {len(ids)}"
     assert len(set(i.casefold() for i in ids)) == len(ids), "FoodIds must be case-insensitively unique"
     signatures = set()
@@ -176,7 +223,10 @@ def main():
         profile = food.get("Profile") or {}
         bands = profile.get("DonenessBands") or []
         crop = food.get("SpriteCrop") or {}
+        area = food.get("FootprintAreaMultiplier")
         assert food.get("DisplayName") and food.get("Category"), f"{food_id} needs a name and category"
+        assert isinstance(area, (int, float)) and math.isfinite(area) and area > 0, f"{food_id} needs a positive physical footprint"
+        assert "DisplayScale" not in food, f"{food_id} still uses legacy per-cut DisplayScale"
         assert profile.get("FoodId") == food_id, f"{food_id} profile id mismatch"
         assert len(bands) == 5, f"{food_id} needs exactly five ordered doneness bands"
         assert [b.get("Doneness") for b in bands] == list(range(5)), f"{food_id} doneness bands must cover all five states in order"
@@ -214,6 +264,44 @@ def main():
         assert card.is_file(), f"Missing representative card: {card.name}"
         assert png_header(card)[:2] == (1536, 1024), f"Unexpected aspect/resolution for {card.name}"
     audit_progression(set(ids))
+    assert next(food["FootprintAreaMultiplier"] for food in foods if food["Id"] == "chorizo") == 1.0
+    assert next(food["FootprintAreaMultiplier"] for food in foods if food["Id"] == "vacio") >= 2.5
+    assert next(food["FootprintAreaMultiplier"] for food in foods if food["Id"] == "matambre_cerdo") >= 2.5
+
+    by_id = {food["Id"]: food for food in foods}
+    atlas_width, atlas_height, *_ = png_header(ATLAS_DIR / "chorizo.png")
+    reference_food = by_id[reference["FoodId"]]
+    reference_aspect = ((reference_food["SpriteCrop"]["XMax"] - reference_food["SpriteCrop"]["XMin"]) * atlas_width /
+                        ((reference_food["SpriteCrop"]["YMax"] - reference_food["SpriteCrop"]["YMin"]) * atlas_height / 6))
+    ref_bounds = (reference["LegacyRectWidth"] * reference["LegacyDisplayScale"],
+                  reference["LegacyRectHeight"] * reference["LegacyDisplayScale"])
+    ref_size = (min(ref_bounds[0], ref_bounds[1] * reference_aspect), 0)
+    ref_size = (ref_size[0], ref_size[0] / reference_aspect)
+
+    def visual_size(food):
+        crop = food["SpriteCrop"]
+        aspect = ((crop["XMax"] - crop["XMin"]) * atlas_width /
+                  ((crop["YMax"] - crop["YMin"]) * atlas_height / 6))
+        area = ref_size[0] * ref_size[1] * food["FootprintAreaMultiplier"]
+        width = math.sqrt(area * aspect)
+        return width, area / width
+
+    level_ids = audit_progression(set(ids))
+    for level, food_ids in enumerate(level_ids, 1):
+        sizes = [visual_size(by_id[food_id]) for food_id in food_ids]
+        centers = try_pack((640, 900), sizes, 16)
+        assert centers is not None, f"L{level} portions do not physically fit without overlap"
+        for i, (cx, cy) in enumerate(centers):
+            width, height = sizes[i]
+            assert -320 <= cx - width / 2 and cx + width / 2 <= 320 and -450 <= cy - height / 2 and cy + height / 2 <= 450
+            for j in range(i + 1, len(centers)):
+                ox, oy = centers[j]
+                ow, oh = sizes[j]
+                assert not (abs(cx - ox) < (width + ow) / 2 + 15.9 and abs(cy - oy) < (height + oh) / 2 + 15.9), (
+                    f"L{level} packed portions {i + 1} and {j + 1} overlap"
+                )
+    assert try_pack((640, 900), [visual_size(by_id["chorizo"])] * 10, 8) is not None, "Ten chorizos should fit"
+    assert try_pack((640, 900), [visual_size(by_id["vacio"])] * 10, 8) is None, "Ten vacíos must not fit"
     required_resources = (
         "Art/AsaditoAppIcon.png", "Art/AsaditoLogo.png", "Art/PortadaAsadito.png",
         "Art/ParrillaTopDownStylized.png", "Art/ParrillaTopDownGameplay.png", "Art/GuestPortraitAtlas.png", "Fonts/LilitaOne-Regular.ttf",
@@ -242,9 +330,13 @@ def main():
     assert 'MakeButton("DAR VUELTA"' not in game_source, "Food flipping must not use a named-food action button"
     assert 'MakeButton("BANDEJA"' not in game_source, "Plating must be direct food drag to the visible board"
     assert 'MakeButton("SERVIR"' not in game_source, "Serving must be a double-tap on the physical board"
+    assert 'FoodFootprintLayout.CalculateVisualSize' in game_source, "Per-food footprint sizes must be connected to the rendered portions"
+    assert 'FoodFootprintLayout.TryPack' in game_source, "Initial food positions must be packed by physical footprint"
+    assert 'FoodFootprintLayout.Overlaps' in game_source, "Dragging must prevent physical overlaps"
+    assert 'FoodFootprintLayout.GetTouchTargetSize' in game_source, "Mobile hit targets must be derived from visible food size"
     all_atlases = {path.stem for path in ATLAS_DIR.glob("*.png")}
     assert all_atlases == REQUIRED_IDS, f"Unexpected cooking atlas set: missing={sorted(REQUIRED_IDS-all_atlases)}, extra={sorted(all_atlases-REQUIRED_IDS)}"
-    print(f"Food content OK: {len(foods)} unique profiles, {len(foods) * 6} visible/coherent cooking frames, {len(cards)} level illustrations, all foods in L1–L12, runtime art/fonts present.")
+    print(f"Food content OK: {len(foods)} unique profiles, {len(foods) * 6} visible/coherent cooking frames, physical footprints and non-overlapping layouts for L1–L12, {len(cards)} level illustrations, runtime art/fonts present.")
 
 
 if __name__ == "__main__":

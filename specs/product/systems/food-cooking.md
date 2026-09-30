@@ -6,7 +6,9 @@
 
 ## Catálogo y etapas
 
-El JSON `Resources/Definitions/FoodCatalog.json` (schema 1) describe 18 entidades únicas. Tasa de transferencia superficial/central, cooling, humedad, Maillard, char, grasa, umbrales, masa térmica, espesor, calor preferido/fuerte, split risk, balance de cara y bandas de punto están definidos por alimento. `UsesCheeseStages` delega solo la lectura térmica del queso a estados propios; los otros cortes usan el motor común.
+El JSON `Resources/Definitions/FoodCatalog.json` (schema 2) describe 18 entidades únicas. Tasa de transferencia superficial/central, cooling, humedad, Maillard, char, grasa, umbrales, masa térmica, espesor, calor preferido/fuerte, split risk, balance de cara y bandas de punto están definidos por alimento. `UsesCheeseStages` delega solo la lectura térmica del queso a estados propios; los otros cortes usan el motor común.
+
+El catálogo schema 2 también define escala cenital/huella mediante un multiplicador de área relativo al sprite actual de chorizo (unidad 1.0). El aspecto original de cada recorte se conserva; la misma huella dimensiona placement/solapamiento y límites del drag, mientras que el hit target añade sólo un margen táctil moderado. Este dimensionamiento es visual y espacial: no altera masa, espesor, transferencia térmica ni scoring.
 
 Cada PNG vertical de seis filas aporta RAW, WARMING, BROWNING, IDEAL, OVERCOOKED, BURNT; recortes se crean en `FoodSpriteLibrary`, se cargan por ID lazy y se cachean para presentación. Un `FoodDefinition` clonado no comparte arrays mutables.
 

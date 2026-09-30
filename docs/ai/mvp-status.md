@@ -1,5 +1,12 @@
 # Estado MVP ASADITO — 2026-09-30
 
+## Actualización de proporciones físicas de alimentos (2026-09-30)
+
+- `FoodCatalog.json` schema 2: `chorizo` permanece en huella 1.0 con su rect legado (236×176×0.92); los otros 17 tamaños se definen en `FootprintAreaMultiplier` y usan el aspecto de su atlas.
+- `FoodFootprintLayout` calcula size sin estirar, packea por área real, comprueba límites/solapamientos del drag y genera hit targets basados en el tamaño visible. Nivel inicial respeta los mismos rectángulos; los slots del board escalan uniformemente para conservar el aspecto.
+- EditMode actual 21/21 PASS; validator actual PASS (18 IDs, 108 atlas frames, layouts L1–L12 y prueba de capacidad Chorizo/Vacío); `git diff --check` PASS. Comparativa Unity Editor 1080×1920: `/tmp/asadito-food-scale-comparison.png`.
+- PlayMode del cambio **no verificado**: tras 8 de 10 tests el Editor reportó `editor_unfocused` en el test normal L1–L12, sin fallas reportadas; se detuvo/limpió ese job. El 10/10 documentado abajo fue antes de este cambio. No se generó APK nueva ni se revisó en teléfono.
+
 ## Implementado
 
 ### Actualización 10bis — layout e interacción física
@@ -16,7 +23,7 @@
 - Catálogo data-driven de 18 alimentos, 108 estados visuales y progresión de 12 niveles; pause/settings mínimos, scoring, save y debug oculto fuera de Editor/development.
 - Specs, arquitectura y manifests documentan la regla y los assets conectados.
 
-## Verificación local
+## Verificación previa al ajuste de escala (rediseño 10bis)
 
 - EditMode Unity 6000.6.3f1: **19/19 PASS** (`/tmp/asadito-always-hot-editmode.xml`).
 - PlayMode Unity 6000.6.3f1: **10/10 PASS** (486.94 s), incluye cocinar/servir todos los niveles L1–L12; XML en `/Users/celestino/Library/Application Support/Cuervation/Asadito/TestResults.xml`.
@@ -31,7 +38,7 @@
 - Faltan pruebas con dedos/hardware físico (drag/multitouch/notch/navbar), audio/haptics real, rendimiento sostenido y sign-off humano de arte.
 - GitHub Actions del push `df081bc`: workflow `36664620467` concluyó `success`; validator/whitespace PASS, job Unity EditMode/PlayMode `skipped` (no se atribuye como ejecución remota).
 
-## QA local completado
+## QA local completado en la actualización 10bis anterior
 
 - EditMode 19/19 PASS y PlayMode 10/10 PASS (incluye L1–L12); `Tools/validate_food_content.py` PASS; consola Unity limpia al final de tests.
 - `git diff --check`: **PASS**; commit principal `df081bc` se empujó a `origin/main`. La ejecución CI resultante está documentada en esta actualización.

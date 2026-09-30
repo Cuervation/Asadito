@@ -2,6 +2,8 @@
 
 Seis estados por atlas/corte: RAW, WARMING, BROWNING, IDEAL, OVERCOOKED, BURNT. `FoodCookVisualStage` usa esa taxonomía común, mientras que cada uno de los 18 PNGs tiene forma/arte propio y `FoodCookProfile` dicta transiciones; provoleta dispone de sub-etapas de queso. No todo estado adicional requiere clip dedicado.
 
+Cada etapa de un mismo corte comparte el mismo recorte de atlas y por ende la misma caja visual. La proporción del sprite se conserva: su tamaño cenital se calcula desde el aspecto del recorte y el área física relativa configurada por alimento; chorizo mantiene sin cambios el rectángulo legado 236×176 a escala 0.92 y es la unidad 1.0. El placement usa esa misma caja visual, nunca el tamaño táctil ampliado.
+
 | Etapa | Lectura prevista |
 |---|---|
 | RAW | Superficie fresca, color específico del corte y silueta reconocible. |

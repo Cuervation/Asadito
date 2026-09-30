@@ -67,6 +67,114 @@ namespace Asadito.Tests
         }
 
         [Test]
+        public void FoodVisualAreasAreRelativeToUnchangedChorizoAndKeepEverySpriteAspect()
+        {
+            Asadito.Runtime.FoodVisualReference reference = Asadito.Runtime.FoodCatalog.GetVisualReference();
+            Assert.AreEqual("chorizo", reference.FoodId);
+            Asadito.Runtime.FoodDefinition chorizo = Asadito.Runtime.FoodCatalog.Get("chorizo");
+            Assert.AreEqual(1f, chorizo.FootprintAreaMultiplier, .001f);
+
+            Sprite referenceSprite = null;
+            foreach (Asadito.Runtime.FoodDefinition food in Asadito.Runtime.FoodCatalog.GetAll())
+            {
+                Texture2D atlas = Resources.Load<Texture2D>("Art/Foods/States/" + food.Id);
+                Sprite[] states = Asadito.Runtime.FoodSpriteLibrary.CreateStateSprites(food, atlas);
+                foreach (Sprite state in states) createdSprites.Add(state);
+                float aspect = states[0].rect.width / states[0].rect.height;
+                for (int stage = 1; stage < states.Length; stage++)
+                {
+                    Assert.AreEqual(states[0].rect.width, states[stage].rect.width, .001f, food.Id + " frame width drift");
+                    Assert.AreEqual(states[0].rect.height, states[stage].rect.height, .001f, food.Id + " frame height drift");
+                }
+                if (food.Id == reference.FoodId) referenceSprite = states[0];
+                // Retain sprite dimensions until the reference aspect is known below.
+                Assert.Greater(aspect, 0f);
+            }
+
+            Assert.IsNotNull(referenceSprite);
+            float referenceAspect = referenceSprite.rect.width / referenceSprite.rect.height;
+            Vector2 baseSize = Asadito.Runtime.FoodFootprintLayout.FitAspectToBounds(referenceAspect,
+                new Vector2(reference.LegacyRectWidth, reference.LegacyRectHeight) * reference.LegacyDisplayScale);
+            Vector2 chorizoSize = Asadito.Runtime.FoodFootprintLayout.CalculateVisualSize(reference, referenceAspect,
+                referenceAspect, chorizo.FootprintAreaMultiplier);
+            Assert.AreEqual(baseSize.x, chorizoSize.x, .001f, "Chorizo must retain the existing fitted size.");
+            Assert.AreEqual(baseSize.y, chorizoSize.y, .001f, "Chorizo must retain the existing fitted size.");
+
+            foreach (Asadito.Runtime.FoodDefinition food in Asadito.Runtime.FoodCatalog.GetAll())
+            {
+                Texture2D atlas = Resources.Load<Texture2D>("Art/Foods/States/" + food.Id);
+                Sprite[] states = Asadito.Runtime.FoodSpriteLibrary.CreateStateSprites(food, atlas);
+                foreach (Sprite state in states) createdSprites.Add(state);
+                Vector2 size = Asadito.Runtime.FoodFootprintLayout.CalculateVisualSize(reference, referenceAspect,
+                    states[0].rect.width / states[0].rect.height, food.FootprintAreaMultiplier);
+                Assert.AreEqual(states[0].rect.width / states[0].rect.height, size.x / size.y, .002f,
+                    food.Id + " must not stretch its source silhouette.");
+                Assert.AreEqual(food.FootprintAreaMultiplier, (size.x * size.y) / (baseSize.x * baseSize.y), .002f,
+                    food.Id + " physical/visual area must match its authored ratio.");
+            }
+        }
+
+        [Test]
+        public void GrillPackingUsesRealFoodFootprintsForAllTwelveLevels()
+        {
+            Asadito.Runtime.FoodVisualReference reference = Asadito.Runtime.FoodCatalog.GetVisualReference();
+            Asadito.Runtime.FoodDefinition referenceFood = Asadito.Runtime.FoodCatalog.Get(reference.FoodId);
+            Texture2D referenceAtlas = Resources.Load<Texture2D>("Art/Foods/States/" + reference.FoodId);
+            Sprite[] referenceStates = Asadito.Runtime.FoodSpriteLibrary.CreateStateSprites(referenceFood, referenceAtlas);
+            foreach (Sprite sprite in referenceStates) createdSprites.Add(sprite);
+            float referenceAspect = referenceStates[0].rect.width / referenceStates[0].rect.height;
+            Vector2 board = new Vector2(640f, 900f);
+
+            for (int levelNumber = 1; levelNumber <= Asadito.Runtime.MvpLevelCatalog.Count; levelNumber++)
+            {
+                Asadito.Runtime.MvpLevelDefinition level = Asadito.Runtime.MvpLevelCatalog.Get(levelNumber);
+                var sizes = new Vector2[level.FoodIds.Length];
+                for (int i = 0; i < sizes.Length; i++)
+                {
+                    Asadito.Runtime.FoodDefinition food = Asadito.Runtime.FoodCatalog.Get(level.FoodIds[i]);
+                    Texture2D atlas = Resources.Load<Texture2D>("Art/Foods/States/" + food.Id);
+                    Sprite[] sprites = Asadito.Runtime.FoodSpriteLibrary.CreateStateSprites(food, atlas);
+                    foreach (Sprite sprite in sprites) createdSprites.Add(sprite);
+                    sizes[i] = Asadito.Runtime.FoodFootprintLayout.CalculateVisualSize(reference, referenceAspect,
+                        sprites[0].rect.width / sprites[0].rect.height, food.FootprintAreaMultiplier);
+                }
+                Assert.IsTrue(Asadito.Runtime.FoodFootprintLayout.TryPack(board, sizes, 16f, out Vector2[] positions),
+                    "L" + levelNumber + " should fit by its real piece footprints.");
+                for (int i = 0; i < sizes.Length; i++)
+                {
+                    Vector2 center = new Vector2((positions[i].x - .5f) * board.x, (positions[i].y - .5f) * board.y);
+                    Assert.IsTrue(Asadito.Runtime.FoodFootprintLayout.FitsInside(board, sizes[i], center), "L" + levelNumber + " piece outside grill.");
+                    for (int j = i + 1; j < sizes.Length; j++)
+                    {
+                        Vector2 other = new Vector2((positions[j].x - .5f) * board.x, (positions[j].y - .5f) * board.y);
+                        Assert.IsFalse(Asadito.Runtime.FoodFootprintLayout.Overlaps(center, sizes[i], other, sizes[j], 15.9f),
+                            "L" + levelNumber + " pieces overlap.");
+                    }
+                }
+            }
+
+            Vector2 chorizoSize = Asadito.Runtime.FoodFootprintLayout.CalculateVisualSize(reference, referenceAspect,
+                referenceAspect, referenceFood.FootprintAreaMultiplier);
+            Vector2 vacioSize = Asadito.Runtime.FoodFootprintLayout.CalculateVisualSize(reference, referenceAspect,
+                AspectFor("vacio"), Asadito.Runtime.FoodCatalog.Get("vacio").FootprintAreaMultiplier);
+            var chorizos = new Vector2[10];
+            var vacios = new Vector2[10];
+            for (int i = 0; i < 10; i++) { chorizos[i] = chorizoSize; vacios[i] = vacioSize; }
+            Assert.IsTrue(Asadito.Runtime.FoodFootprintLayout.TryPack(board, chorizos, 8f, out _), "Ten chorizos should fit.");
+            Assert.IsFalse(Asadito.Runtime.FoodFootprintLayout.TryPack(board, vacios, 8f, out _), "Ten vacíos should not fit in the same grill.");
+        }
+
+        private static float AspectFor(string foodId)
+        {
+            Asadito.Runtime.FoodDefinition food = Asadito.Runtime.FoodCatalog.Get(foodId);
+            Texture2D atlas = Resources.Load<Texture2D>("Art/Foods/States/" + foodId);
+            Sprite[] states = Asadito.Runtime.FoodSpriteLibrary.CreateStateSprites(food, atlas);
+            float aspect = states[0].rect.width / states[0].rect.height;
+            foreach (Sprite sprite in states) Object.DestroyImmediate(sprite);
+            return aspect;
+        }
+
+        [Test]
         public void EveryFoodReachesIdealOvercookedAndBurntInControlledSimulation()
         {
             foreach (Asadito.Runtime.FoodDefinition food in Asadito.Runtime.FoodCatalog.GetAll())

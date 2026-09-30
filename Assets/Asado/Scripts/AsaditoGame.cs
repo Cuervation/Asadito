@@ -87,6 +87,7 @@ namespace Asadito
         private Image background;
         private Image[] portionImages;
         private RectTransform[] portionHitTargets;
+        private Vector2[] portionVisualSizes;
         private Image[] portionSelectionHalos;
         private Shadow[] portionSelectionShadows;
         private Image cookFill;
@@ -1038,7 +1039,7 @@ namespace Asadito
             if (!RectTransformUtility.ScreenPointToLocalPointInRectangle(grillAreaRect, screenPosition, null, out Vector2 local)) return;
             Vector2 size = grillAreaRect.rect.size;
             Vector2 normalized = new Vector2(local.x / size.x + .5f, local.y / size.y + .5f);
-            SetFoodTargetPosition(index, normalized);
+            TrySetFoodTargetPosition(index, normalized);
             if (tongsVisual != null)
             {
                 tongsVisual.position = screenPosition + new Vector2(26f, 30f);
@@ -1081,11 +1082,11 @@ namespace Asadito
         private void ClampFoodToGrill(int index)
         {
             Vector2 position = portions[index].Position;
-            Vector2 targetHalf = portionHitTargets[index].rect.size * .5f;
-            Vector2 margin = new Vector2(targetHalf.x / grillAreaRect.rect.width, targetHalf.y / grillAreaRect.rect.height);
+            Vector2 foodHalf = portionVisualSizes[index] * .5f;
+            Vector2 margin = new Vector2(foodHalf.x / grillAreaRect.rect.width, foodHalf.y / grillAreaRect.rect.height);
             position.x = Mathf.Clamp(position.x, margin.x, 1f - margin.x);
             position.y = Mathf.Clamp(position.y, margin.y, 1f - margin.y);
-            SetFoodTargetPosition(index, position);
+            if (!TrySetFoodTargetPosition(index, position)) SetFoodTargetPosition(index, portions[index].Position);
         }
 
         private void AdvanceTutorial(int step, string message)
@@ -1108,10 +1109,11 @@ namespace Asadito
             activeFoodPointerIndex = -1;
             activeFoodPointerDragging = false;
             trayCount = totalScore = 0;
+            Vector2[] homes = CalculateInitialFoodPositions();
             for (int i = 0; i < portions.Length; i++)
             {
                 portions[i].Reset();
-                portions[i].Position = PortionHome(i);
+                portions[i].Position = homes[i];
             }
             for (int i = 0; i < portionImages.Length; i++)
             {
@@ -1144,7 +1146,7 @@ namespace Asadito
             target.gameObject.SetActive(true);
             target.anchoredPosition = Vector2.zero;
             target.localScale = Vector3.one;
-            SetFoodTargetPosition(index, PortionHome(index));
+            SetFoodTargetPosition(index, portions[index].Position);
             CanvasGroup hitGroup = target.GetComponent<CanvasGroup>();
             hitGroup.alpha = 1f;
             hitGroup.interactable = true;
@@ -1176,16 +1178,30 @@ namespace Asadito
             portionHitTargets = new RectTransform[portions.Length];
             portionSelectionHalos = new Image[portions.Length];
             portionSelectionShadows = new Shadow[portions.Length];
+
+            portionVisualSizes = new Vector2[portions.Length];
+            FoodVisualReference reference = FoodCatalog.GetVisualReference();
+            Sprite referenceSprite = FoodStateSprite(reference.FoodId, (int)FoodCookVisualStage.Raw);
+            float referenceAspect = referenceSprite != null ? referenceSprite.rect.width / referenceSprite.rect.height : 1f;
+            for (int i = 0; i < portions.Length; i++)
+            {
+                FoodDefinition definition = FoodCatalog.Get(portions[i].Profile.FoodId);
+                Sprite rawSprite = FoodStateSprite(definition.Id, (int)FoodCookVisualStage.Raw);
+                float spriteAspect = rawSprite != null ? rawSprite.rect.width / rawSprite.rect.height : referenceAspect;
+                portionVisualSizes[i] = FoodFootprintLayout.CalculateVisualSize(reference, referenceAspect,
+                    spriteAspect, definition.FootprintAreaMultiplier);
+            }
+            Vector2[] homePositions = CalculateInitialFoodPositions();
+
             for (int i = 0; i < portions.Length; i++)
             {
                 int index = i;
                 string foodId = portions[index].Profile.FoodId;
-                Vector2 home = PortionHome(index);
+                Vector2 home = homePositions[index];
                 portions[index].Position = home;
                 FoodDefinition definition = FoodCatalog.Get(foodId);
-                Vector2 visualSize = new Vector2(236f, 176f) * definition.DisplayScale;
-                Vector2 touchSize = new Vector2(Mathf.Max(196f, visualSize.x * .82f),
-                    Mathf.Max(188f, visualSize.y * 1.02f));
+                Vector2 visualSize = portionVisualSizes[index];
+                Vector2 touchSize = FoodFootprintLayout.GetTouchTargetSize(visualSize);
                 Image hitGraphic = MakeImage("Food hit target " + (index + 1), foodInteractionRoot, whiteSprite,
                     new Color(1f, 1f, 1f, 0f), new Vector2(.5f, .5f), new Vector2(.5f, .5f), touchSize);
                 hitGraphic.rectTransform.position = grillAreaRect.TransformPoint(GrillLocalPosition(home));
@@ -1220,20 +1236,24 @@ namespace Asadito
             }
         }
 
-        private Vector2 PortionHome(int index)
+        private Vector2[] CalculateInitialFoodPositions()
         {
             int count = portions != null ? portions.Length : 0;
-            if (count <= 1) return new Vector2(.5f, .5f);
-            if (count == 2) return new Vector2(index == 0 ? .36f : .64f, .5f);
-            if (count == 3) return new Vector2(new[] { .2f, .5f, .8f }[index], .5f);
-            if (count == 4)
-                return new Vector2(index % 2 == 0 ? .34f : .66f, index < 2 ? .75f : .25f);
-            if (count == 5)
+            if (count == 0) return System.Array.Empty<Vector2>();
+            if (portionVisualSizes == null || portionVisualSizes.Length != count)
             {
-                if (index < 3) return new Vector2(new[] { .18f, .5f, .82f }[index], .75f);
-                return new Vector2(index == 3 ? .36f : .64f, .25f);
+                var fallback = new Vector2[count];
+                for (int i = 0; i < count; i++) fallback[i] = new Vector2((i + 1f) / (count + 1f), .5f);
+                return fallback;
             }
-            return new Vector2(new[] { .18f, .5f, .82f }[index % 3], index < 3 ? .75f : .25f);
+
+            Vector2 grillSize = grillAreaRect != null ? grillAreaRect.rect.size : new Vector2(640f, 900f);
+            if (FoodFootprintLayout.TryPack(grillSize, portionVisualSizes, 16f, out Vector2[] positions)) return positions;
+            if (FoodFootprintLayout.TryPack(grillSize, portionVisualSizes, 4f, out positions)) return positions;
+            Debug.LogError("Food pieces do not fit on the grill for level " + currentLevelNumber + ".");
+            var emergency = new Vector2[count];
+            for (int i = 0; i < count; i++) emergency[i] = new Vector2((i + 1f) / (count + 1f), .5f);
+            return emergency;
         }
 
         private Vector2 GrillLocalPosition(Vector2 normalizedPosition)
@@ -1248,6 +1268,23 @@ namespace Asadito
             if (portionHitTargets == null || index < 0 || index >= portionHitTargets.Length || portionHitTargets[index] == null)
                 return;
             portionHitTargets[index].position = grillAreaRect.TransformPoint(GrillLocalPosition(normalizedPosition));
+        }
+
+        private bool TrySetFoodTargetPosition(int index, Vector2 normalizedPosition)
+        {
+            if (index < 0 || index >= portions.Length || portionVisualSizes == null || grillAreaRect == null) return false;
+            Vector2 area = grillAreaRect.rect.size;
+            Vector2 center = GrillLocalPosition(normalizedPosition);
+            Vector2 size = portionVisualSizes[index];
+            if (!FoodFootprintLayout.FitsInside(area, size, center)) return false;
+            for (int other = 0; other < portions.Length; other++)
+            {
+                if (other == index || portions[other].OnTray) continue;
+                if (FoodFootprintLayout.Overlaps(center, size, GrillLocalPosition(portions[other].Position),
+                    portionVisualSizes[other], 10f)) return false;
+            }
+            SetFoodTargetPosition(index, normalizedPosition);
+            return true;
         }
 
         public bool IsFoodTargetClosest(int index, Vector2 screenPoint, Camera eventCamera)
@@ -1617,6 +1654,7 @@ namespace Asadito
             Vector3 start = target.position;
             Vector3 destination = TrayPortionPosition(index);
             Vector3 startScale = target.localScale;
+            float trayScale = TrayPortionScale(index);
             float elapsed = 0f;
             while (elapsed < .42f)
             {
@@ -1624,12 +1662,12 @@ namespace Asadito
                 float p = Mathf.Clamp01(elapsed / .42f);
                 float eased = Mathf.SmoothStep(0f, 1f, p);
                 target.position = Vector3.Lerp(start, destination, eased) + Vector3.up * (54f * Mathf.Sin(p * Mathf.PI));
-                target.localScale = Vector3.Lerp(startScale, Vector3.one * .35f, eased);
+                target.localScale = Vector3.Lerp(startScale, Vector3.one * trayScale, eased);
                 if (tongsVisual != null) tongsVisual.position = target.position + new Vector3(26f, 28f + 34f * Mathf.Sin(p * Mathf.PI), 0f);
                 yield return null;
             }
             target.position = destination;
-            target.localScale = Vector3.one * .35f;
+            target.localScale = Vector3.one * trayScale;
             AnimateTongsGrip(false);
             if (tongsVisual != null)
             {
@@ -1659,6 +1697,17 @@ namespace Asadito
                 ((rows - 1) * .5f - row + jitterY[index % jitterY.Length]) * yStep,
                 0f);
             return trayRect.TransformPoint(localOffset);
+        }
+
+        private float TrayPortionScale(int index)
+        {
+            if (portionVisualSizes == null || index < 0 || index >= portionVisualSizes.Length || trayRect == null) return .35f;
+            Vector2 size = portionVisualSizes[index];
+            // The same cell pitch as the board layout leaves room for jitter and adjacent cuts.
+            float cellWidth = trayRect.rect.width * .30f * .72f;
+            float cellHeight = trayRect.rect.height * .30f * .72f;
+            float fit = Mathf.Min(cellWidth / size.x, cellHeight / size.y);
+            return Mathf.Clamp(Mathf.Min(.35f, fit), .12f, .35f);
         }
 
         private void Serve()

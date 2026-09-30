@@ -1,11 +1,10 @@
 {
-  "SchemaVersion": 1,
+  "SchemaVersion": 2,
   "Foods": [
     {
       "Id": "tira",
       "DisplayName": "TIRA DE ASADO",
       "Category": "Vacuno",
-      "DisplayScale": 1.0,
       "SpriteCrop": {
         "XMin": 0.1728515625,
         "YMin": 0.0,
@@ -57,13 +56,13 @@
             "MaximumCoreC": 76
           }
         ]
-      }
+      },
+      "FootprintAreaMultiplier": 2.0
     },
     {
       "Id": "chorizo",
       "DisplayName": "CHORIZO",
       "Category": "Embutido",
-      "DisplayScale": 0.92,
       "SpriteCrop": {
         "XMin": 0.17578125,
         "YMin": 0.0,
@@ -115,13 +114,13 @@
             "MaximumCoreC": 92
           }
         ]
-      }
+      },
+      "FootprintAreaMultiplier": 1.0
     },
     {
       "Id": "vacio",
       "DisplayName": "VACÍO",
       "Category": "Vacuno",
-      "DisplayScale": 1.08,
       "SpriteCrop": {
         "XMin": 0.16796875,
         "YMin": 0.0,
@@ -173,13 +172,13 @@
             "MaximumCoreC": 76
           }
         ]
-      }
+      },
+      "FootprintAreaMultiplier": 3.0
     },
     {
       "Id": "provoleta",
       "DisplayName": "PROVOLETA",
       "Category": "Queso",
-      "DisplayScale": 0.9,
       "SpriteCrop": {
         "XMin": 0.3408203125,
         "YMin": 0.0,
@@ -231,13 +230,13 @@
             "MaximumCoreC": 76
           }
         ]
-      }
+      },
+      "FootprintAreaMultiplier": 1.35
     },
     {
       "Id": "entrana",
       "DisplayName": "ENTRAÑA",
       "Category": "Vacuno",
-      "DisplayScale": 0.92,
       "SpriteCrop": {
         "XMin": 0.0478515625,
         "YMin": 0.0,
@@ -289,13 +288,13 @@
             "MaximumCoreC": 81
           }
         ]
-      }
+      },
+      "FootprintAreaMultiplier": 2.7
     },
     {
       "Id": "colita_cuadril",
       "DisplayName": "COLITA DE CUADRIL",
       "Category": "Vacuno",
-      "DisplayScale": 1.0,
       "SpriteCrop": {
         "XMin": 0.2880859375,
         "YMin": 0.0,
@@ -347,13 +346,13 @@
             "MaximumCoreC": 76
           }
         ]
-      }
+      },
+      "FootprintAreaMultiplier": 2.2
     },
     {
       "Id": "lomo",
       "DisplayName": "LOMO",
       "Category": "Vacuno",
-      "DisplayScale": 0.94,
       "SpriteCrop": {
         "XMin": 0.3349609375,
         "YMin": 0.0,
@@ -405,13 +404,13 @@
             "MaximumCoreC": 76
           }
         ]
-      }
+      },
+      "FootprintAreaMultiplier": 1.8
     },
     {
       "Id": "bife_ancho",
       "DisplayName": "BIFE ANCHO",
       "Category": "Vacuno",
-      "DisplayScale": 1.08,
       "SpriteCrop": {
         "XMin": 0.326171875,
         "YMin": 0.0,
@@ -463,13 +462,13 @@
             "MaximumCoreC": 76
           }
         ]
-      }
+      },
+      "FootprintAreaMultiplier": 2.15
     },
     {
       "Id": "bife_angosto",
       "DisplayName": "BIFE ANGOSTO",
       "Category": "Vacuno",
-      "DisplayScale": 0.98,
       "SpriteCrop": {
         "XMin": 0.208984375,
         "YMin": 0.0,
@@ -521,13 +520,13 @@
             "MaximumCoreC": 76
           }
         ]
-      }
+      },
+      "FootprintAreaMultiplier": 1.65
     },
     {
       "Id": "bife_chorizo",
       "DisplayName": "BIFE DE CHORIZO",
       "Category": "Vacuno",
-      "DisplayScale": 1.02,
       "SpriteCrop": {
         "XMin": 0.201171875,
         "YMin": 0.0,
@@ -579,13 +578,13 @@
             "MaximumCoreC": 76
           }
         ]
-      }
+      },
+      "FootprintAreaMultiplier": 1.9
     },
     {
       "Id": "ojo_bife",
       "DisplayName": "OJO DE BIFE",
       "Category": "Vacuno",
-      "DisplayScale": 1.04,
       "SpriteCrop": {
         "XMin": 0.3173828125,
         "YMin": 0.0,
@@ -637,13 +636,13 @@
             "MaximumCoreC": 76
           }
         ]
-      }
+      },
+      "FootprintAreaMultiplier": 2.25
     },
     {
       "Id": "chinchulines",
       "DisplayName": "CHINCHULINES",
       "Category": "Achura",
-      "DisplayScale": 0.9,
       "SpriteCrop": {
         "XMin": 0.1904296875,
         "YMin": 0.0,
@@ -695,13 +694,13 @@
             "MaximumCoreC": 81
           }
         ]
-      }
+      },
+      "FootprintAreaMultiplier": 1.1
     },
     {
       "Id": "morcilla",
       "DisplayName": "MORCILLA",
       "Category": "Embutido",
-      "DisplayScale": 0.96,
       "SpriteCrop": {
         "XMin": 0.208984375,
         "YMin": 0.0,
@@ -753,13 +752,13 @@
             "MaximumCoreC": 82
           }
         ]
-      }
+      },
+      "FootprintAreaMultiplier": 1.0
     },
     {
       "Id": "morcilla_vasca",
       "DisplayName": "MORCILLA VASCA",
       "Category": "Embutido",
-      "DisplayScale": 1.0,
       "SpriteCrop": {
         "XMin": 0.31640625,
         "YMin": 0.0,
@@ -811,13 +810,13 @@
             "MaximumCoreC": 82
           }
         ]
-      }
+      },
+      "FootprintAreaMultiplier": 1.35
     },
     {
       "Id": "matambre_cerdo",
       "DisplayName": "MATAMBRE DE CERDO",
       "Category": "Cerdo",
-      "DisplayScale": 1.02,
       "SpriteCrop": {
         "XMin": 0.1162109375,
         "YMin": 0.0,
@@ -869,13 +868,13 @@
             "MaximumCoreC": 74
           }
         ]
-      }
+      },
+      "FootprintAreaMultiplier": 3.0
     },
     {
       "Id": "costillita_cerdo",
       "DisplayName": "COSTILLITA DE CERDO",
       "Category": "Cerdo",
-      "DisplayScale": 0.94,
       "SpriteCrop": {
         "XMin": 0.3125,
         "YMin": 0.0,
@@ -927,13 +926,13 @@
             "MaximumCoreC": 74
           }
         ]
-      }
+      },
+      "FootprintAreaMultiplier": 1.7
     },
     {
       "Id": "solomillo_cerdo",
       "DisplayName": "SOLOMILLO DE CERDO",
       "Category": "Cerdo",
-      "DisplayScale": 0.92,
       "SpriteCrop": {
         "XMin": 0.3115234375,
         "YMin": 0.01171875,
@@ -985,13 +984,13 @@
             "MaximumCoreC": 80
           }
         ]
-      }
+      },
+      "FootprintAreaMultiplier": 1.8
     },
     {
       "Id": "pollo_deshuesado",
       "DisplayName": "POLLO DESHUESADO",
       "Category": "Ave",
-      "DisplayScale": 0.98,
       "SpriteCrop": {
         "XMin": 0.291015625,
         "YMin": 0.0,
@@ -1043,7 +1042,14 @@
             "MaximumCoreC": 82
           }
         ]
-      }
+      },
+      "FootprintAreaMultiplier": 2.5
     }
-  ]
+  ],
+  "VisualReference": {
+    "FoodId": "chorizo",
+    "LegacyRectWidth": 236.0,
+    "LegacyRectHeight": 176.0,
+    "LegacyDisplayScale": 0.92
+  }
 }

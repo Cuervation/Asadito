@@ -1,5 +1,13 @@
 # Estado actual de ASADITO — 2026-09-30
 
+## Ajuste de proporciones de cortes (2026-09-30)
+
+- El catálogo schema 2 conserva el rectángulo/aspect-fit legado de Chorizo (236×176 a escala 0.92; área 1.0) y define para los 18 alimentos un multiplicador relativo de área cenital; ancho/largo se derivan del aspecto original del recorte, sin deformar sprites.
+- La misma caja visual se usa para una colocación inicial sin solapamientos, límites de parrilla y rechazo de drags fuera de lugar; el hit target deriva de la caja con margen táctil modesto. Los frames de un alimento comparten caja. En tabla el tamaño baja para encajar las celdas sin aplastar el aspecto.
+- Comparativa generada desde los sprites reales/catalog/packing en Unity Editor RenderTexture, 1080×1920: `/tmp/asadito-food-scale-comparison.png`. Es visualización estática, no sesión jugable ni screenshot de Android.
+- Validación de esta actualización: EditMode **21/21 PASS**, `python3 Tools/validate_food_content.py` PASS (incluye placement/huellas L1–L12, 10 chorizos caben y 10 vacíos no), compilación C# de Unity sin errores y `git diff --check` PASS. Suite PlayMode intentada pero el Editor quedó sin foco en mitad del test L1–L12; el job se detuvo. No se atribuye el antiguo 10/10 al nuevo cambio.
+- Android no se reconstruyó para esta actualización; build/device/manual drag/hitbox y lectura en móvil quedan pendientes. No se modificaron atlas PNG ni se guardó una escena de comparación.
+
 ## Rediseño de gameplay 10bis (estado de este sprint)
 
 - Gameplay recompuesto sobre fondo top-down `ParrillaTopDownGameplay`: parrilla dominante a la izquierda y piso despejado a la derecha; mesita independiente a la derecha con `MesitaAsador.png` como decorado y `TablaAsador.png` como hija interactiva. La mesa no invade la superficie de cocción ni reduce la parrilla a un objeto secundario.
@@ -14,7 +22,7 @@
 - **Interacción/arte:** tap/drag directo sobre targets transparentes agrandados; flujo de selección único, pointer dueño, feedback, pinza ilustrada open/closed y tabla PNG conectadas por `AsaditoGame`. Tap de la pieza activa voltea; arrastre a la tabla emplata; sólo doble tap en la tabla sirve cuando el pedido está completo. No hay botones DAR VUELTA/BANDEJA/SERVIR.
 - **Contenido:** 18 FoodIds/18 atlas × 6 etapas (108 sprites) y 12 niveles/cards. Validator confirma perfiles/recursos y progresión L1–L12.
 - **Tutorial/pausa:** instrucciones de manipulación directa; pausa ofrece continuar, reiniciar, selector, sonido y vibración. `CONTROL DEBUG` se limita a Editor/development builds.
-- **Unity 6000.6.3f1:** EditMode **19/19 PASS**, `/tmp/asadito-always-hot-editmode.xml`; PlayMode **10/10 PASS**, **486.94 s**, incluyendo cocinar/servir de L1 a L12, progresión/save, tap directo, drag, flip, tabla, Retry, pausa y assets. XML del runner: `/Users/celestino/Library/Application Support/Cuervation/Asadito/TestResults.xml`. Console de Unity consultada al final: 0 errores/advertencias.
+- **Unity 6000.6.3f1 en rediseño 10bis anterior:** EditMode **19/19 PASS** y PlayMode **10/10 PASS** (486.94 s) validaron ese estado; XML: `/Users/celestino/Library/Application Support/Cuervation/Asadito/TestResults.xml`. Para este cambio, ver los resultados y limitación del bloque superior; 19/19+10/10 no son pruebas del código actual.
 - **Validator:** `python3 Tools/validate_food_content.py` PASS: 18 perfiles únicos, 108 estados visuales/coherentes, 12 ilustraciones, progresión completa, fuentes e imágenes obligatorias.
 - **Android:** APK actual `/tmp/Asadito-always-hot-1.2.0-arm64.apk` (53 MiB) compilado con Unity 6000.6.3f1, ARM64 IL2CPP, API36, package `com.cuervation.asadito`, 1.2.0/code3; package/version/min/target/ABI y apksigner scheme v2 verificados. Primer build MCP cancelado durante IL2CPP postprocess; segundo incremental `Succeeded` en 61.7 s. Instalación ADB al AVD completada.
 - **Emulador:** el Pixel 7a llamado `Asadito_Pixel_7a_API_36` es imagen Android 16 x86_64. El player ARM64 muestra incompatibilidad y no puede inicializar Unity Graphics API; SwiftShader reporta GLES 3.1 y el player solicita ES 3.2/3.1. Por tanto, build/install sí están validados; lanzamiento visual/menu/gameplay/input en Android no. No hay captura Android de gameplay del refactor; diagnóstico en `/tmp/asadito-qa/02-after-hardware-warning.png`.

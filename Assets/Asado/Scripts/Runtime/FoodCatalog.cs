@@ -7,8 +7,27 @@ namespace Asadito.Runtime
     [Serializable]
     public sealed class FoodCatalogData
     {
-        public int SchemaVersion = 1;
+        public int SchemaVersion = 2;
+        public FoodVisualReference VisualReference = new FoodVisualReference();
         public FoodDefinition[] Foods = Array.Empty<FoodDefinition>();
+    }
+
+    /// <summary>Historical chorizo sizing is frozen as the authored visual/physical scale unit.</summary>
+    [Serializable]
+    public sealed class FoodVisualReference
+    {
+        public string FoodId = "chorizo";
+        public float LegacyRectWidth = 236f;
+        public float LegacyRectHeight = 176f;
+        public float LegacyDisplayScale = .92f;
+
+        public FoodVisualReference Clone() => new FoodVisualReference
+        {
+            FoodId = FoodId,
+            LegacyRectWidth = LegacyRectWidth,
+            LegacyRectHeight = LegacyRectHeight,
+            LegacyDisplayScale = LegacyDisplayScale
+        };
     }
 
     /// <summary>Authored, serializable identity and presentation settings for a playable food.</summary>
@@ -18,7 +37,7 @@ namespace Asadito.Runtime
         public string Id;
         public string DisplayName;
         public string Category;
-        [Min(.4f)] public float DisplayScale = 1f;
+        [Min(.1f)] public float FootprintAreaMultiplier = 1f;
         public FoodSpriteCrop SpriteCrop = new FoodSpriteCrop();
         public FoodCookProfile Profile = new FoodCookProfile();
 
@@ -29,7 +48,7 @@ namespace Asadito.Runtime
                 Id = Id,
                 DisplayName = DisplayName,
                 Category = Category,
-                DisplayScale = DisplayScale,
+                FootprintAreaMultiplier = FootprintAreaMultiplier,
                 SpriteCrop = SpriteCrop == null ? new FoodSpriteCrop() : SpriteCrop.Clone(),
                 Profile = Profile == null ? new FoodCookProfile() : Profile.Clone()
             };
@@ -60,6 +79,8 @@ namespace Asadito.Runtime
         private static Dictionary<string, FoodDefinition> byId;
 
         public static int Count => EnsureLoaded().Foods.Length;
+
+        public static FoodVisualReference GetVisualReference() => EnsureLoaded().VisualReference.Clone();
 
         public static FoodDefinition[] GetAll()
         {
@@ -97,7 +118,8 @@ namespace Asadito.Runtime
                 else if (!ids.Add(food.Id)) issues.Add("Duplicate food id: " + food.Id);
                 if (string.IsNullOrWhiteSpace(food.DisplayName)) issues.Add((food.Id ?? "<empty>") + " has no display name.");
                 if (string.IsNullOrWhiteSpace(food.Category)) issues.Add((food.Id ?? "<empty>") + " has no category.");
-                if (food.DisplayScale <= 0f) issues.Add((food.Id ?? "<empty>") + " has an invalid display scale.");
+                if (float.IsNaN(food.FootprintAreaMultiplier) || float.IsInfinity(food.FootprintAreaMultiplier) || food.FootprintAreaMultiplier <= 0f)
+                    issues.Add((food.Id ?? "<empty>") + " has an invalid chorizo-relative footprint area.");
                 if (food.SpriteCrop == null || !food.SpriteCrop.IsValid) issues.Add((food.Id ?? "<empty>") + " has invalid atlas crop bounds.");
                 if (food.Profile == null) issues.Add((food.Id ?? "<empty>") + " has no cook profile.");
                 else
@@ -108,6 +130,13 @@ namespace Asadito.Runtime
                         issues.Add((food.Id ?? "<empty>") + " profile: " + profileError);
                 }
             }
+            if (EnsureLoaded().VisualReference == null ||
+                !string.Equals(EnsureLoaded().VisualReference.FoodId, "chorizo", StringComparison.OrdinalIgnoreCase) ||
+                EnsureLoaded().VisualReference.LegacyRectWidth <= 0f || EnsureLoaded().VisualReference.LegacyRectHeight <= 0f ||
+                EnsureLoaded().VisualReference.LegacyDisplayScale <= 0f)
+                issues.Add("Food visual reference must preserve the historical chorizo sizing.");
+            if (!EnsureIndex().TryGetValue("chorizo", out FoodDefinition chorizo) || Mathf.Abs(chorizo.FootprintAreaMultiplier - 1f) > .001f)
+                issues.Add("Chorizo must remain the 1.0 footprint-area reference.");
             errors = issues.ToArray();
             return errors;
         }
@@ -118,7 +147,7 @@ namespace Asadito.Runtime
             TextAsset asset = Resources.Load<TextAsset>(ResourcePath);
             if (asset == null) throw new InvalidOperationException("Missing Resources/" + ResourcePath + ".json.");
             cachedData = JsonUtility.FromJson<FoodCatalogData>(asset.text);
-            if (cachedData == null || cachedData.SchemaVersion != 1 || cachedData.Foods == null)
+            if (cachedData == null || cachedData.SchemaVersion != 2 || cachedData.VisualReference == null || cachedData.Foods == null)
                 throw new InvalidOperationException("Invalid food catalog schema at Resources/" + ResourcePath + ".json.");
             return cachedData;
         }
