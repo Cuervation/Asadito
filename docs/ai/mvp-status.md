@@ -1,5 +1,7 @@
 # Estado MVP ASADITO — 2026-09-30
 
+> Registro fechado de verificación y pendientes; para comportamiento operativo actual usar [`docs/current-project-state.md`](../current-project-state.md). Los resultados pertenecen al alcance/commit anotado en cada sección.
+
 ## Actualización de proporciones físicas de alimentos (2026-09-30)
 
 - `FoodCatalog.json` schema 2: `chorizo` permanece en huella 1.0 con su rect legado (236×176×0.92); los otros 17 tamaños se definen en `FootprintAreaMultiplier` y usan el aspecto de su atlas.

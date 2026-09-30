@@ -1,6 +1,6 @@
 # Asadito
 
-Prototipo móvil de parrilla argentina. El objetivo actual es validar el nivel 1 antes de ampliar contenido.
+Juego móvil casual de parrilla argentina. El MVP actual comprende 12 niveles y 18 alimentos; el nivel 1 introduce el loop completo.
 
 Repositorio oficial: [Cuervation/Asadito](https://github.com/Cuervation/Asadito), branch `main`.
 
@@ -8,10 +8,11 @@ Repositorio oficial: [Cuervation/Asadito](https://github.com/Cuervation/Asadito)
 
 - Unity 6000.6.3f1, URP.
 - MCP for Unity 10.2.0: [setup y compatibilidad](UNITY_MCP_SETUP.md).
-- Fuentes canónicas: [alcance y reglas](specs/product/mvp-scope.md), [gate](specs/acceptance/mvp-gate.md), [dirección visual](specs/visual/art-direction.md), [manifiesto de assets](docs/art/asset-manifest.md).
-- Estado por milestone: [mvp-status](docs/ai/mvp-status.md); contexto compacto: [current-state](docs/ai/current-state.md).
+- Fuentes de producto/aceptación: [alcance](specs/product/mvp-scope.md), [gate](specs/acceptance/mvp-gate.md). Las specs se consultan según la tarea, no todas al inicio.
+- Orientación rápida: [estado operativo actual](docs/current-project-state.md), [mapa del repositorio](docs/repo-map.md), [router](AGENTS.md).
+- Evidencia fechada de QA: [mvp-status](docs/ai/mvp-status.md) y [current-state](docs/ai/current-state.md).
 - Contrato de contribución y memoria: [AGENTS.md](AGENTS.md).
 
 ## Alcance
 
-First Playable: dos comensales, chorizo y tira de asado, parrilla caliente al entrar, interacción táctil directa con pinza, tabla de asador, evaluación y retry. No desarrollar sistemas fuera del [scope del MVP](specs/product/mvp-scope.md).
+Loop principal: parrilla ya caliente, manipulación directa de alimentos con pinza, servir en tabla, evaluación y progresión. No hay encendido/carbón. Ver el [scope del MVP](specs/product/mvp-scope.md); no ampliar sistemas fuera de ese alcance.

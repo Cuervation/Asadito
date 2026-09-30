@@ -6,6 +6,8 @@
 **HEAD:** 9a73fd8 — feat(gameplay): size foods by grill footprint
 **Alcance:** diagnóstico exclusivamente. No se modificó código, settings, AGENTS, skills ni specs. Esta es la única modificación de repo.
 
+> Seguimiento: esta auditoría conserva el diagnóstico y recomendaciones tal como estaban al corte. Su implementación documental está registrada en [`context-optimization-result.md`](context-optimization-result.md); las secciones “pendiente aprobación” describen el estado de esa fecha, no el estado actual.
+
 ## 1. Resumen ejecutivo
 
 **Alineación con contexto progresivo: parcial, ~6/10 (valoración cualitativa, no métrica de telemetría).** La base es buena: un AGENTS corto, tres skills concisos, SDD que dice no crear documentos para cambios pequeños, validación escalonada y cero agentes obligatorios. No hay una cadena inevitable Planner → Architect → Reviewer → Tester.

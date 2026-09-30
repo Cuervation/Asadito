@@ -2,7 +2,7 @@
 
 ## First Playable y contenido
 
-- Menú → nivel → intro → parrilla cenital ya caliente (210 °C uniforme por `GrillHeatModel`); sin controls/mecánica/celdas de carbón. Tap/drag directo de carne con pinza de arte real, cara independiente/flip, arrastre o acción universal a tabla de asador, servir, evaluar, guardar, retry/next.
+- Menú → nivel → intro → parrilla cenital ya caliente (210 °C uniforme por `GrillHeatModel`); sin controles/mecánica/celdas de carbón. Tap/drag directo de carne con pinza de arte real y caras independientes; arrastrar piezas a la tabla y hacer doble tap en la tabla para servir el pedido completo; evaluar, guardar, retry/next. No hay botones individuales por corte ni botón de servir.
 - 18 IDs únicos con perfil térmico configurable y completo, 6 representaciones visuales por alimento (108 sprite recortados de 18 atlas), sin recurso obligatorio faltante; perfiles son tuning de gameplay y no reglas sanitarias.
 - 12 niveles progresivos enseñan manipulación directa/puntos/cortes/achuras/cerdo/ave/premium y asado combinado; unlock y migración de progreso preexistente.
 - 6 comensales diferenciados en edad/peso/apetito/preferencias/punto; género fuera de fórmulas. Asignador no debe saltear invitados por repetición antes de asignar primera porción a todos.

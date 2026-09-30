@@ -1,5 +1,7 @@
 # Estado actual de ASADITO — 2026-09-30
 
+> Este archivo conserva evidencia fechada y detalle del sprint; no es el resumen operativo por defecto. Para el comportamiento actual conciso, usar [`docs/current-project-state.md`](../current-project-state.md). No atribuir resultados anteriores a cambios posteriores.
+
 ## Ajuste de proporciones de cortes (2026-09-30)
 
 - El catálogo schema 2 conserva el rectángulo/aspect-fit legado de Chorizo (236×176 a escala 0.92; área 1.0) y define para los 18 alimentos un multiplicador relativo de área cenital; ancho/largo se derivan del aspecto original del recorte, sin deformar sprites.

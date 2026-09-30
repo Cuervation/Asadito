@@ -1,0 +1,45 @@
+# ASADITO repository map
+
+An operational index, not a full file inventory. Start with the narrow path for the task; use `rg -n 'symbol|label' <file>` and read the surrounding range instead of opening large files whole.
+
+In the table, `Runtime/...` expands to `Assets/Asado/Scripts/Runtime/...`; `Resources/...` expands to `Assets/Asado/Resources/...`.
+
+| Task/domain | Start here |
+|---|---|
+| UI labels, buttons, screens, safe area, level flow, pause/results | `Assets/Asado/Scripts/AsaditoGame.cs`; UI feedback: `Assets/Asado/Scripts/AsaditoButtonFeedback.cs` |
+| Fonts | `Assets/Asado/Resources/Fonts/`; font loading/assignment at `AsaditoGame.Start` |
+| Food tap/drag/pointer ownership | `Assets/Asado/Scripts/FoodPieceTouch.cs`; callbacks and selection in `Assets/Asado/Scripts/AsaditoGame.cs` |
+| Serving-board double tap | `Assets/Asado/Scripts/ServingBoardTouch.cs`; `AsaditoGame.OnServingBoardDoubleTap` |
+| Food definitions/profiles | `Assets/Asado/Resources/Definitions/FoodCatalog.json`; `Assets/Asado/Scripts/Runtime/FoodCatalog.cs` |
+| Cooking, states, heat | `Runtime/FoodCookingModel.cs`, `FoodState.cs`, `GrillHeatModel.cs`; profiles in `FoodCatalog.json` |
+| Food sizing/placement | `Runtime/FoodFootprintLayout.cs`; use call sites in `AsaditoGame.cs` |
+| Food sprites and thermal states | `Assets/Asado/Resources/Art/Foods/` and `Foods/States/`; loader `Runtime/FoodSpriteLibrary.cs` |
+| Grill/table/tongs/level-card art | `Resources/Art/ParrillaTopDownGameplay.png`, `Props/MesitaAsador.png`, `Props/TablaAsador.png`, `Tools/PinzaParrilleraOpen.png`, `Tools/PinzaParrilleraClosed.png`, `LevelCards/NivelN.png`; import settings `Assets/Asado/Scripts/Editor/FoodAtlasImportSettings.cs`; canvas placement in `AsaditoGame.BuildInterface` |
+| Level definitions/progression | `Runtime/MvpLevelCatalog.cs`; level cards in `Resources/Art/LevelCards/` |
+| Serving allocation/scoring/guests | `Runtime/ServingAllocator.cs`, `GuestAndScoring.cs`; runtime service in `AsaditoGame.cs` |
+| Save/migration | `Runtime/MvpSaveData.cs` and related progression code in `AsaditoGame.cs` |
+| Procedural animation/audio | Coroutines/cues in `AsaditoGame.cs`, `Runtime/ProceduralSfx.cs`; guidance/manifests in `docs/art/animation-manifest.md` and `docs/art/asset-manifest.md` |
+| EditMode/PlayMode tests | `Assets/Tests/EditMode/`, `Assets/Tests/PlayMode/`; content check `Tools/validate_food_content.py` |
+| Scene bootstrap | `Assets/Scenes/SampleScene.unity`; setup `Assets/Asado/Scripts/Editor/MvpSceneSetup.cs` |
+| Android build/config | `docs/android-release.md`, `Assets/Asado/Scripts/Editor/AndroidReleaseBuild.cs`, `ProjectSettings/` |
+| CI | `.github/workflows/unity-content-and-tests.yml` |
+
+## Large-file symbol index
+
+`Assets/Asado/Scripts/AsaditoGame.cs` is the runtime/UI monolith. Search these exact current symbols, then inspect a small range:
+
+- UI/layout/pause: `BuildInterface`, `BuildGrillInteractionArea`, `BuildFoodInteractionLayer`, `BuildPauseMenu`, `BuildFrontEnd`, `ApplySafeAreaIfChanged`, `MakeButton`.
+- Levels: `ConfigureLevel`, `BuildOrderSummary`, `RefreshLevelCards`, `SelectLevel`, `StartLevel`, `Retry`, `PlayNextLevel`.
+- Food layout/input: `BuildPortionControls`, `CalculateInitialFoodPositions`, `TrySetFoodTargetPosition`, `BeginFoodPointer`, `SelectFoodPiece`, `BeginFoodDrag`, `DragFood`, `EndFoodDrag`, `IsFoodTargetClosest`.
+- Tongs/flip/serve: `PositionTongsAtFood`, `MoveTongsTo`, `PlatePortion`, `FlipSelectedPortionFromTap`, `OnServingBoardDoubleTap`, `Serve`, `ServeAnimation`.
+- Cooking/feedback: `Update`, `UpdateCookFeedback`, `RefreshFoodVisual`, `SmokePuffs`, `GuestReaction`, `ShowFinalScore`.
+
+## Specs to open only when needed
+
+- Scope/catalog/progression: `specs/product/mvp-scope.md`.
+- Heat/cooking: `specs/product/systems/fire-heat.md`, `food-cooking.md`.
+- Serving/scoring/guests: `specs/product/systems/serving.md`, `scoring.md`, `guest-evaluation.md`.
+- Art/states/animation: `specs/visual/art-direction.md`, `food-states.md`, `animation.md`.
+- Acceptance changes or release sign-off: `specs/acceptance/mvp-gate.md`.
+
+Do not load all specs for navigation; choose the one matching the affected behavior or asset.

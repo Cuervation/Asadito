@@ -1,13 +1,13 @@
 ---
 name: asadito-visual-mvp
-description: "Create or integrate Asadito visual assets and interactions, preserving the Visual Bible, asset status and early animation/feedback requirements."
+description: "Use for new/replaced raster art, visual-state assets, gameplay animation/feedback, or substantial composition changes."
 ---
 
 # Asadito Visual MVP
 
-Read `specs/visual/` for style/states and `docs/art/asset-manifest.md` before generating or replacing game art.
+- Use [`docs/repo-map.md`](../../../docs/repo-map.md) to find actual asset paths and runtime consumers. Load only the relevant section of `specs/visual/`; do not read the full Visual Bible for a local code-only color/offset.
+- For new/replaced game art, follow `specs/visual/art-direction.md`, `docs/art/asset-manifest.md`, and the Unity import workflow. Use ImageGen for new raster assets; retain existing art by making versioned alternatives, and record status as FINAL/PROVISIONAL/CONCEPT/TODO. Concepts are not runtime assets.
+- Current gameplay is always-hot and top-down: food, tongs, grill and serving board are the affordances. Do not design charcoal/ember/ignition or named food-action button interactions.
+- Check animation-specific rules in `specs/visual/animation.md` and `docs/art/animation-manifest.md` only when changing motion/feedback. Verify Unity import and mobile-size readability when art/runtime assets change.
 
-- Use ImageGen for new raster game assets; copy final project assets into `Assets/` and mark them FINAL or PROVISIONAL. Mark reference-only output CONCEPT. Use only FINAL/PROVISIONAL/CONCEPT/TODO. Concepts are not runtime assets.
-- Do not overwrite art already in the project; create a versioned sibling and update references when replacing.
-- Core interactions need movement plus clear visual feedback early: cooking/embers, turning, placing on tray, serving and guest reaction.
-- Call art DONE only after the asset imports in Unity and remains readable at mobile UI size over the gameplay background.
+Current behavior and QA boundaries: [`docs/current-project-state.md`](../../../docs/current-project-state.md).
