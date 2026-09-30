@@ -25,6 +25,6 @@ The first color-change route needs no skill or spec by default and should reach 
 - Updated `AGENTS.md`, `README.md`, all three `.agents/skills/*/SKILL.md`, and clarified the current serving interaction in `specs/acceptance/mvp-gate.md`.
 - Added `docs/current-project-state.md` (short operational behavior), `docs/repo-map.md` (paths plus verified monolith symbols), and this comparison.
 - Dated `docs/ai/current-state.md` and `docs/ai/mvp-status.md` remain evidence/history; they now point to the operational source. The audit received only a follow-up pointer; its original dated diagnosis remains intact, and its “pending” recommendations now link here.
-- No specialized agents were created. Simple tasks avoid skills/specs/full suites; medium tasks load at most one or two relevant skills and a specific spec; complex/release tasks expand validation with risk.
+- No specialized agents were created. `AGENTS.md` now gives only the general rule “testing is proportional to risk”; the five-level selection/fail-fast matrix lives in `.agents/skills/asadito-unity-verify/SKILL.md` to avoid duplicated policy.
 
 This documents a routing design, not runtime token/latency telemetry. It reduces unnecessary pre-edit exploration by making first paths and expansion criteria explicit.
