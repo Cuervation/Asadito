@@ -86,6 +86,7 @@ namespace Asadito
         private GameObject menuRoot;
         private GameObject levelSelectRoot;
         private GameObject introRoot;
+        private Transform introPopup;
         private CanvasGroup menuCanvasGroup;
         private CanvasGroup levelSelectCanvasGroup;
         private CanvasGroup introCanvasGroup;
@@ -131,6 +132,8 @@ namespace Asadito
         private Button[] levelCards;
         private Image[] levelCardImages;
         private Text[] levelCardLabels;
+        private Image[] levelCardLocks;
+        private Image[] levelCardDisabledOverlays;
         private Sprite[] levelCardSprites;
         private Image[] introFoodIcons;
         private Coroutine boardReadyPulseRoutine;
@@ -700,6 +703,8 @@ namespace Asadito
             levelCards = new Button[MvpLevelCatalog.Count];
             levelCardImages = new Image[levelCards.Length];
             levelCardLabels = new Text[levelCards.Length];
+            levelCardLocks = new Image[levelCards.Length];
+            levelCardDisabledOverlays = new Image[levelCards.Length];
             for (int i = 0; i < levelCards.Length; i++)
             {
                 int levelNumber = i + 1;
@@ -737,6 +742,23 @@ namespace Asadito
                 illustration.raycastTarget = false;
                 levelCardImages[i] = illustration;
 
+                Image disabledOverlay = MakeImage("Disabled nivel " + levelNumber,
+                    levelCards[i].transform, whiteSprite, new Color(0f, 0f, 0f, .48f),
+                    Vector2.zero, Vector2.one, Vector2.zero);
+                disabledOverlay.rectTransform.offsetMin = new Vector2(7f, 7f);
+                disabledOverlay.rectTransform.offsetMax = new Vector2(-7f, -7f);
+                disabledOverlay.raycastTarget = false;
+                levelCardDisabledOverlays[i] = disabledOverlay;
+                Image lockBadge = MakeImage("Candado nivel " + levelNumber,
+                    levelCards[i].transform, AsaditoUiIcons.Get(AsaditoUiIcon.Locked), Cream,
+                    new Vector2(.5f, .58f), new Vector2(.5f, .58f), new Vector2(88f, 88f));
+                lockBadge.preserveAspect = true;
+                lockBadge.raycastTarget = false;
+                var lockShadow = lockBadge.gameObject.AddComponent<Shadow>();
+                lockShadow.effectColor = new Color(0f, 0f, 0f, .8f);
+                lockShadow.effectDistance = new Vector2(2f, -3f);
+                levelCardLocks[i] = lockBadge;
+
                 Image labelBacking = MakeImage("Fondo etiqueta nivel " + levelNumber,
                     levelCards[i].transform, whiteSprite, new Color32(36, 25, 18, 205),
                     Vector2.zero, Vector2.zero, new Vector2(0f, 72f));
@@ -756,25 +778,58 @@ namespace Asadito
             introCanvasGroup = introRoot.AddComponent<CanvasGroup>();
             introCanvasGroup.alpha = 0f;
             introRoot.SetActive(false);
-            MakePanel("Sombra intro", introRoot.transform, new Color32(31, 34, 29, 245), .5f, .5f, 1080, 1920);
-            introTitleText = MakeText("Intro título", introRoot.transform, "EL DEBUT", 64, Cream, TextAnchor.MiddleCenter, .5f, .66f, 900, 115, true);
-            introGuestsText = MakeText("Intro comensales", introRoot.transform, "2 COMENSALES", 31, Gold, TextAnchor.MiddleCenter, .5f, .56f, 850, 64, true);
-            Image introGuestIcon = MakeImage("Icon comensales intro", introRoot.transform, AsaditoUiIcons.Get(AsaditoUiIcon.Guest), Gold,
-                new Vector2(.34f, .56f), new Vector2(.34f, .56f), new Vector2(32f, 32f));
+            Image introBackdrop = MakePanel("Sombra intro", introRoot.transform, new Color32(12, 15, 13, 190), .5f, .5f, 1080, 1920);
+            introBackdrop.sprite = whiteSprite;
+            var popup = new GameObject("Popup nivel", typeof(RectTransform), typeof(CanvasRenderer), typeof(Image));
+            popup.transform.SetParent(introRoot.transform, false);
+            RectTransform popupRect = popup.GetComponent<RectTransform>();
+            SetRect(popupRect, .5f, .5f, 774f, 1000f);
+            Image popupImage = popup.GetComponent<Image>();
+            popupImage.sprite = roundedButtonSprite != null ? roundedButtonSprite : whiteSprite;
+            popupImage.type = roundedButtonSprite != null ? Image.Type.Sliced : Image.Type.Simple;
+            popupImage.color = new Color(1f, 1f, 1f, .7f);
+            popupImage.raycastTarget = true;
+            var popupShadow = popup.AddComponent<Shadow>();
+            popupShadow.effectColor = new Color(0f, 0f, 0f, .65f);
+            popupShadow.effectDistance = new Vector2(0f, -14f);
+            var glassRim = popup.AddComponent<Outline>();
+            glassRim.effectColor = new Color(1f, 1f, 1f, .92f);
+            glassRim.effectDistance = new Vector2(2f, -2f);
+            introPopup = popup.transform;
+            Image glassSheen = MakeImage("Reflejo vidrio popup", introPopup, popupImage.sprite,
+                new Color(1f, 1f, 1f, .18f), new Vector2(.025f, .84f), new Vector2(.975f, .98f), Vector2.zero);
+            glassSheen.type = Image.Type.Sliced;
+            glassSheen.raycastTarget = false;
+            Image ruleLeft = MakeImage("Regla vidrio izquierda", introPopup, whiteSprite,
+                new Color32(190, 146, 61, 220), new Vector2(.15f, .86f), new Vector2(.41f, .86f), new Vector2(0f, 2f));
+            ruleLeft.raycastTarget = false;
+            Image glassFire = MakeImage("Icono fuego vidrio", introPopup, AsaditoUiIcons.Get(AsaditoUiIcon.Fire),
+                new Color32(191, 143, 60, 255), new Vector2(.5f, .86f), new Vector2(.5f, .86f), new Vector2(26f, 26f));
+            glassFire.preserveAspect = true;
+            Image ruleRight = MakeImage("Regla vidrio derecha", introPopup, whiteSprite,
+                new Color32(190, 146, 61, 220), new Vector2(.59f, .86f), new Vector2(.85f, .86f), new Vector2(0f, 2f));
+            ruleRight.raycastTarget = false;
+            introTitleText = MakeText("Intro título", introPopup, "EL DEBUT", 56, new Color32(44, 55, 44, 255), TextAnchor.MiddleCenter, .5f, .68f, 700, 112, true);
+            introTitleText.resizeTextForBestFit = true;
+            introTitleText.resizeTextMinSize = 38;
+            introTitleText.resizeTextMaxSize = 56;
+            introGuestsText = MakeText("Intro comensales", introPopup, "2 COMENSALES", 31, new Color32(171, 112, 33, 255), TextAnchor.MiddleCenter, .5f, .56f, 470, 64, true);
+            Image introGuestIcon = MakeImage("Icon comensales intro", introPopup, AsaditoUiIcons.Get(AsaditoUiIcon.Guest), Gold,
+                new Vector2(.29f, .56f), new Vector2(.29f, .56f), new Vector2(32f, 32f));
             introGuestIcon.preserveAspect = true;
-            introMenuText = MakeText("Intro menu", introRoot.transform, "CHORIZO ×1   ·   TIRA DE ASADO ×1", 24, Cream, TextAnchor.MiddleCenter, .5f, .535f, 920, 74, true);
+            introMenuText = MakeText("Intro menu", introPopup, "CHORIZO ×1   ·   TIRA DE ASADO ×1", 24, new Color32(70, 69, 62, 255), TextAnchor.MiddleCenter, .5f, .48f, 700, 74, true);
             introFoodIcons = new Image[4];
             for (int i = 0; i < introFoodIcons.Length; i++)
             {
-                Image icon = MakeImage("Icon comida intro " + (i + 1), introRoot.transform, whiteSprite, Color.white,
-                    new Vector2(.5f, .46f), new Vector2(.5f, .46f), new Vector2(42f, 42f));
+                Image icon = MakeImage("Icon comida intro " + (i + 1), introPopup, whiteSprite, Color.white,
+                    new Vector2(.5f, .40f), new Vector2(.5f, .40f), new Vector2(42f, 42f));
                 icon.rectTransform.anchoredPosition = new Vector2((i - 1.5f) * 52f, 0f);
                 icon.preserveAspect = true;
                 icon.gameObject.SetActive(false);
                 introFoodIcons[i] = icon;
             }
-            introObjectiveText = MakeText("Intro objetivo", introRoot.transform, "Arrastrá toda la carne a la parrilla.\nDespués, cociná y serví cada pieza.", 32, Cream, TextAnchor.MiddleCenter, .5f, .415f, 850, 132, false);
-            MakeButton("IR A LA PARRILLA", introRoot.transform, .5f, .35f, 550, 115, new Color32(199, 139, 54, 255), StartLevel);
+            introObjectiveText = MakeText("Intro objetivo", introPopup, "Arrastrá toda la carne a la parrilla.\nDespués, cociná y serví cada pieza.", 32, new Color32(58, 63, 55, 255), TextAnchor.MiddleCenter, .5f, .30f, 700, 132, false);
+            MakeButton("IR A LA PARRILLA", introPopup, .5f, .16f, 500, 108, new Color32(199, 139, 54, 255), StartLevel);
             gameplayCanvasGroup.alpha = 0f;
             gameplayCanvasGroup.interactable = false;
             gameplayCanvasGroup.blocksRaycasts = false;
@@ -860,7 +915,10 @@ namespace Asadito
                 bool unlocked = levelNumber <= saveData.MaxUnlockedLevel;
                 levelCardLabels[i].text = "Nivel " + levelNumber;
                 levelCards[i].interactable = unlocked;
-                levelCardImages[i].color = unlocked ? Color.white : new Color32(166, 157, 143, 255);
+                levelCardImages[i].color = unlocked ? Color.white : new Color32(145, 145, 145, 255);
+                levelCardLabels[i].color = unlocked ? Cream : new Color32(178, 178, 178, 255);
+                levelCardDisabledOverlays[i].gameObject.SetActive(!unlocked);
+                levelCardLocks[i].gameObject.SetActive(!unlocked);
             }
         }
 

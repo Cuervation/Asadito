@@ -514,6 +514,17 @@ namespace Asadito.Tests.PlayMode
                 levelTwo.transform.Find("Imagen representativa nivel 2").GetComponent<Image>().sprite.name);
             Assert.AreEqual(1, levelTwo.GetComponentsInChildren<Text>().Length);
             Assert.IsFalse(levelTwo.interactable);
+            Assert.IsFalse(levelOne.transform.Find("Candado nivel 1").gameObject.activeSelf);
+            Assert.IsFalse(levelOne.transform.Find("Disabled nivel 1").gameObject.activeSelf);
+            Assert.IsTrue(levelTwo.transform.Find("Candado nivel 2").gameObject.activeSelf);
+            Assert.IsTrue(levelTwo.transform.Find("Disabled nivel 2").gameObject.activeSelf);
+            Component levelGame = game;
+            var levelSave = (MvpSaveData)GetField(levelGame, "saveData");
+            levelSave.MaxUnlockedLevel = 2;
+            levelGame.GetType().GetMethod("RefreshLevelCards", BindingFlags.Instance | BindingFlags.NonPublic).Invoke(levelGame, null);
+            Assert.IsTrue(levelTwo.interactable);
+            Assert.IsFalse(levelTwo.transform.Find("Candado nivel 2").gameObject.activeSelf);
+            Assert.IsFalse(levelTwo.transform.Find("Disabled nivel 2").gameObject.activeSelf);
             Assert.IsNull(GameObject.Find("Seleccion ayuda"),
                 "The level-selection screen should not add a secondary block of descriptive copy.");
             ClickButton("NIVEL 1");
@@ -521,8 +532,19 @@ namespace Asadito.Tests.PlayMode
             Assert.AreEqual("Asadito UI Icon Guest", GameObject.Find("Icon comensales intro").GetComponent<Image>().sprite.name);
             Assert.AreEqual("tira_ideal", GameObject.Find("Icon comida intro TIRA DE ASADO").GetComponent<Image>().sprite.name);
             Assert.AreEqual("chorizo_ideal", GameObject.Find("Icon comida intro CHORIZO").GetComponent<Image>().sprite.name);
+            Transform introPopup = GameObject.Find("Popup nivel").transform;
+            Assert.AreEqual(new Vector2(774f, 1000f), introPopup.GetComponent<RectTransform>().rect.size,
+                "Level intro should use the narrower, shorter centered popup.");
+            Assert.AreEqual(.7f, introPopup.GetComponent<Image>().color.a, .001f, "The white popup should be 30% transparent.");
+            Assert.NotNull(introPopup.GetComponent<Outline>(), "Frosted glass should have a subtle bright rim.");
+            Assert.NotNull(introPopup.Find("Reflejo vidrio popup"), "The translucent card should have a soft glass sheen.");
+            Assert.NotNull(introPopup.Find("Icono fuego vidrio"), "Glass style should use the small centered warm accent.");
+            Assert.AreEqual(introPopup, GameObject.Find("Intro título").transform.parent);
+            Assert.AreEqual(introPopup, GameObject.Find("IR A LA PARRILLA").transform.parent);
             Button introStart = FindButton("IR A LA PARRILLA");
             Assert.AreEqual("Asadito UI Icon Next", introStart.transform.Find("Icono accion IR A LA PARRILLA").GetComponent<Image>().sprite.name);
+            Assert.AreEqual("Arcade Gold Button", ((Image)introStart.targetGraphic).sprite.name,
+                "The selected glass style must preserve the app's current CTA button styling.");
             AssertActionIconInsideButton(introStart, "IR A LA PARRILLA");
 
             var sprites = (Dictionary<string, Sprite[]>)GetField(game, "foodStateSprites");

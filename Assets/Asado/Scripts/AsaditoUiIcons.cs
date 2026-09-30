@@ -5,7 +5,7 @@ namespace Asadito
 {
     internal enum AsaditoUiIcon
     {
-        Guest, Locked, Star, Tray, Retry, Next, Flip, Back, Exit, Warning
+        Guest, Locked, Star, Tray, Retry, Next, Flip, Back, Exit, Warning, Fire
     }
 
     /// <summary>Small deterministic vector-like UI marks, rasterized once at runtime.</summary>
@@ -24,6 +24,7 @@ namespace Asadito
         private static readonly Vector2[] ExitDoor = { new Vector2(-.7f, -.74f), new Vector2(-.02f, -.74f), new Vector2(-.02f, -.48f), new Vector2(-.46f, -.48f), new Vector2(-.46f, .48f), new Vector2(-.02f, .48f), new Vector2(-.02f, .74f), new Vector2(-.7f, .74f) };
         private static readonly Vector2[] ExitArrow = { new Vector2(-.05f, -.3f), new Vector2(.4f, -.3f), new Vector2(.4f, -.56f), new Vector2(.88f, 0f), new Vector2(.4f, .56f), new Vector2(.4f, .3f), new Vector2(-.05f, .3f) };
         private static readonly Vector2[] WarningTriangle = { new Vector2(0f, .83f), new Vector2(.84f, -.67f), new Vector2(-.84f, -.67f) };
+        private static readonly Vector2[] FireShape = { new Vector2(-.28f, -.76f), new Vector2(.25f, -.76f), new Vector2(.12f, -.3f), new Vector2(.46f, .1f), new Vector2(.35f, .53f), new Vector2(.06f, .82f), new Vector2(-.08f, .48f), new Vector2(-.22f, .68f), new Vector2(-.49f, .16f), new Vector2(-.35f, -.18f) };
         private static readonly Vector2[] WarningInner = { new Vector2(0f, .52f), new Vector2(.62f, -.4f), new Vector2(-.62f, -.4f) };
 
         // This project disables domain reload on Play. Clear cached Unity objects on
@@ -94,6 +95,8 @@ namespace Asadito
                     return InPolygon(x, y, BackShape);
                 case AsaditoUiIcon.Exit:
                     return InPolygon(x, y, ExitDoor) || InPolygon(x, y, ExitArrow);
+                case AsaditoUiIcon.Fire:
+                    return InPolygon(x, y, FireShape);
                 case AsaditoUiIcon.Warning:
                     bool triangle = InPolygon(x, y, WarningTriangle);
                     bool innerTriangle = InPolygon(x, y, WarningInner);
