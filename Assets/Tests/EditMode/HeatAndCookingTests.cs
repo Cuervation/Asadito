@@ -88,7 +88,7 @@ namespace Asadito.Tests
             Assert.AreEqual(.025f, tira.CoreTransferRate, .0001f);
             Assert.AreEqual(.055f, chorizo.CoreTransferRate, .0001f);
             Assert.AreEqual(71f, chorizo.DonenessBands[1].MinimumCoreC);
-            Assert.AreEqual(73f, chorizo.DonenessBands[1].MaximumCoreC);
+            Assert.AreEqual(76f, chorizo.DonenessBands[1].MaximumCoreC);
         }
 
         [Test]

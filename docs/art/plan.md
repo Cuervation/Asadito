@@ -13,7 +13,7 @@ El inventario vigente y sus límites están en [Visual Bible](../../specs/visual
 
 ## Validación técnica disponible
 
-Unity 6000.6.3f1: EditMode 18/18 y PlayMode 6/6; los tests recorren los doce niveles, no solo L1–L5. `Tools/validate_food_content.py` confirma 18 perfiles distintos, 108 sprites, 12 tarjetas. APK Android ARM64 IL2CPP (1.1.0, min API 26, target API 36, portrait) compilado, verificado e instalado/lanzado en emulador Pixel 7a API 36. La portada se capturó en ese emulador; no equivale a certificar tacto, notch, perf/audio físicos ni aprobación artística. Evidencia y limitaciones en [current state](../ai/current-state.md) y [Android release](../android-release.md).
+Unity 6000.6.3f1: EditMode 20/20 y PlayMode 10/10; las pruebas recorren los doce niveles, no solo L1–L5. `Tools/validate_food_content.py` confirma 18 perfiles distintos, 108 sprites, 12 tarjetas. APK de validación Android ARM64 IL2CPP 1.2.0/code3, min API26/target API36/portrait compilado e instalado en emulador Pixel 7a API36. L1, fuego y selección directa de chorizo vistos; captura `/tmp/Asadito-mvp-gameplay-selected.png`. Un swipe ADB final produjo ANR y no confirmó drop al plato; no se declara validado el drag en dispositivo. Arte, tacto, notch, perf/audio físicos todavía sin aprobación. Evidencia y límites en [current state](../ai/current-state.md), [auditoría](../ai/mvp-audit.md) y [Android release](../android-release.md).
 
 ## Próximas mejoras, sin bloquear el MVP técnico
 

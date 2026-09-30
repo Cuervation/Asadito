@@ -49,8 +49,8 @@ namespace Asadito.Tests.PlayMode
             yield return EnterLevelOne(game);
             IgniteAndMoveEmbers(game);
 
-            yield return CookAndPlate(game, 0, "TIRA DE ASADO", 25f, true);
-            yield return CookAndPlate(game, 1, "CHORIZO", 25f, true);
+            yield return CookAndPlate(game, 0, "tira", 25f, true);
+            yield return CookAndPlate(game, 1, "chorizo", 25f, true);
 
             Button serve = FindButton("SERVIR");
             Assert.IsTrue(serve.interactable, "Serve must unlock after every portion reaches the tray.");
@@ -97,8 +97,8 @@ namespace Asadito.Tests.PlayMode
 
             yield return EnterLevelOne(game);
             IgniteAndMoveEmbers(game);
-            yield return CookAndPlate(game, 0, "TIRA DE ASADO", 25f, true);
-            yield return CookAndPlate(game, 1, "CHORIZO", 25f, true);
+            yield return CookAndPlate(game, 0, "tira", 25f, true);
+            yield return CookAndPlate(game, 1, "chorizo", 25f, true);
             ClickButton("SERVIR");
             yield return new WaitForSecondsRealtime(1.8f);
 
@@ -128,13 +128,13 @@ namespace Asadito.Tests.PlayMode
             yield return LoadGameScene(value => game = value);
             Assert.NotNull(game);
             AssertGameplayGrillArtLoaded(game);
-            Assert.AreEqual(30f, ReadField<float>(game, "SimulationTimeScale"), .001f,
-                "A clean install should start at the specified 30x simulation scale.");
+            Assert.AreEqual(20f, ReadField<float>(game, "SimulationTimeScale"), .001f,
+                "A clean install should start at the tactile 20x simulation scale.");
             yield return EnterLevelOne(game);
 
-            Button scale = FindButton("DEBUG ×30");
-            string[] expectedLabels = { "DEBUG ×35", "DEBUG ×40", "DEBUG ×20", "DEBUG ×25", "DEBUG ×30" };
-            float[] expectedValues = { 35f, 40f, 20f, 25f, 30f };
+            Button scale = FindButton("CONTROL DEBUG");
+            string[] expectedLabels = { "DEBUG ×25", "DEBUG ×30", "DEBUG ×35", "DEBUG ×40", "DEBUG ×20" };
+            float[] expectedValues = { 25f, 30f, 35f, 40f, 20f };
             for (int i = 0; i < expectedValues.Length; i++)
             {
                 ClickButton(scale);
@@ -143,6 +143,114 @@ namespace Asadito.Tests.PlayMode
                 Assert.AreEqual(expectedValues[i], ReadSaveSetting<float>("SimulationTimeScale"), .001f,
                     "Scale selection must persist to local save.");
             }
+        }
+
+        [UnityTest]
+        public IEnumerator FoodPieces_AreVisibleDirectTouchTargetsAndNoFoodNameButtonsRemain()
+        {
+            ResetSaveCache();
+            MvpSave.Save(new MvpSaveData());
+            Component game = null;
+            yield return LoadGameScene(value => game = value);
+            yield return EnterLevelOne(game);
+
+            Array portions = (Array)GetField(game, "portions");
+            Image[] images = (Image[])GetField(game, "portionImages");
+            RectTransform[] targets = (RectTransform[])GetField(game, "portionHitTargets");
+            Assert.AreEqual(portions.Length, images.Length);
+            Assert.AreEqual(portions.Length, targets.Length);
+            for (int i = 0; i < portions.Length; i++)
+            {
+                object portion = portions.GetValue(i);
+                string foodId = ((FoodCookProfile)GetField(portion, "Profile")).FoodId;
+                Assert.IsTrue(targets[i].gameObject.activeInHierarchy, foodId + " hit target should be available on the grill.");
+                Assert.IsTrue(images[i].gameObject.activeInHierarchy, foodId + " art should be visible before selection.");
+                Assert.IsNotNull(FindComponent(targets[i].gameObject, "Asadito.Runtime.FoodPieceTouch"));
+                Assert.IsNull(GameObject.Find(FoodCatalog.Get(foodId).DisplayName),
+                    foodId + " must not be presented as a separate food-name button.");
+            }
+
+            Assert.AreEqual(Debug.isDebugBuild, GameObject.Find("CONTROL DEBUG") != null,
+                "Only Editor/development builds may expose the simulation debug control.");
+
+            IgniteAndMoveEmbers(game);
+            TapFoodPiece(game, 0, 41);
+            Assert.IsTrue(ReadField<bool>(portions.GetValue(0), "Started"), "A pointer tap directly on a food piece must select/start it.");
+            Assert.AreEqual(0, ReadField<int>(game, "activePortion"));
+            TapFoodPiece(game, 1, 42);
+            Assert.IsFalse(ReadField<bool>(portions.GetValue(1), "Started"),
+                "A second piece cannot steal the active tong while a piece is still being cooked.");
+            Assert.AreEqual(0, ReadField<int>(game, "activePortion"));
+            Assert.IsFalse((bool)game.GetType().GetMethod("SelectFoodPiece").Invoke(game, new object[] { -1 }),
+                "Out-of-range/empty selections must be harmless.");
+        }
+
+        [UnityTest]
+        public IEnumerator MobilePause_ResumeRestartLevelsAndPersistSoundAndHaptics()
+        {
+            ResetSaveCache();
+            MvpSave.Save(new MvpSaveData());
+            Component game = null;
+            yield return LoadGameScene(value => game = value);
+            yield return EnterLevelOne(game);
+            ClickButton("PRENDER CARBÓN");
+            TapFoodPiece(game, 0, 51);
+
+            ClickButton("PAUSA");
+            Assert.AreEqual(0f, Time.timeScale);
+            Assert.IsTrue(GameObject.Find("Pausa").activeInHierarchy);
+            Assert.IsTrue(FindButton("CONTINUAR").interactable);
+            ClickButton("SONIDO");
+            ClickButton("VIBRACIÓN");
+            Assert.AreEqual(0f, MvpSave.Load().Settings.SfxVolume);
+            Assert.IsFalse(MvpSave.Load().Settings.HapticsEnabled);
+            Assert.That(FindButton("SONIDO").GetComponentInChildren<Text>().text, Does.Contain("OFF"));
+            Assert.That(FindButton("VIBRACIÓN").GetComponentInChildren<Text>().text, Does.Contain("OFF"));
+
+            ClickButton("REINICIAR NIVEL");
+            Assert.AreEqual(1f, Time.timeScale);
+            Assert.IsFalse(((GameObject)GetField(game, "pauseRoot")).activeInHierarchy);
+            Assert.IsFalse(((CharcoalGrillModel)GetField(game, "grill")).IsLit);
+            Assert.IsFalse(ReadField<bool>(((Array)GetField(game, "portions")).GetValue(0), "Started"));
+            Assert.AreEqual(0f, MvpSave.Load().Settings.SfxVolume, "Restart must preserve settings.");
+            Assert.IsFalse(MvpSave.Load().Settings.HapticsEnabled, "Restart must preserve haptics preference.");
+
+            ClickButton("PAUSA");
+            ClickButton("VOLVER A NIVELES");
+            yield return new WaitForSecondsRealtime(.5f);
+            Assert.AreEqual(1f, Time.timeScale);
+            Assert.NotNull(GameObject.Find("Seleccion de nivel"), "Pause should return to the level selector.");
+        }
+
+        [UnityTest]
+        public IEnumerator FoodPieceDrag_CanReachTrayAndMultiTouchCannotMoveTwoPieces()
+        {
+            ResetSaveCache();
+            MvpSave.Save(new MvpSaveData());
+            Component game = null;
+            yield return LoadGameScene(value => game = value);
+            yield return EnterLevelOne(game);
+            IgniteAndMoveEmbers(game);
+
+            RectTransform[] targets = (RectTransform[])GetField(game, "portionHitTargets");
+            Component firstTouch = FindComponent(targets[0].gameObject, "Asadito.Runtime.FoodPieceTouch");
+            Component secondTouch = FindComponent(targets[1].gameObject, "Asadito.Runtime.FoodPieceTouch");
+            PointerEventData firstPointer = MakePointer(targets[0], 61);
+            PointerEventData secondPointer = MakePointer(targets[1], 62);
+            Assert.IsTrue(ExecuteEvents.Execute(firstTouch.gameObject, firstPointer, ExecuteEvents.pointerDownHandler));
+            Assert.IsTrue(ExecuteEvents.Execute(secondTouch.gameObject, secondPointer, ExecuteEvents.pointerDownHandler));
+            Assert.IsTrue(ExecuteEvents.Execute(secondTouch.gameObject, secondPointer, ExecuteEvents.pointerUpHandler));
+            Assert.IsTrue(ExecuteEvents.Execute(firstTouch.gameObject, firstPointer, ExecuteEvents.pointerUpHandler));
+            Assert.AreEqual(0, ReadField<int>(game, "activePortion"));
+            Assert.IsFalse(ReadField<bool>(((Array)GetField(game, "portions")).GetValue(1), "Started"));
+
+            RectTransform trayDrop = (RectTransform)GetField(game, "trayDropRect");
+            Vector2 trayPoint = RectTransformUtility.WorldToScreenPoint(null, trayDrop.position);
+            DragFoodPiece(game, 0, trayPoint, 63);
+            yield return new WaitForSecondsRealtime(.55f);
+            Assert.IsTrue(ReadField<bool>(((Array)GetField(game, "portions")).GetValue(0), "OnTray"),
+                "Dragging a selected food piece to the tray must plate that piece.");
+            Assert.AreEqual(1, ReadField<int>(game, "trayCount"));
         }
 
         [UnityTest]
@@ -352,7 +460,7 @@ namespace Asadito.Tests.PlayMode
         }
 
         [UnityTest]
-        public IEnumerator FirstPlayable_L1CompletesAtConfigured30xWithoutCookingTimerShortcuts()
+        public IEnumerator FirstPlayable_L1CompletesAtMeasured20xWithoutCookingTimerShortcuts()
         {
             ResetSaveCache();
             MvpSave.Save(new MvpSaveData());
@@ -360,21 +468,21 @@ namespace Asadito.Tests.PlayMode
             yield return LoadGameScene(value => game = value);
             Assert.NotNull(game);
             AssertGameplayGrillArtLoaded(game);
-            Assert.AreEqual(30f, ReadField<float>(game, "SimulationTimeScale"), .001f,
-                "L1 duration validation must use the shipped default simulation scale.");
+            Assert.AreEqual(20f, ReadField<float>(game, "SimulationTimeScale"), .001f,
+                "L1 duration validation must use the measured default simulation scale.");
 
             DateTime started = DateTime.UtcNow;
             yield return EnterLevelOne(game);
             IgniteAndMoveEmbers(game);
-            yield return CookAndPlate(game, 0, "TIRA DE ASADO", 60f, true);
-            yield return CookAndPlate(game, 1, "CHORIZO", 60f, true);
+            yield return CookAndPlate(game, 0, "tira", 100f, true);
+            yield return CookAndPlate(game, 1, "chorizo", 60f, true);
             Assert.IsTrue(FindButton("SERVIR").interactable);
             ClickButton("SERVIR");
             yield return new WaitForSecondsRealtime(2f);
             Assert.NotNull(GameObject.Find("Fin de nivel"));
 
             double elapsedSeconds = (DateTime.UtcNow - started).TotalSeconds;
-            Assert.LessOrEqual(elapsedSeconds, 180d, "Automated L1 should remain under the 2–3 minute First Playable tuning ceiling at 30x.");
+            Assert.LessOrEqual(elapsedSeconds, 180d, "Automated L1 should remain under the 2–3 minute First Playable tuning ceiling at 20x.");
             Assert.Greater(ReadField<float>(game, "SimulationTimeScale"), 0f);
         }
 
@@ -455,24 +563,17 @@ namespace Asadito.Tests.PlayMode
 
         private static IEnumerator CookAndPlateByIndex(Component game, int index, float timeoutSeconds)
         {
-            Button[] buttons = (Button[])GetField(game, "portionButtons");
             Array portions = (Array)GetField(game, "portions");
             object portion = portions.GetValue(index);
             FoodState state = (FoodState)GetField(portion, "State");
             FoodCookProfile profile = (FoodCookProfile)GetField(portion, "Profile");
-            ClickButton(buttons[index]);
+            TapFoodPiece(game, index, 100 + index);
             yield return null;
 
             RectTransform grid = GameObject.Find("Mapa de calor carbón 8x6").GetComponent<RectTransform>();
             Vector3 centerWorld = grid.TransformPoint(new Vector3(grid.rect.width * .03f, -grid.rect.height * .015f, 0f));
             Vector2 centerScreen = RectTransformUtility.WorldToScreenPoint(null, centerWorld);
-            Image image = ((Image[])GetField(game, "portionImages"))[index];
-            Component foodTouch = FindComponent(image.gameObject, "Asadito.Runtime.FoodPieceTouch");
-            var pointer = new PointerEventData(EventSystem.current);
-            Assert.IsTrue(ExecuteEvents.Execute(foodTouch.gameObject, pointer, ExecuteEvents.beginDragHandler));
-            pointer.position = centerScreen;
-            Assert.IsTrue(ExecuteEvents.Execute(foodTouch.gameObject, pointer, ExecuteEvents.dragHandler));
-            Assert.IsTrue(ExecuteEvents.Execute(foodTouch.gameObject, pointer, ExecuteEvents.endDragHandler));
+            DragFoodPiece(game, index, centerScreen, 200 + index);
 
             float elapsed = 0f;
             while (state.CoreTemperatureC < 38f && elapsed < timeoutSeconds)
@@ -492,7 +593,7 @@ namespace Asadito.Tests.PlayMode
                 elapsed += .01f;
             }
             Assert.AreEqual(Doneness.A_Punto, FoodCookingModel.GetDoneness(state, profile), profile.FoodId + " must reach a valid point band.");
-            ClickButton(buttons[index]);
+            ClickButton("BANDEJA");
             float plateElapsed = 0f;
             while (ReadField<int>(game, "trayCount") < index + 1 && plateElapsed < 3f)
             {
@@ -609,12 +710,11 @@ namespace Asadito.Tests.PlayMode
             if (assertTutorialStep) Assert.That(FindText("Tutorial contextual").text, Does.Contain("Paso 3"));
         }
 
-        private static IEnumerator CookAndPlate(Component game, int index, string foodButton, float timeoutSeconds, bool flip)
+        private static IEnumerator CookAndPlate(Component game, int index, string foodId, float timeoutSeconds, bool flip)
         {
-            Button food = FindButton(foodButton);
-            ClickButton(food);
+            string foodName = FoodCatalog.Get(foodId).DisplayName;
+            TapFoodPiece(game, index, 300 + index);
             if (index == 0) Assert.That(FindText("Tutorial contextual").text, Does.Contain("Paso 4"));
-            else Assert.That(FindText("Tutorial contextual").text, Does.Contain("Repetí con la otra porción"));
             Array portions = (Array)GetField(game, "portions");
             object portion = portions.GetValue(index);
             FoodState state = (FoodState)GetField(portion, "State");
@@ -626,13 +726,7 @@ namespace Asadito.Tests.PlayMode
             RectTransform grid = GameObject.Find("Mapa de calor carbón 8x6").GetComponent<RectTransform>();
             Vector3 moveWorld = grid.TransformPoint(new Vector3(grid.rect.width * .03f, -grid.rect.height * .015f, 0f));
             Vector2 moveScreen = RectTransformUtility.WorldToScreenPoint(null, moveWorld);
-            Array images = (Array)GetField(game, "portionImages");
-            Component foodTouch = FindComponent(((Image)images.GetValue(index)).gameObject, "Asadito.Runtime.FoodPieceTouch");
-            PointerEventData foodPointer = new PointerEventData(EventSystem.current);
-            Assert.IsTrue(ExecuteEvents.Execute(foodTouch.gameObject, foodPointer, ExecuteEvents.beginDragHandler));
-            foodPointer.position = moveScreen;
-            Assert.IsTrue(ExecuteEvents.Execute(foodTouch.gameObject, foodPointer, ExecuteEvents.dragHandler));
-            Assert.IsTrue(ExecuteEvents.Execute(foodTouch.gameObject, foodPointer, ExecuteEvents.endDragHandler));
+            DragFoodPiece(game, index, moveScreen, 400 + index);
             Assert.Greater(Vector2.Distance(startingPosition, ReadField<Vector2>(portion, "Position")), .1f,
                 "Dragging the portion must change its normalized grill position.");
             if (index == 0) Assert.That(FindText("Tutorial contextual").text, Does.Contain("Mové la pieza"));
@@ -645,11 +739,10 @@ namespace Asadito.Tests.PlayMode
                     yield return new WaitForSecondsRealtime(.01f);
                     elapsedBeforeFlip += .01f;
                 }
-                Assert.GreaterOrEqual(state.CoreTemperatureC, 38f, foodButton + " should start warming before flip.");
+                Assert.GreaterOrEqual(state.CoreTemperatureC, 38f, foodName + " should start warming before flip.");
                 int faceBefore = state.ExposedFace;
                 ClickButton("DAR VUELTA");
-                Assert.AreNotEqual(faceBefore, state.ExposedFace, foodButton + " flip must expose its other side.");
-                if (index == 0) Assert.That(FindText("Tutorial contextual").text, Does.Contain("Paso 5"));
+                Assert.AreNotEqual(faceBefore, state.ExposedFace, foodName + " flip must expose its other side.");
             }
 
             float elapsed = 0f;
@@ -658,18 +751,51 @@ namespace Asadito.Tests.PlayMode
                 yield return new WaitForSecondsRealtime(.01f);
                 elapsed += .01f;
             }
-            Assert.AreEqual(Doneness.A_Punto, FoodCookingModel.GetDoneness(state, profile), foodButton + " should reach its configured point band.");
+            Assert.AreEqual(Doneness.A_Punto, FoodCookingModel.GetDoneness(state, profile), foodName + " should reach its configured point band.");
             Assert.Greater(state.CoreTemperatureC, 0f);
 
-            ClickButton(food); // The active cut's second tap removes it to the serving tray.
+            ClickButton("BANDEJA");
             float plateElapsed = 0f;
             while (ReadField<int>(game, "trayCount") < index + 1 && plateElapsed < 3f)
             {
                 yield return new WaitForSecondsRealtime(.05f);
                 plateElapsed += .05f;
             }
-            Assert.IsTrue(ReadField<bool>(portion, "OnTray"), foodButton + " should be on the tray before service.");
-            Assert.That(FindText("Tutorial contextual").text, Does.Contain("Repetí con la otra porción"));
+            Assert.IsTrue(ReadField<bool>(portion, "OnTray"), foodName + " should be on the tray before service.");
+        }
+
+        private static void TapFoodPiece(Component game, int index, int pointerId)
+        {
+            RectTransform[] targets = (RectTransform[])GetField(game, "portionHitTargets");
+            Component touch = FindComponent(targets[index].gameObject, "Asadito.Runtime.FoodPieceTouch");
+            PointerEventData pointer = MakePointer(targets[index], pointerId);
+            Assert.IsTrue(ExecuteEvents.Execute(touch.gameObject, pointer, ExecuteEvents.pointerDownHandler),
+                "The food hit target must receive pointer-down directly.");
+            Assert.IsTrue(ExecuteEvents.Execute(touch.gameObject, pointer, ExecuteEvents.pointerUpHandler),
+                "A food tap must release its pointer cleanly.");
+        }
+
+        private static void DragFoodPiece(Component game, int index, Vector2 destination, int pointerId)
+        {
+            RectTransform[] targets = (RectTransform[])GetField(game, "portionHitTargets");
+            Component touch = FindComponent(targets[index].gameObject, "Asadito.Runtime.FoodPieceTouch");
+            PointerEventData pointer = MakePointer(targets[index], pointerId);
+            Assert.IsTrue(ExecuteEvents.Execute(touch.gameObject, pointer, ExecuteEvents.pointerDownHandler));
+            Assert.IsTrue(ExecuteEvents.Execute(touch.gameObject, pointer, ExecuteEvents.beginDragHandler));
+            pointer.position = destination;
+            Assert.IsTrue(ExecuteEvents.Execute(touch.gameObject, pointer, ExecuteEvents.dragHandler));
+            Assert.IsTrue(ExecuteEvents.Execute(touch.gameObject, pointer, ExecuteEvents.pointerUpHandler));
+            Assert.IsTrue(ExecuteEvents.Execute(touch.gameObject, pointer, ExecuteEvents.endDragHandler));
+        }
+
+        private static PointerEventData MakePointer(RectTransform target, int pointerId)
+        {
+            return new PointerEventData(EventSystem.current)
+            {
+                pointerId = pointerId,
+                button = PointerEventData.InputButton.Left,
+                position = RectTransformUtility.WorldToScreenPoint(null, target.position)
+            };
         }
 
         private static Button FindButton(string name)

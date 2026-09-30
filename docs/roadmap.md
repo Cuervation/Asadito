@@ -1,9 +1,10 @@
-# Roadmap revisado
+# Roadmap revisado — 2026-09-29
 
-1. **Contenido / progresión (implementado):** 18 perfiles y seis estados visuales por alimento, 12 niveles ilustrados, tabla de [catálogo jugable](gameplay/food-catalog.md) y [progresión](gameplay/level-progression.md).
-2. **Regresión / Android (validado localmente):** EditMode/PlayMode, validator de contenido, build ARM64 API36 e instalación/arranque en emulador; evidencia en [`mvp-audit`](ai/mvp-audit.md). GitHub CI corre validator, Unity tests requieren activar secrets de licencia.
-3. **QA humana/móvil (parcial):** se probaron taps hasta resultados, tres resoluciones y un cutout simulado; se corrigió el espaciado del feedback. El heat grid no repinta 48 celdas cada frame ni cancela el tween; el tong tampoco se reordena en cada evento `OnDrag`. Un swipe ADB de 1 s movió comida sin ANR observable en la build actual, pero un ANR apareció en una build intermedia y el emplatado por drag sigue sin confirmarse: falta perfilar con Unity Profiler/Development Build y validar en teléfono real. También faltan FPS/memoria en hardware y aprobación humana de arte/audio. DEBUG ×30 no es bug: escala inicial 30 y ciclos DEBUG 20/25/30/35/40 están declarados en specs.
-4. **Release prep:** probar launcher/icono adaptativo, metadatos de privacidad/política y firmar con keystore protegido; no subir secretos al repo ni publicar automáticamente.
-5. **Iteración post gate:** segmentar el coordinador UI/gameplay si el siguiente ciclo lo justifica; añadir clips/VFX/audio profesionales según feedback visual, presupuesto y dirección artística.
+1. **Finalización del loop móvil (implementado):** interacción primaria por tap/drag sobre la comida con pinza, feedback de selección, flip, bandeja, pausa, tutorial directo y ausencia de botones por corte. El debug de tiempo no aparece en release.
+2. **Contenido/jugabilidad MVP (implementado y automatizado):** 18 alimentos con perfiles diferenciados y 6 estados visuales, 12 niveles/progreso/save v3, comensales y scoring existente. Ritmo inicial 20× tuneado frente a medición de ventanas térmicas. Suites locales: EditMode 20/20, PlayMode 10/10; validator ampliado.
+3. **Android build / humo visual (PASS parcial):** APK 1.2.0 code3 ARM64 IL2CPP API36 compilado/instalado; se mostró gameplay L1 y tap directo a pieza. Se quitó configuración Bloom URP sin uso. No es APK productivo firmado ni publicación.
+4. **QA táctil/performance físico (abierto antes de release):** el último swipe sintético en emulador terminó en ANR (~8 s) y no confirmó bandeja por drag; la traza muestra espera QEMU GL pero no determina causa. Repetir drag/drop a bandeja y brasas, multi-touch, overlap, bordes, pausa y safe area con Development Build + Unity Profiler y teléfono ARM64 de gama media. Emulador/SwiftShader no mide rendimiento útil.
+5. **Evaluación de experiencia:** playtest humano progresivo L1–L12, ritmo por alimento, tutorial, legibilidad y volumen de audio; artwork y SFX actuales son procedurales/provisionales, requieren aprobación.
+6. **Release futura:** cuando owner lo autorice, activar credenciales Unity para CI remoto y revisar metadata/políticas, firmar con keystore protegido fuera de Git y solo después preparar Play Store.
 
-No hay metas de carnicería/economía/multiplayer en este ciclo.
+No se agregan carnicería, economía, multijugador, NPCs, anuncios ni otras features fuera del MVP.

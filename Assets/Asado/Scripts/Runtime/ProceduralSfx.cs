@@ -38,6 +38,15 @@ namespace Asadito.Runtime
             source.PlayOneShot(clips[index], volume);
         }
 
+        public void SetVolume(float sfxVolume)
+        {
+            volume = Mathf.Clamp01(sfxVolume);
+            if (source != null) source.volume = volume;
+        }
+
+        public void Pause() { if (source != null) source.Pause(); }
+        public void Resume() { if (source != null) source.UnPause(); }
+
         private static AudioClip Tone(string label, float duration, float startHz, float endHz, float noiseMix, float gain, int seed)
         {
             const int sampleRate = 22050;

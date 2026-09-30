@@ -94,6 +94,41 @@ namespace Asadito.Tests
         }
 
         [Test]
+        public void DefaultTwentyXSimulationLeavesAtLeastOneAndQuarterSecondsInApointForEveryFood()
+        {
+            const int maxFrames = 60 * 300;
+            const float frameMinutesAtSixtyFps = 20f / 60f / 60f;
+            Assert.AreEqual(20f, new Asadito.Runtime.MvpSettings().SimulationTimeScale);
+
+            foreach (Asadito.Runtime.FoodDefinition food in Asadito.Runtime.FoodCatalog.GetAll())
+            {
+                var state = NewWarmState();
+                int frames = 0;
+                bool flipped = false;
+                while (Asadito.Runtime.FoodCookingModel.GetDoneness(state, food.Profile) != Asadito.Runtime.Doneness.A_Punto && frames < maxFrames)
+                {
+                    Asadito.Runtime.FoodCookingModel.Step(state, food.Profile, 210f, frameMinutesAtSixtyFps, true);
+                    frames++;
+                    if (!flipped && state.CoreTemperatureC >= 38f)
+                    {
+                        state.Flip();
+                        flipped = true;
+                    }
+                }
+                Assert.Less(frames, maxFrames, food.Id + " should reach a preferred doneness when started and flipped normally.");
+
+                int aPointFrames = 0;
+                while (Asadito.Runtime.FoodCookingModel.GetDoneness(state, food.Profile) == Asadito.Runtime.Doneness.A_Punto && aPointFrames < maxFrames)
+                {
+                    Asadito.Runtime.FoodCookingModel.Step(state, food.Profile, 210f, frameMinutesAtSixtyFps, true);
+                    aPointFrames++;
+                }
+                Assert.GreaterOrEqual(aPointFrames / 60f, 1.25f,
+                    food.Id + " A_Punto window should allow a deliberate mobile touch at the 20x default.");
+            }
+        }
+
+        [Test]
         public void MorcillaHasRealCasingRiskAndFavoritesUseFullPreferenceScale()
         {
             Asadito.Runtime.FoodCookProfile morcilla = Asadito.Runtime.FoodCookingModel.CreateProfile("morcilla");

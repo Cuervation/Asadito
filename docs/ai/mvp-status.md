@@ -1,24 +1,28 @@
-# Estado del MVP — expansión de catálogo (2026-09-29)
+# Estado del MVP — finalización y QA (2026-09-29)
 
 ## Implementado
 
-- 18 alimentos únicos desde JSON data-driven; motor térmico genérico por perfil, con bandas, masa, espesor, tasas, humedad, Maillard, char, grasa, split risk y comportamiento de queso configurables.
-- 18 PNG RGBA de 1024×1536, cada uno con seis estados, 108 representaciones recortadas/cacheadas por el runtime; import Android mobile-safe.
-- 12 niveles ilustrados y progresión; IDs de las 18 comidas incluidos progresivamente; save v2 migra filas del save v1 de cinco niveles.
-- Seis perfiles de comensal con edad/peso/apetito/punto y favoritos/gustados/rechazados. Preferencia 0/40/70/100, favorito=100; allocator distribuye una porción por persona antes de dar segundas.
-- Cara independiente, parrilla 8×6, brasa y calor local, drag/flip/retiro/tray/servicio, score/estrellas/progreso/tutorial/Retry/Next.
-- Canvas de gameplay aislado en `gameplayRoot`; overlays y menú bajo safe area permanecen activos. Audio 8 cues procedural + sizzle y feedback visual procedural de comida/fire/UI/guests/resultados.
-- CI de contenido y suite opcional Unity preparada; script repetible Android ARM64/IL2CPP API36.
+- Comida como interacción primaria: toque/drag directamente sobre cada pieza y target táctil transparente mínimo de 190×180; selección unificada, lift/halo/sombra y pinza animada; movimiento/settle, flip, bandeja por botón universal o drag-to-tray. Sin botones nombrados por alimento.
+- Flujo L1–L12, 18 alimentos data-driven con perfil térmico distinto, 18 atlas y seis estados progresivos c/u (108 sprites), cara independiente, fuego/carbón, bandeja, comensales y scoring 40/30/20/10.
+- Ritmo inicial ajustado de 30× a **20×** después de medir ventanas A_Punto en cada corte rápido: mínimo ~1.9 s para provoleta y máximo ~18.1 s para vacío a grilla de 210 °C; conserva entraña rápida y vacío lento. Guardado v3 migra los defaults previos sin sobrescribir elecciones custom.
+- Menú pausa móvil (continuar, retry, selector, SFX y vibración), tutorial actualizado a manipulación directa, control debug solo en Editor/development.
+- Audio sizzle/SFX procedural con volumen/pausa; safe area y dimensiones revisadas en simulación previa. Estos elementos aún necesitan validación humana/física.
+- Validator ampliado verifica catálogo, 108 frames y consistencia alfa/silueta, niveles, perfiles y recursos de runtime.
 
-## Verificación actual
+## Verificación
 
-- EditMode **18/18 PASS** y PlayMode **7/7 PASS** ejecutados con Unity 6000.6.3f1; PlayMode completa los doce niveles, seis estados/cara y verifica que `Update` no cancela el tween de calor.
-- `Tools/validate_food_content.py`: PASS (18 definiciones/perfiles, 108 sprites, 12 cartas). GitHub Actions run [36592407375](https://github.com/Cuervation/Asadito/actions/runs/36592407375): validator y whitespace-check PASS. El job Unity remoto se omitió por el gate de licencia desactivado; ambas suites Unity sí pasaron localmente.
-- APK Android ARM64 IL2CPP construye correctamente e instala en emulador Pixel 7a Android 16/API36. El recorrido ADB por taps llegó a resultados Nivel 1 (126/200, 2 estrellas). En la build actual un swipe de 1 s movió la comida por la parrilla y no produjo ANR observable; el drop al plato no se confirmó. Una build intermedia sí coincidió con ANR de input-dispatch (MOVE sin respuesta por 6.4 s), así que no se declara resuelto el problema de rendimiento/touch.
-- No se afirma QA física ni que todos los gestos estén validados. Falta perfilar Development Build con Unity Profiler, confirmar emplatado por drag y validar en teléfono real. Retención de assets, nombres, estados y futuras pruebas en `docs/gameplay/food-catalog.md` y `docs/art/*manifest.md`.
+- Unity 6000.6.3f1 local: EditMode **20/20 PASS**; PlayMode **10/10 PASS**; tras el ajuste idempotente del tutorial se repitieron ambas suites: `/tmp/asadito-final-rerun-editmode.xml` y `/tmp/asadito-final-rerun-playmode.xml`.
+- `python3 Tools/validate_food_content.py`: PASS, 18 perfiles, 108 estados coherentes, 12 tarjetas y progresión completa.
+- `git diff --check`: se repetirá después de la actualización de auditoría/documentación.
+- Build Android de validación **PASS**: `/tmp/Asadito-mvp-1.2.0-arm64-final.apk`, ARM64 IL2CPP, API36, 1.2.0/code3; `aapt` configurado, firma debug; instalado y lanzado en emulador Pixel 7a API36. Se mostró L1, fuego y selección directa; captura `/tmp/Asadito-mvp-gameplay-selected.png`. Se eliminó spam de Bloom quitando referencia URP no usada.
+- **Riesgo bloqueante de QA pendiente:** el último swipe ADB del APK final produjo ANR input (~8 s) y no confirmó drag-to-tray. Traza apunta a espera `glUnmapBufferAEMU_enc` en renderer QEMU/Android x86-64 con APK ARM64 traducido; origen no resuelto ni se atribuye solo al emulador. No declarar MVP release-ready hasta validar drag continuo/emplatado y profiler en teléfono ARM64. AssetPackManager opcional reporta ClassNotFound al inicio, sin crash fatal observado.
+- Emulador no certifica rendimiento, batería, tacto humano, audio/haptics, cutout ni navbar físico. No se afirma QA física; la imagen demuestra solo un estado de interacción visible, no recorrido completo.
+- GitHub Actions [36592407375](https://github.com/Cuervation/Asadito/actions/runs/36592407375): static validator y whitespace PASS; Unity workflow SKIPPED por licencia/secretos no provistos por owner.
 
-## PROVISIONAL / fuera de gate automatizado
+## Límites pendientes antes de un release de tienda
 
-Arte y audio integrados pero no aprobados profesionalmente. No hay clips Animator authored únicos para cada comida; las animaciones son interacciones genéricas compartidas con arte/perfiles diferentes. Las temperaturas son tuning de gameplay, **no** consejo de inocuidad ni modelo científico. Sin teléfono físico, firma de distribución, check Play Console o publicación.
+- Teléfono real y Unity Profiler; prueba con dedos de arrastre y drop a bandeja, brasas, multitoque, solapes, gestos y safe areas.
+- Revisión humana de artwork/audio y balance real del juego completo.
+- Firma y publicación no están en el scope ni se generaron credenciales productivas.
 
-Ver [auditoría y evidencia](mvp-audit.md), [build Android](../android-release.md), [catálogo completo](../gameplay/food-catalog.md) y [progresión](../gameplay/level-progression.md).
+Ver [auditoría](mvp-audit.md), [estado detallado](current-state.md) y [build Android](../android-release.md).

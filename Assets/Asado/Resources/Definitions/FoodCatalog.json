@@ -97,22 +97,22 @@
           {
             "Doneness": 1,
             "MinimumCoreC": 71,
-            "MaximumCoreC": 73
-          },
-          {
-            "Doneness": 2,
-            "MinimumCoreC": 74,
             "MaximumCoreC": 76
           },
           {
-            "Doneness": 3,
+            "Doneness": 2,
             "MinimumCoreC": 77,
-            "MaximumCoreC": 80
+            "MaximumCoreC": 81
+          },
+          {
+            "Doneness": 3,
+            "MinimumCoreC": 82,
+            "MaximumCoreC": 86
           },
           {
             "Doneness": 4,
-            "MinimumCoreC": 81,
-            "MaximumCoreC": 85
+            "MinimumCoreC": 87,
+            "MaximumCoreC": 92
           }
         ]
       }
@@ -192,7 +192,7 @@
         "SurfaceTransferRate": 1.1,
         "CoolingRate": 0.035,
         "MoistureLossRate": 0.004,
-        "MaillardRate": 0.065,
+        "MaillardRate": 0.075,
         "CharRate": 0.018,
         "FatRenderRate": 0.001,
         "MaillardStartsAtC": 105,
@@ -271,22 +271,22 @@
           {
             "Doneness": 1,
             "MinimumCoreC": 55,
-            "MaximumCoreC": 59
-          },
-          {
-            "Doneness": 2,
-            "MinimumCoreC": 60,
             "MaximumCoreC": 64
           },
           {
-            "Doneness": 3,
+            "Doneness": 2,
             "MinimumCoreC": 65,
             "MaximumCoreC": 69
           },
           {
-            "Doneness": 4,
+            "Doneness": 3,
             "MinimumCoreC": 70,
-            "MaximumCoreC": 76
+            "MaximumCoreC": 74
+          },
+          {
+            "Doneness": 4,
+            "MinimumCoreC": 75,
+            "MaximumCoreC": 81
           }
         ]
       }
@@ -677,22 +677,22 @@
           {
             "Doneness": 1,
             "MinimumCoreC": 55,
-            "MaximumCoreC": 59
-          },
-          {
-            "Doneness": 2,
-            "MinimumCoreC": 60,
             "MaximumCoreC": 64
           },
           {
-            "Doneness": 3,
+            "Doneness": 2,
             "MinimumCoreC": 65,
             "MaximumCoreC": 69
           },
           {
-            "Doneness": 4,
+            "Doneness": 3,
             "MinimumCoreC": 70,
-            "MaximumCoreC": 76
+            "MaximumCoreC": 74
+          },
+          {
+            "Doneness": 4,
+            "MinimumCoreC": 75,
+            "MaximumCoreC": 81
           }
         ]
       }
@@ -735,22 +735,22 @@
           {
             "Doneness": 1,
             "MinimumCoreC": 59,
-            "MaximumCoreC": 62
+            "MaximumCoreC": 66
           },
           {
             "Doneness": 2,
-            "MinimumCoreC": 63,
-            "MaximumCoreC": 67
+            "MinimumCoreC": 67,
+            "MaximumCoreC": 71
           },
           {
             "Doneness": 3,
-            "MinimumCoreC": 68,
-            "MaximumCoreC": 72
+            "MinimumCoreC": 72,
+            "MaximumCoreC": 76
           },
           {
             "Doneness": 4,
-            "MinimumCoreC": 73,
-            "MaximumCoreC": 77
+            "MinimumCoreC": 77,
+            "MaximumCoreC": 82
           }
         ]
       }
@@ -793,22 +793,22 @@
           {
             "Doneness": 1,
             "MinimumCoreC": 59,
-            "MaximumCoreC": 62
+            "MaximumCoreC": 66
           },
           {
             "Doneness": 2,
-            "MinimumCoreC": 63,
-            "MaximumCoreC": 67
+            "MinimumCoreC": 67,
+            "MaximumCoreC": 71
           },
           {
             "Doneness": 3,
-            "MinimumCoreC": 68,
-            "MaximumCoreC": 72
+            "MinimumCoreC": 72,
+            "MaximumCoreC": 76
           },
           {
             "Doneness": 4,
-            "MinimumCoreC": 73,
-            "MaximumCoreC": 77
+            "MinimumCoreC": 77,
+            "MaximumCoreC": 82
           }
         ]
       }
@@ -967,22 +967,22 @@
           {
             "Doneness": 1,
             "MinimumCoreC": 59,
-            "MaximumCoreC": 62
+            "MaximumCoreC": 64
           },
           {
             "Doneness": 2,
-            "MinimumCoreC": 63,
-            "MaximumCoreC": 66
+            "MinimumCoreC": 65,
+            "MaximumCoreC": 69
           },
           {
             "Doneness": 3,
-            "MinimumCoreC": 67,
-            "MaximumCoreC": 70
+            "MinimumCoreC": 70,
+            "MaximumCoreC": 74
           },
           {
             "Doneness": 4,
-            "MinimumCoreC": 71,
-            "MaximumCoreC": 76
+            "MinimumCoreC": 75,
+            "MaximumCoreC": 80
           }
         ]
       }

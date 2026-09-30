@@ -6,7 +6,7 @@ namespace Asadito.Runtime
     [Serializable]
     public sealed class MvpSettings
     {
-        [Range(20f, 40f)] public float SimulationTimeScale = 30f;
+        [Range(20f, 40f)] public float SimulationTimeScale = 20f;
         [Range(0f, 1f)] public float SfxVolume = .8f;
         public bool HapticsEnabled = true;
         public bool TutorialCompleted;
@@ -15,7 +15,7 @@ namespace Asadito.Runtime
     [Serializable]
     public sealed class MvpSaveData
     {
-        public const int CurrentVersion = 2;
+        public const int CurrentVersion = 3;
         public int Version = CurrentVersion;
         public int MaxUnlockedLevel = 1;
         public int[] StarsByLevel = new int[MvpLevelCatalog.Count];
@@ -43,6 +43,8 @@ namespace Asadito.Runtime
             Array.Resize(ref data.BestScoreByLevel, MvpLevelCatalog.Count);
             data.MaxUnlockedLevel = Mathf.Clamp(data.MaxUnlockedLevel, 1, MvpLevelCatalog.Count);
             if (data.Settings == null) data.Settings = new MvpSettings();
+            else if (data.Version < 3 && Mathf.Approximately(data.Settings.SimulationTimeScale, 30f))
+                data.Settings.SimulationTimeScale = 20f;
             data.Settings.SimulationTimeScale = Mathf.Clamp(data.Settings.SimulationTimeScale, 20f, 40f);
             data.Version = CurrentVersion;
             return data;

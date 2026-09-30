@@ -73,13 +73,34 @@ namespace Asadito.Tests
                 BestScoreByLevel = new[] { 70, 90, 120, 60, 99 }
             };
             Asadito.Runtime.MvpSaveData migrated = Asadito.Runtime.MvpSaveData.Migrate(legacy);
-            Assert.AreEqual(2, migrated.Version);
+            Assert.AreEqual(Asadito.Runtime.MvpSaveData.CurrentVersion, migrated.Version);
             Assert.AreEqual(12, migrated.StarsByLevel.Length);
             Assert.AreEqual(3, migrated.StarsByLevel[2]);
             Assert.AreEqual(120, migrated.BestScoreByLevel[2]);
             Assert.AreEqual(0, migrated.StarsByLevel[11]);
+            Assert.AreEqual(20f, migrated.Settings.SimulationTimeScale,
+                "Legacy default 30x should migrate to the measured mobile-friendly 20x default.");
             migrated.RecordLevelResult(5, 160, 2);
             Assert.AreEqual(6, migrated.MaxUnlockedLevel);
+        }
+
+        [Test]
+        public void SaveMigration_UpdatesOnlyTheOldDefaultSimulationSpeed()
+        {
+            var defaultSave = new Asadito.Runtime.MvpSaveData
+            {
+                Version = 2,
+                Settings = new Asadito.Runtime.MvpSettings { SimulationTimeScale = 30f }
+            };
+            var tunedSave = new Asadito.Runtime.MvpSaveData
+            {
+                Version = 2,
+                Settings = new Asadito.Runtime.MvpSettings { SimulationTimeScale = 25f }
+            };
+
+            Assert.AreEqual(20f, Asadito.Runtime.MvpSaveData.Migrate(defaultSave).Settings.SimulationTimeScale);
+            Assert.AreEqual(25f, Asadito.Runtime.MvpSaveData.Migrate(tunedSave).Settings.SimulationTimeScale,
+                "A non-default saved tuning choice must survive migration.");
         }
 
         [Test]
