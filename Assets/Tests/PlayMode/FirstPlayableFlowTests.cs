@@ -54,9 +54,8 @@ namespace Asadito.Tests.PlayMode
             yield return CookAndPlate(game, 0, "tira", 25f, true);
             yield return CookAndPlate(game, 1, "chorizo", 25f, true);
 
-            Button serve = FindButton("SERVIR");
-            Assert.IsTrue(serve.interactable, "Serve must unlock after every portion reaches the tray.");
-            ClickButton(serve);
+            Assert.IsTrue(CanServeFromBoard(game), "Serving unlocks on the physical board after every portion is plated.");
+            DoubleTapBoard(game);
             yield return new WaitForSecondsRealtime(1.8f);
 
             Assert.NotNull(GameObject.Find("Fin de nivel"), "Serving must reach the result screen.");
@@ -101,7 +100,7 @@ namespace Asadito.Tests.PlayMode
             AssertGrillReadyWithoutCoal(game);
             yield return CookAndPlate(game, 0, "tira", 25f, true);
             yield return CookAndPlate(game, 1, "chorizo", 25f, true);
-            ClickButton("SERVIR");
+            DoubleTapBoard(game);
             yield return new WaitForSecondsRealtime(1.8f);
 
             Button retry = FindButton("REINTENTAR");
@@ -269,15 +268,29 @@ namespace Asadito.Tests.PlayMode
 
             AssertGrillReadyWithoutCoal(game);
             Sprite boardSprite = (Sprite)GetField(game, "servingBoardSprite");
+            Sprite tableSprite = (Sprite)GetField(game, "auxiliaryTableSprite");
             Sprite openTongsSprite = (Sprite)GetField(game, "tongsOpenSprite");
             Sprite closedTongsSprite = (Sprite)GetField(game, "tongsClosedSprite");
             Assert.NotNull(boardSprite);
+            Assert.NotNull(tableSprite);
             Assert.NotNull(openTongsSprite);
             Assert.NotNull(closedTongsSprite);
             Assert.AreEqual("TablaAsador_0", boardSprite.name);
             Assert.AreEqual("PinzaParrilleraOpen_0", openTongsSprite.name);
             Assert.AreEqual("PinzaParrilleraClosed_0", closedTongsSprite.name);
             Assert.AreSame(boardSprite, ((Image)GetField(game, "servingBoardImage")).sprite);
+            Image tableImage = (Image)GetField(game, "auxiliaryTableImage");
+            Assert.AreSame(tableSprite, tableImage.sprite);
+            Assert.AreSame(tableImage.transform, ((Image)GetField(game, "servingBoardImage")).transform.parent,
+                "The interactive board must be a distinct object layered on the auxiliary table.");
+            Assert.NotNull(FindComponent(((Image)GetField(game, "servingBoardImage")).gameObject,
+                "Asadito.Runtime.ServingBoardTouch"));
+            Assert.IsNull(GameObject.Find("DAR VUELTA"));
+            Assert.IsNull(GameObject.Find("BANDEJA"));
+            Assert.IsNull(GameObject.Find("SERVIR"));
+            DoubleTapBoard(game);
+            Assert.AreEqual(0, ReadField<int>(game, "trayCount"),
+                "A double tap on an incomplete physical board must not bypass cooking/serving flow.");
 
             Array portions = (Array)GetField(game, "portions");
             object portion = portions.GetValue(0);
@@ -497,8 +510,8 @@ namespace Asadito.Tests.PlayMode
             AssertGrillReadyWithoutCoal(game);
             yield return CookAndPlate(game, 0, "tira", 100f, true);
             yield return CookAndPlate(game, 1, "chorizo", 60f, true);
-            Assert.IsTrue(FindButton("SERVIR").interactable);
-            ClickButton("SERVIR");
+            Assert.IsTrue(CanServeFromBoard(game));
+            DoubleTapBoard(game);
             yield return new WaitForSecondsRealtime(2f);
             Assert.NotNull(GameObject.Find("Fin de nivel"));
 
@@ -540,9 +553,8 @@ namespace Asadito.Tests.PlayMode
                 for (int portionIndex = 0; portionIndex < portions.Length; portionIndex++)
                     yield return CookAndPlateByIndex(game, portionIndex, 35f);
 
-                Button serve = FindButton("SERVIR");
-                Assert.IsTrue(serve.interactable, "All L" + level + " portions must be plated before service.");
-                ClickButton(serve);
+                Assert.IsTrue(CanServeFromBoard(game), "All L" + level + " portions must be plated before service.");
+                DoubleTapBoard(game);
                 yield return new WaitForSecondsRealtime(2f);
 
                 Assert.NotNull(GameObject.Find("Fin de nivel"), "L" + level + " must reach results after service.");
@@ -605,7 +617,7 @@ namespace Asadito.Tests.PlayMode
             }
             Assert.GreaterOrEqual(state.CoreTemperatureC, 38f, profile.FoodId + " must warm before flipping.");
             int exposedFace = state.ExposedFace;
-            ClickButton("DAR VUELTA");
+            TapFoodPiece(game, index, 600 + index);
             Assert.AreNotEqual(exposedFace, state.ExposedFace, profile.FoodId + " flip must expose the second face.");
 
             elapsed = 0f;
@@ -615,7 +627,7 @@ namespace Asadito.Tests.PlayMode
                 elapsed += .01f;
             }
             Assert.AreEqual(Doneness.A_Punto, FoodCookingModel.GetDoneness(state, profile), profile.FoodId + " must reach a valid point band.");
-            ClickButton("BANDEJA");
+            DragFoodToBoard(game, index, 700 + index);
             float plateElapsed = 0f;
             while (ReadField<int>(game, "trayCount") < index + 1 && plateElapsed < 3f)
             {
@@ -652,8 +664,8 @@ namespace Asadito.Tests.PlayMode
         {
             Sprite sprite = (Sprite)GetField(game, "gameplayGrillSprite");
             Assert.NotNull(sprite, "The gameplay grill background must load as a Sprite.");
-            Assert.AreEqual("ParrillaTopDownStylized", sprite.texture.name,
-                "The new stylized top-down grill should be the runtime primary asset, not the legacy photo fallback.");
+            Assert.AreEqual("ParrillaTopDownGameplay", sprite.texture.name,
+                "The redesigned top-down gameplay scene should be the primary background, not the legacy fallback.");
 
             Sprite[,] portraits = (Sprite[,])GetField(game, "guestPortraitSprites");
             Assert.NotNull(portraits, "The six-guest portrait atlas must load in runtime.");
@@ -742,7 +754,7 @@ namespace Asadito.Tests.PlayMode
                 }
                 Assert.GreaterOrEqual(state.CoreTemperatureC, 38f, foodName + " should start warming before flip.");
                 int faceBefore = state.ExposedFace;
-                ClickButton("DAR VUELTA");
+                TapFoodPiece(game, index, 600 + index);
                 Assert.AreNotEqual(faceBefore, state.ExposedFace, foodName + " flip must expose its other side.");
             }
 
@@ -755,7 +767,7 @@ namespace Asadito.Tests.PlayMode
             Assert.AreEqual(Doneness.A_Punto, FoodCookingModel.GetDoneness(state, profile), foodName + " should reach its configured point band.");
             Assert.Greater(state.CoreTemperatureC, 0f);
 
-            ClickButton("BANDEJA");
+            DragFoodToBoard(game, index, 700 + index);
             float plateElapsed = 0f;
             while (ReadField<int>(game, "trayCount") < index + 1 && plateElapsed < 3f)
             {
@@ -763,6 +775,28 @@ namespace Asadito.Tests.PlayMode
                 plateElapsed += .05f;
             }
             Assert.IsTrue(ReadField<bool>(portion, "OnTray"), foodName + " should be on the tray before service.");
+        }
+
+        private static bool CanServeFromBoard(Component game)
+        {
+            return (bool)game.GetType().GetProperty("CanServeFromBoard").GetValue(game);
+        }
+
+        private static void DoubleTapBoard(Component game)
+        {
+            Image board = (Image)GetField(game, "servingBoardImage");
+            Component touch = FindComponent(board.gameObject, "Asadito.Runtime.ServingBoardTouch");
+            PointerEventData pointer = MakePointer(board.rectTransform, 900);
+            pointer.clickCount = 2;
+            Assert.IsTrue(ExecuteEvents.Execute(touch.gameObject, pointer, ExecuteEvents.pointerClickHandler),
+                "Only the physical cutting board should receive the double-tap-to-serve input.");
+        }
+
+        private static void DragFoodToBoard(Component game, int index, int pointerId)
+        {
+            RectTransform board = ((Image)GetField(game, "servingBoardImage")).rectTransform;
+            Vector2 boardPoint = RectTransformUtility.WorldToScreenPoint(null, board.position);
+            DragFoodPiece(game, index, boardPoint, pointerId);
         }
 
         private static void TapFoodPiece(Component game, int index, int pointerId)

@@ -2,15 +2,24 @@
 
 ## Implementado
 
+### Actualización 10bis — layout e interacción física
+
+- Fondo vertical gameplay actualizado, parrilla cenital grande a la izquierda; prop `MesitaAsador` a la derecha con `TablaAsador` separada como objeto hijo e interactivo. Los archivos y metadatos de import se conservan en `Resources/Art/`.
+- Quitados los botones de acción de carne `DAR VUELTA`, `BANDEJA` y `SERVIR`. El segundo tap al alimento activo voltea; arrastrar al rect de tabla emplata; doble tap sobre tabla llena sirve. Pinza acompaña el arco grill→tabla; seis slots 3×2 con variación determinista.
+- HUD sin barra de cocción, estado contextual en texto; tutorial bajo la zona de parrilla; debug se mantiene sólo para builds de desarrollo y se ocultó manualmente para la captura de presentación.
+- Captura de Unity Editor Game View a 1080×1920: `/tmp/Asadito-gameplay-layout-final.png`. No representa Android ni hardware físico.
+- Tests del código del rediseño: EditMode 19/19 PASS; PlayMode 10/10 PASS (486.94 s) en Unity 6000.6.3f1; validator y consola chequeados. El detalle sigue abajo/actualiza con la última ejecución de este sprint.
+- No se reconstruyó APK para este cambio: el APK previo `/tmp/Asadito-always-hot-1.2.0-arm64.apk` no incluye el layout actualizado; verificar compilación/instalación Android tras el commit si el release requiere esta UI.
+
 - Parrilla always-hot uniforme a 210 °C; se eliminaron carbón/encendido, combustible, heat-grid/brasas táctiles, glow de gameplay, SFX de ignition y tutorial asociado. Cocción de alimentos, caras/flip, Maillard, humedad, char y perfiles siguen conectados.
-- Tocar comida directamente selecciona la pieza; hitbox invisible ampliada, pinza ilustrada abierta/cerrada y movimiento/flip; tabla de asador ilustrada como destino por drag o acción universal. No existen botones individuales por corte.
+- Tocar comida directamente selecciona; hitbox invisible ampliada, pinza ilustrada abierta/cerrada, tap repetido voltea; arrastrar a tabla física y doble tap para servirla. No quedan botones de acción DAR VUELTA/BANDEJA/SERVIR ni botones individuales por corte.
 - Catálogo data-driven de 18 alimentos, 108 estados visuales y progresión de 12 niveles; pause/settings mínimos, scoring, save y debug oculto fuera de Editor/development.
 - Specs, arquitectura y manifests documentan la regla y los assets conectados.
 
 ## Verificación local
 
 - EditMode Unity 6000.6.3f1: **19/19 PASS** (`/tmp/asadito-always-hot-editmode.xml`).
-- PlayMode Unity 6000.6.3f1: **10/10 PASS** (486.61 s), incluye cocinar/servir todos los niveles L1–L12; XML en `/Users/celestino/Library/Application Support/Cuervation/Asadito/TestResults.xml`.
+- PlayMode Unity 6000.6.3f1: **10/10 PASS** (486.94 s), incluye cocinar/servir todos los niveles L1–L12; XML en `/Users/celestino/Library/Application Support/Cuervation/Asadito/TestResults.xml`.
 - Validator `python3 Tools/validate_food_content.py`: **PASS**, 18 perfiles, 108 sprites, 12 cartas, progresión y recursos runtime.
 - Console Unity al final de la suite: 0 errors/warnings.
 

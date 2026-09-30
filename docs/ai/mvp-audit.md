@@ -2,6 +2,9 @@
 
 | Gate | Estado | Evidencia / límite |
 |---|---|---|
+| Composición 10bis | PASS visual en Editor / dispositivo pendiente | Fondo top-down con grill grande a izquierda; `MesitaAsador` a derecha; `TablaAsador` hija, drop y doble toque restringidos al rect visible. Captura `/tmp/Asadito-gameplay-layout-final.png` a 1080×1920. La prueba no es emulador ni teléfono físico y no sustituye QA de safe area. |
+| Acciones físicas gameplay | PASS automatizable | Se quitaron DAR VUELTA/BANDEJA/SERVIR; FoodPieceTouch selecciona, tap al mismo alimento voltea, drag a la tabla deposita; ServingBoardTouch sirve tras doble tap cuando completa. PlayMode 10/10 y EditMode 19/19 en la ejecución local reportada abajo. |
+| Mesa / slots | PASS técnico, arte provisional | Mesita generada original con alpha, tabla separada como hija. Slots deterministas en 2×3 para seis porciones; los tests de niveles incluyen pedidos hasta seis. Revisión artística y ergonomía en device siguen pendientes. |
 | Base y alcance | PASS | HEAD inicial verificado: `f0a6126bca756f7f49ed5fdeacf56ce755d12962`, `main`. Se retira la manipulación de carbón sin expandir sistemas. |
 | Calor | PASS | `GrillHeatModel` entrega 210 °C uniforme al entrar; no existe requisito `IsLit`, combustible, decaimiento ni mapa térmico. `FoodCookingModel` y estados por cara permanecen activos. |
 | Interacción directa | PASS automatizable | `FoodPieceTouch` conduce tap/drag a una sola selección; pruebas PlayMode de tap directo, dueño de pointer/multitouch, drag, flip y emplatado. Sin botones por nombre de comida. |
@@ -11,7 +14,7 @@
 | Pause/tutorial/settings | PASS automatizable | PlayMode cubre pause/resume/restart/selector, sonido/vibración y onboarding de comida/pinza; sin pasos de carbón. |
 | Debug | PASS por código/config | `CONTROL DEBUG` sólo se construye en Editor/development (`Debug.isDebugBuild`); APK Android compilado como release no-development. La UI del player no pudo inspeccionarse en el AVD por incompatibilidad gráfica. |
 | EditMode | PASS | 19/19 en Unity 6000.6.3f1; XML `/tmp/asadito-always-hot-editmode.xml`. |
-| PlayMode | PASS | 10/10 en Unity 6000.6.3f1; 486.61 s, incluye `Mvp_AllTwelveLevels_CookServeResultsUnlockNextAndReturnToSelection`; XML `/Users/celestino/Library/Application Support/Cuervation/Asadito/TestResults.xml`. |
+| PlayMode | PASS | 10/10 en Unity 6000.6.3f1; 486.94 s, incluye `Mvp_AllTwelveLevels_CookServeResultsUnlockNextAndReturnToSelection`; XML `/Users/celestino/Library/Application Support/Cuervation/Asadito/TestResults.xml`. |
 | Validator | PASS | `python3 Tools/validate_food_content.py`: 18 perfiles, 108 estados, 12 cards, cobertura de niveles y recursos conectados. |
 | Console Unity | PASS al fin de tests | `read_console(error, warning)` recuperó 0 mensajes. Un intento anterior de PlayMode tuvo un error del runner/editor; se reinició el editor y el suite final terminó 10/10. |
 | Android build | PASS | Unity 6000.6.3f1 compiló APK ARM64 IL2CPP; package/version/code, min26/target36, ABI ARM64 y firma v2 verificadas (`/tmp/Asadito-always-hot-1.2.0-arm64.apk`, 53 MiB). |
@@ -24,8 +27,8 @@
 
 ## Riesgos / siguiente QA
 
-1. Repetir runtime smoke en teléfono ARM64: abrir, recorrer Nivel 1 con tap, drag continuo, flip, tabla, servicio, resultados, Retry y pausa.
-2. Capturar evidencia visual Android del gameplay con pieza seleccionada, pinza, tabla y parrilla top-down; la captura del AVD actual solo contiene bloqueo gráfico.
+1. Construir APK nuevo con el rediseño y repetir runtime smoke en teléfono ARM64: abrir, recorrer Nivel 1 con tap, drag continuo, flip por segundo tap, drop a tabla, doble toque, resultados, Retry y pausa.
+2. Capturar evidencia visual Android del gameplay con pieza seleccionada, pinza, tabla y parrilla top-down; la captura Editor presente solo valida la composición de referencia y el AVD histórico solo contiene bloqueo gráfico.
 3. Si swipe causa ANR en un dispositivo compatible, obtener trace/profiler y medir memoria/FPS/GC antes de atribuirlo.
 4. Probar notch/nav gesture, audio/haptics y sign-off artístico con teléfono real; tests automatizados no lo sustituyen.
 5. Revisar CI remoto posterior al push; Unity CI puede permanecer omitido por licencia/secrets sin que eso invalide tests locales.

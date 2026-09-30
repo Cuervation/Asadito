@@ -216,7 +216,7 @@ def main():
     audit_progression(set(ids))
     required_resources = (
         "Art/AsaditoAppIcon.png", "Art/AsaditoLogo.png", "Art/PortadaAsadito.png",
-        "Art/ParrillaTopDownStylized.png", "Art/GuestPortraitAtlas.png", "Fonts/LilitaOne-Regular.ttf",
+        "Art/ParrillaTopDownStylized.png", "Art/ParrillaTopDownGameplay.png", "Art/GuestPortraitAtlas.png", "Fonts/LilitaOne-Regular.ttf",
         "Fonts/Baloo2-Regular.ttf", "Fonts/Baloo2-Medium.ttf", "Fonts/Baloo2-SemiBold.ttf",
         "Fonts/Baloo2-Bold.ttf", "Fonts/Baloo2-ExtraBold.ttf",
     )
@@ -226,15 +226,22 @@ def main():
     audit_transparent_sprite("Art/Tools/PinzaParrilleraOpen.png", (2172, 724))
     audit_transparent_sprite("Art/Tools/PinzaParrilleraClosed.png", (2172, 724))
     audit_transparent_sprite("Art/Props/TablaAsador.png", (1536, 1024))
+    audit_transparent_sprite("Art/Props/MesitaAsador.png", (1086, 1448))
     game_source = (ROOT / "Assets/Asado/Scripts/AsaditoGame.cs").read_text(encoding="utf-8")
     for runtime_connection in (
         'LoadSingleSpriteResource("Art/Tools/PinzaParrilleraOpen")',
         'LoadSingleSpriteResource("Art/Tools/PinzaParrilleraClosed")',
         'LoadSingleSpriteResource("Art/Props/TablaAsador")',
+        'Resources.Load<Texture2D>("Art/Props/MesitaAsador")',
         'MakeImage("Pinza parrillera ilustrada"',
+        'MakeImage("Mesita auxiliar de asador"',
         'MakeImage("Tabla de asador"',
+        'AddComponent<ServingBoardTouch>()',
     ):
         assert runtime_connection in game_source, f"Generated visual is not connected to gameplay: {runtime_connection}"
+    assert 'MakeButton("DAR VUELTA"' not in game_source, "Food flipping must not use a named-food action button"
+    assert 'MakeButton("BANDEJA"' not in game_source, "Plating must be direct food drag to the visible board"
+    assert 'MakeButton("SERVIR"' not in game_source, "Serving must be a double-tap on the physical board"
     all_atlases = {path.stem for path in ATLAS_DIR.glob("*.png")}
     assert all_atlases == REQUIRED_IDS, f"Unexpected cooking atlas set: missing={sorted(REQUIRED_IDS-all_atlases)}, extra={sorted(all_atlases-REQUIRED_IDS)}"
     print(f"Food content OK: {len(foods)} unique profiles, {len(foods) * 6} visible/coherent cooking frames, {len(cards)} level illustrations, all foods in L1–L12, runtime art/fonts present.")
