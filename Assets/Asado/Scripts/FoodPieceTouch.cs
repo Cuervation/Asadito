@@ -17,7 +17,6 @@ namespace Asadito.Runtime
 
         private int pointerId = NoPointer;
         private bool dragging;
-        private bool selectedBeforePointerDown;
 
         public bool IsRaycastLocationValid(Vector2 screenPoint, Camera eventCamera)
         {
@@ -27,7 +26,6 @@ namespace Asadito.Runtime
         public void OnPointerDown(PointerEventData e)
         {
             if (Owner == null || pointerId != NoPointer) return;
-            selectedBeforePointerDown = Owner.IsFoodPieceSelected(PortionIndex);
             if (!Owner.BeginFoodPointer(PortionIndex, e.pointerId)) return;
             pointerId = e.pointerId;
             dragging = false;
@@ -36,9 +34,7 @@ namespace Asadito.Runtime
         public void OnPointerUp(PointerEventData e)
         {
             if (Owner == null || pointerId != e.pointerId || dragging) return;
-            bool shouldFlip = selectedBeforePointerDown;
             ReleasePointer();
-            if (shouldFlip && Owner != null) Owner.FlipSelectedPortionFromTap(PortionIndex);
         }
 
         public void OnBeginDrag(PointerEventData e)
@@ -71,7 +67,6 @@ namespace Asadito.Runtime
             if (Owner != null) Owner.EndFoodPointer(PortionIndex, pointerId);
             pointerId = NoPointer;
             dragging = false;
-            selectedBeforePointerDown = false;
         }
     }
 }

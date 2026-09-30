@@ -14,8 +14,12 @@ Cada PNG vertical de seis filas aporta RAW, WARMING, BROWNING, IDEAL, OVERCOOKED
 
 ## Punto y caras
 
-Las cinco bandas (`Jugoso` a `Bien cocido`) se balancean por perfil; por ejemplo el chorizo, queso, morcilla, cerdo y pollo no heredan idénticos umbrales. En el paso se calienta la cara expuesta; flip alterna cara y conserva estado. Stage ideal se comunica por arte más estado; la puntuación evalúa calidad/punto por temperatura/variables configuradas.
+Las cinco bandas (`Jugoso` a `Bien cocido`) se balancean por perfil; por ejemplo el chorizo, queso, morcilla, cerdo y pollo no heredan idénticos umbrales. Por decisión del usuario (2026-09-30), se cocina de un solo lado: tap selecciona, sin voltear. El modelo de dos caras permanece por compatibilidad, pero la interacción no cambia la cara expuesta. Stage ideal se comunica por arte más estado; la puntuación evalúa calidad/punto por temperatura/variables configuradas.
 
 ## Verificación
 
 `FoodCatalogTests` verifica IDs, diferencias/perfiles válidos, copias aisladas, seis sprites por atlas, y simulaciones que alcanzan Warming/Browning/Ideal/Overcooked/Burnt. Hay test de riesgo de rotura de morcilla y progresión/uso de los 18 alimentos. PlayMode comprueba caras independientes/flip y ciclo completo de los 12 niveles. Validador externo revisa assets/dimensiones/transparencia.
+
+## Diez etapas runtime (2026-09-30)
+
+RAW → EARLY_WARMING → WARMING → EARLY_BROWNING → BROWNING → IDEAL → DRYING → OVERCOOKED → CHARRING → BURNT. Se conservan los seis dibujos originales; cuatro composiciones al 50% entre etapas adyacentes aportan transiciones visuales intermedias, sin alterar proporciones ni perfiles térmicos. Provoleta usa sus propios umbrales. Los diez estados no cambian las cinco bandas de punto solicitadas por los comensales.

@@ -55,7 +55,7 @@ namespace Asadito.Tests.PlayMode
             yield return CookAndPlate(game, 1, "chorizo", 25f, true);
 
             Assert.IsTrue(CanServeFromBoard(game), "Serving unlocks on the physical board after every portion is plated.");
-            DoubleTapBoard(game);
+            TapBoard(game);
             yield return new WaitForSecondsRealtime(1.8f);
 
             Assert.NotNull(GameObject.Find("Fin de nivel"), "Serving must reach the result screen.");
@@ -100,7 +100,7 @@ namespace Asadito.Tests.PlayMode
             AssertGrillReadyWithoutCoal(game);
             yield return CookAndPlate(game, 0, "tira", 25f, true);
             yield return CookAndPlate(game, 1, "chorizo", 25f, true);
-            DoubleTapBoard(game);
+            TapBoard(game);
             yield return new WaitForSecondsRealtime(1.8f);
 
             Button retry = FindButton("REINTENTAR");
@@ -158,32 +158,90 @@ namespace Asadito.Tests.PlayMode
             Array portions = (Array)GetField(game, "portions");
             Image[] images = (Image[])GetField(game, "portionImages");
             RectTransform[] targets = (RectTransform[])GetField(game, "portionHitTargets");
+            Vector2[] grillFoodSizes = (Vector2[])GetField(game, "portionVisualSizes");
+            bool[] rawTrayStacked = (bool[])GetField(game, "rawTrayPortionStacked");
             Assert.AreEqual(portions.Length, images.Length);
             Assert.AreEqual(portions.Length, targets.Length);
+            Assert.AreEqual(portions.Length, rawTrayStacked.Length);
+            RectTransform rawTray = ((Image)GetField(game, "rawTrayImage")).rectTransform;
+            var rawTrayCenters = new Vector2[portions.Length];
+            var rawTrayFoodSizes = new Vector2[portions.Length];
             for (int i = 0; i < portions.Length; i++)
             {
                 object portion = portions.GetValue(i);
                 string foodId = ((FoodCookProfile)GetField(portion, "Profile")).FoodId;
-                Assert.IsTrue(targets[i].gameObject.activeInHierarchy, foodId + " hit target should be available on the grill.");
+                Assert.IsTrue(targets[i].gameObject.activeInHierarchy, foodId + " hit target should be available on the raw-food tray.");
                 Assert.IsTrue(images[i].gameObject.activeInHierarchy, foodId + " art should be visible before selection.");
+                Assert.IsTrue(ReadField<bool>(portion, "OnSourceTray"), foodId + " should start on the aluminum tray.");
+                Assert.IsFalse(ReadField<bool>(portion, "Started"), foodId + " should not start cooking before being dragged to the grill.");
+                Assert.That(Vector2.Distance(images[i].rectTransform.sizeDelta, grillFoodSizes[i]), Is.LessThan(.01f),
+                    foodId + " should render at its grill size while resting on the source tray.");
+                Assert.IsTrue(RectTransformUtility.RectangleContainsScreenPoint(rawTray, targets[i].position, null),
+                    foodId + " hit target should sit inside the aluminum tray.");
+                Vector3 localCenter = rawTray.InverseTransformPoint(targets[i].position);
+                rawTrayCenters[i] = new Vector2(localCenter.x, localCenter.y);
+                rawTrayFoodSizes[i] = images[i].rectTransform.sizeDelta;
+                if (!rawTrayStacked[i])
+                    Assert.IsTrue(FoodFootprintLayout.FitsInside(rawTray.rect.size, rawTrayFoodSizes[i], rawTrayCenters[i]),
+                        foodId + " unstacked food art should fit inside the aluminum tray.");
                 Assert.IsNotNull(FindComponent(targets[i].gameObject, "Asadito.Runtime.FoodPieceTouch"));
                 Assert.IsNull(GameObject.Find(FoodCatalog.Get(foodId).DisplayName),
                     foodId + " must not be presented as a separate food-name button.");
             }
+            for (int i = 0; i < portions.Length; i++)
+                for (int j = i + 1; j < portions.Length; j++)
+                {
+                    bool overlap = FoodFootprintLayout.Overlaps(rawTrayCenters[i], rawTrayFoodSizes[i],
+                        rawTrayCenters[j], rawTrayFoodSizes[j]);
+                    if (overlap)
+                        Assert.IsTrue(rawTrayStacked[i] || rawTrayStacked[j],
+                            "Food art may overlap only when the layout explicitly marks a layer as intentionally stacked.");
+                    if (!rawTrayStacked[i] && !rawTrayStacked[j])
+                        Assert.IsFalse(overlap, "Food pieces that fit must remain separate on the raw tray.");
+                }
 
             Assert.AreEqual(Debug.isDebugBuild, GameObject.Find("CONTROL DEBUG") != null,
                 "Only Editor/development builds may expose the simulation debug control.");
 
             AssertGrillReadyWithoutCoal(game);
+            Image rawSurface = (Image)GetField(game, "rawTrayImage");
+            Image boardSurface = (Image)GetField(game, "servingBoardImage");
+            Assert.IsTrue(rawSurface.gameObject.activeInHierarchy, "Raw food starts with the aluminum tray visible.");
+            Assert.IsFalse(boardSurface.gameObject.activeInHierarchy, "The serving board stays hidden until the source tray is empty.");
+            Sprite rawTraySprite = (Sprite)GetField(game, "aluminumTraySprite");
+            Assert.NotNull(rawTraySprite);
+            Assert.AreEqual("Raw Aluminum Tray", rawTraySprite.name);
+            Assert.IsNull(GameObject.Find("Pinza parrillera ilustrada"), "The tong illustration is intentionally removed for this MVP interaction.");
             TapFoodPiece(game, 0, 41);
-            Assert.IsTrue(ReadField<bool>(portions.GetValue(0), "Started"), "A pointer tap directly on a food piece must select/start it.");
-            Assert.AreEqual(0, ReadField<int>(game, "activePortion"));
-            Assert.AreEqual(GetField(game, "tongsClosedSprite"), GetField(game, "tongsImage") is Image selectedTongs ? selectedTongs.sprite : null,
-                "Selecting food must use the generated closed tong art.");
-            TapFoodPiece(game, 1, 42);
-            Assert.IsFalse(ReadField<bool>(portions.GetValue(1), "Started"),
-                "A second piece cannot steal the active tong while a piece is still being cooked.");
-            Assert.AreEqual(0, ReadField<int>(game, "activePortion"));
+            Assert.IsFalse(ReadField<bool>(portions.GetValue(0), "Started"), "A raw tray piece must be dragged to the grill before cooking.");
+            Vector2 sourceTraySize = images[0].rectTransform.sizeDelta;
+            DragRawFoodToGrill(game, 0, 42);
+            Assert.IsTrue(ReadField<bool>(portions.GetValue(0), "Started"), "Dragging the raw food to the grill must start it.");
+            Assert.That(Vector2.Distance(images[0].rectTransform.sizeDelta, sourceTraySize), Is.LessThan(.01f),
+                "Moving meat from aluminum tray to grill must not resize its visual.");
+            Assert.AreEqual(-1, ReadField<int>(game, "activePortion"), "The loading step doesn't begin cooking before the source tray is empty.");
+            Assert.IsFalse(ReadField<bool>(game, "cooking"));
+            Assert.IsTrue(rawSurface.gameObject.activeInHierarchy);
+            Assert.IsFalse(boardSurface.gameObject.activeInHierarchy);
+            Vector2 waitingPosition = ReadField<Vector2>(portions.GetValue(0), "Position");
+            DragActiveFoodToDifferentGrillPosition(game, 0, 45);
+            Assert.Greater(Vector2.Distance(waitingPosition, ReadField<Vector2>(portions.GetValue(0), "Position")), .1f,
+                "A loaded piece can still be repositioned while the remaining raw order is transferred.");
+            float waitingTemperature = ((FoodState)GetField(portions.GetValue(0), "State")).CoreTemperatureC;
+            TapFoodPiece(game, 1, 43);
+            Assert.IsFalse(ReadField<bool>(portions.GetValue(1), "Started"), "Tapping raw food must not transfer it to the grill.");
+            DragRawFoodToGrill(game, 1, 44);
+            Assert.IsTrue(ReadField<bool>(portions.GetValue(1), "Started"));
+            Assert.IsFalse(rawSurface.gameObject.activeInHierarchy, "The aluminum tray disappears after its last piece leaves.");
+            Assert.IsTrue(boardSurface.gameObject.activeInHierarchy, "The board replaces the tray in the same spot.");
+            Assert.AreEqual(1, ReadField<int>(game, "activePortion"));
+            yield return new WaitForSecondsRealtime(.3f);
+            Assert.Greater(((FoodState)GetField(portions.GetValue(1), "State")).CoreTemperatureC, 20f,
+                "Cooking begins only after all raw pieces are on the grill.");
+            Assert.That(((FoodState)GetField(portions.GetValue(0), "State")).CoreTemperatureC,
+                Is.EqualTo(waitingTemperature).Within(.01f), "Unselected portions keep their size and wait their turn on the grill.");
+            Assert.That(Vector3.Distance(images[0].rectTransform.localScale, Vector3.one), Is.LessThan(.001f),
+                "Selection feedback must not permanently enlarge food on the grill.");
             Assert.IsFalse((bool)game.GetType().GetMethod("SelectFoodPiece").Invoke(game, new object[] { -1 }),
                 "Out-of-range/empty selections must be harmless.");
         }
@@ -196,7 +254,7 @@ namespace Asadito.Tests.PlayMode
             Component game = null;
             yield return LoadGameScene(value => game = value);
             yield return EnterLevelOne(game);
-            TapFoodPiece(game, 0, 51);
+            DragRawFoodToGrill(game, 0, 51);
             AssertGrillReadyWithoutCoal(game, false);
 
             ClickButton("PAUSA");
@@ -244,20 +302,24 @@ namespace Asadito.Tests.PlayMode
             Assert.IsTrue(ExecuteEvents.Execute(secondTouch.gameObject, secondPointer, ExecuteEvents.pointerDownHandler));
             Assert.IsTrue(ExecuteEvents.Execute(secondTouch.gameObject, secondPointer, ExecuteEvents.pointerUpHandler));
             Assert.IsTrue(ExecuteEvents.Execute(firstTouch.gameObject, firstPointer, ExecuteEvents.pointerUpHandler));
-            Assert.AreEqual(0, ReadField<int>(game, "activePortion"));
+            Assert.AreEqual(-1, ReadField<int>(game, "activePortion"), "Raw tray taps must not select or start a piece.");
             Assert.IsFalse(ReadField<bool>(((Array)GetField(game, "portions")).GetValue(1), "Started"));
 
+            DragRawFoodToGrill(game, 0, 63);
+            DragRawFoodToGrill(game, 1, 64);
             RectTransform trayDrop = (RectTransform)GetField(game, "trayDropRect");
             Vector2 trayPoint = RectTransformUtility.WorldToScreenPoint(null, trayDrop.position);
-            DragFoodPiece(game, 0, trayPoint, 63);
+            DragFoodPiece(game, 1, trayPoint, 65);
             yield return new WaitForSecondsRealtime(.55f);
-            Assert.IsTrue(ReadField<bool>(((Array)GetField(game, "portions")).GetValue(0), "OnTray"),
+            Assert.IsTrue(ReadField<bool>(((Array)GetField(game, "portions")).GetValue(1), "OnTray"),
                 "Dragging a selected food piece to the tray must plate that piece.");
             Assert.AreEqual(1, ReadField<int>(game, "trayCount"));
+            Assert.That(targets[1].localScale.x, Is.EqualTo(1f).Within(.001f),
+                "Plated meat must preserve its exact grill/source size instead of shrinking into a cell.");
         }
 
         [UnityTest]
-        public IEnumerator AlwaysHotGrill_DirectFoodTapHeatsWithoutIgnitionAndUsesGeneratedProps()
+        public IEnumerator AluminumTrayDrag_StartsCooking_AndBoardTapServes()
         {
             ResetSaveCache();
             MvpSave.Save(new MvpSaveData());
@@ -269,26 +331,47 @@ namespace Asadito.Tests.PlayMode
             AssertGrillReadyWithoutCoal(game);
             Sprite boardSprite = (Sprite)GetField(game, "servingBoardSprite");
             Sprite tableSprite = (Sprite)GetField(game, "auxiliaryTableSprite");
-            Sprite openTongsSprite = (Sprite)GetField(game, "tongsOpenSprite");
-            Sprite closedTongsSprite = (Sprite)GetField(game, "tongsClosedSprite");
+            Sprite aluminumTray = (Sprite)GetField(game, "aluminumTraySprite");
             Assert.NotNull(boardSprite);
             Assert.NotNull(tableSprite);
-            Assert.NotNull(openTongsSprite);
-            Assert.NotNull(closedTongsSprite);
+            Assert.NotNull(aluminumTray);
             Assert.AreEqual("TablaAsador_0", boardSprite.name);
-            Assert.AreEqual("PinzaParrilleraOpen_0", openTongsSprite.name);
-            Assert.AreEqual("PinzaParrilleraClosed_0", closedTongsSprite.name);
+            Assert.AreEqual("Raw Aluminum Tray", aluminumTray.name);
             Assert.AreSame(boardSprite, ((Image)GetField(game, "servingBoardImage")).sprite);
             Image tableImage = (Image)GetField(game, "auxiliaryTableImage");
             Assert.AreSame(tableSprite, tableImage.sprite);
             Assert.AreSame(tableImage.transform, ((Image)GetField(game, "servingBoardImage")).transform.parent,
                 "The interactive board must be a distinct object layered on the auxiliary table.");
+            RectTransform rawTrayRect = ((Image)GetField(game, "rawTrayImage")).rectTransform;
+            RectTransform boardRect = ((Image)GetField(game, "servingBoardImage")).rectTransform;
+            RectTransform tableRect = tableImage.rectTransform;
+            Assert.That(Vector2.Distance(boardRect.rect.size, rawTrayRect.rect.size), Is.LessThan(.01f),
+                "The board and aluminum tray must use exactly equal dimensions.");
+            Assert.That(Vector2.Distance(boardRect.anchoredPosition, rawTrayRect.anchoredPosition), Is.LessThan(.01f),
+                "The board must appear exactly where the aluminum tray was, not beside it.");
+            Assert.That(Vector2.Distance(boardRect.anchorMin, rawTrayRect.anchorMin), Is.LessThan(.001f));
+            Assert.That(Vector2.Distance(boardRect.anchorMax, rawTrayRect.anchorMax), Is.LessThan(.001f));
+            Assert.That(boardRect.rect.width / boardRect.rect.height,
+                Is.EqualTo(boardSprite.rect.width / boardSprite.rect.height).Within(.01f),
+                "The serving board must not be stretched to match the aluminum tray's shape.");
+            Assert.That((float)aluminumTray.rect.width / aluminumTray.rect.height,
+                Is.EqualTo(boardRect.rect.width / boardRect.rect.height).Within(.01f),
+                "The source tray artwork must have the same native proportions as the board.");
+            Assert.IsTrue(tableImage.preserveAspect,
+                "The auxiliary table illustration must keep its source aspect ratio.");
+            Assert.That(Vector3.Distance(rawTrayRect.position, boardRect.position), Is.LessThan(.01f),
+                "The surfaces occupy the same visual slot and swap visibility.");
+            Assert.IsTrue(((Image)GetField(game, "rawTrayImage")).gameObject.activeInHierarchy);
+            Assert.IsFalse(((Image)GetField(game, "servingBoardImage")).gameObject.activeInHierarchy);
+            float sharedServingScale = ReadField<float>(game, "servingBoardPortionScale");
+            Assert.That(sharedServingScale, Is.EqualTo(1f).Within(.001f),
+                "Food scale on the serving board must be exactly the same as on the grill and raw tray.");
             Assert.NotNull(FindComponent(((Image)GetField(game, "servingBoardImage")).gameObject,
                 "Asadito.Runtime.ServingBoardTouch"));
             Assert.IsNull(GameObject.Find("DAR VUELTA"));
             Assert.IsNull(GameObject.Find("BANDEJA"));
             Assert.IsNull(GameObject.Find("SERVIR"));
-            DoubleTapBoard(game);
+            game.GetType().GetMethod("OnServingBoardTap").Invoke(game, null);
             Assert.AreEqual(0, ReadField<int>(game, "trayCount"),
                 "A double tap on an incomplete physical board must not bypass cooking/serving flow.");
 
@@ -297,15 +380,34 @@ namespace Asadito.Tests.PlayMode
             FoodState state = (FoodState)GetField(portion, "State");
             float initialCore = state.CoreTemperatureC;
             TapFoodPiece(game, 0, 71);
+            Assert.IsFalse(ReadField<bool>(portion, "Started"), "Tapping raw meat leaves it on the source tray.");
+            DragRawFoodToGrill(game, 1, 72);
+            Assert.IsTrue(((Image)GetField(game, "rawTrayImage")).gameObject.activeInHierarchy,
+                "The source tray must stay while it still contains raw food.");
+            Assert.IsFalse(((Image)GetField(game, "servingBoardImage")).gameObject.activeInHierarchy,
+                "The serving board cannot replace a tray that still holds food.");
+            Assert.That(state.CoreTemperatureC, Is.EqualTo(initialCore).Within(.01f),
+                "A piece waits without heat while the order is still being transferred.");
+            DragRawFoodToGrill(game, 0, 73);
             Assert.IsTrue(ReadField<bool>(portion, "Started"));
-            Assert.AreSame(closedTongsSprite, ((Image)GetField(game, "tongsImage")).sprite);
-            yield return new WaitForSecondsRealtime(.2f);
+            Assert.IsFalse(((Image)GetField(game, "rawTrayImage")).gameObject.activeInHierarchy);
+            Assert.IsTrue(((Image)GetField(game, "servingBoardImage")).gameObject.activeInHierarchy);
+            yield return new WaitForSecondsRealtime(.3f);
             Assert.Greater(state.CoreTemperatureC, initialCore, "Food must heat directly without an ignition step.");
+            DragFoodToBoard(game, 0, 74);
+            yield return new WaitForSecondsRealtime(.55f);
+            Assert.IsTrue(ReadField<bool>(portion, "OnTray"), "Dragging cooked food onto the board plates it.");
             RectTransform[] targets = (RectTransform[])GetField(game, "portionHitTargets");
-            Vector2 grillPoint = RectTransformUtility.WorldToScreenPoint(null, ((RectTransform)GetField(game, "grillAreaRect")).position);
-            DragFoodPiece(game, 0, grillPoint, 72);
-            Assert.AreSame(openTongsSprite, ((Image)GetField(game, "tongsImage")).sprite,
-                "After release, the visible tongs settle open around the selected food.");
+            Assert.That(targets[0].localScale.x, Is.EqualTo(1f).Within(.001f),
+                "Plating preserves the exact grill scale, rather than a board fit scale.");
+            Assert.IsTrue((bool)game.GetType().GetMethod("SelectFoodPiece").Invoke(game, new object[] { 1 }));
+            DragFoodToBoard(game, 1, 75);
+            yield return new WaitForSecondsRealtime(.55f);
+            Assert.That(targets[1].localScale.x, Is.EqualTo(1f).Within(.001f),
+                "Every cut on the board keeps the same multiplier, regardless of sprite aspect.");
+            Assert.IsTrue(CanServeFromBoard(game));
+            TapBoard(game);
+            Assert.IsTrue(ReadField<bool>(game, "servingLocked"), "A single tap on the ready board serves the order.");
         }
 
         [UnityTest]
@@ -511,7 +613,7 @@ namespace Asadito.Tests.PlayMode
             yield return CookAndPlate(game, 0, "tira", 100f, true);
             yield return CookAndPlate(game, 1, "chorizo", 60f, true);
             Assert.IsTrue(CanServeFromBoard(game));
-            DoubleTapBoard(game);
+            TapBoard(game);
             yield return new WaitForSecondsRealtime(2f);
             Assert.NotNull(GameObject.Find("Fin de nivel"));
 
@@ -554,7 +656,7 @@ namespace Asadito.Tests.PlayMode
                     yield return CookAndPlateByIndex(game, portionIndex, 35f);
 
                 Assert.IsTrue(CanServeFromBoard(game), "All L" + level + " portions must be plated before service.");
-                DoubleTapBoard(game);
+                TapBoard(game);
                 yield return new WaitForSecondsRealtime(2f);
 
                 Assert.NotNull(GameObject.Find("Fin de nivel"), "L" + level + " must reach results after service.");
@@ -601,13 +703,8 @@ namespace Asadito.Tests.PlayMode
             object portion = portions.GetValue(index);
             FoodState state = (FoodState)GetField(portion, "State");
             FoodCookProfile profile = (FoodCookProfile)GetField(portion, "Profile");
-            TapFoodPiece(game, index, 100 + index);
+            LoadAllRawFoodToGrill(game, index);
             yield return null;
-
-            RectTransform grillArea = (RectTransform)GetField(game, "grillAreaRect");
-            Vector3 centerWorld = grillArea.TransformPoint(new Vector3(grillArea.rect.width * .03f, -grillArea.rect.height * .015f, 0f));
-            Vector2 centerScreen = RectTransformUtility.WorldToScreenPoint(null, centerWorld);
-            DragFoodPiece(game, index, centerScreen, 200 + index);
 
             float elapsed = 0f;
             while (state.CoreTemperatureC < 38f && elapsed < timeoutSeconds)
@@ -618,7 +715,7 @@ namespace Asadito.Tests.PlayMode
             Assert.GreaterOrEqual(state.CoreTemperatureC, 38f, profile.FoodId + " must warm before flipping.");
             int exposedFace = state.ExposedFace;
             TapFoodPiece(game, index, 600 + index);
-            Assert.AreNotEqual(exposedFace, state.ExposedFace, profile.FoodId + " flip must expose the second face.");
+            Assert.AreEqual(exposedFace, state.ExposedFace, profile.FoodId + " repeated taps must not flip food.");
 
             elapsed = 0f;
             while (FoodCookingModel.GetDoneness(state, profile) != Doneness.A_Punto && elapsed < timeoutSeconds)
@@ -704,7 +801,7 @@ namespace Asadito.Tests.PlayMode
             ClickButton("IR A LA PARRILLA");
             yield return new WaitForSecondsRealtime(.45f);
             AssertGrillReadyWithoutCoal(game);
-            Assert.That(FindText("Tutorial contextual").text, Does.Contain("pieza"));
+            Assert.That(FindText("Estado coccion").text, Does.Contain("ARRASTRÁ"));
             Assert.AreEqual(2, ((Array)GetField(game, "portions")).Length);
             Assert.AreEqual(2, ((Array)GetField(game, "activeGuests")).Length);
         }
@@ -720,14 +817,13 @@ namespace Asadito.Tests.PlayMode
                 Assert.IsNull(GameObject.Find("Brasa " + x + "," + y));
             Assert.AreEqual(210f, ((GrillHeatModel)GetField(game, "grillHeat")).GetTemperatureC(), .001f);
             if (assertTutorialStep)
-                Assert.That(FindText("Tutorial contextual").text, Does.Contain("pieza"));
+                Assert.That(FindText("Estado coccion").text, Does.Contain("ARRASTRÁ"));
         }
 
         private static IEnumerator CookAndPlate(Component game, int index, string foodId, float timeoutSeconds, bool flip)
         {
             string foodName = FoodCatalog.Get(foodId).DisplayName;
-            TapFoodPiece(game, index, 300 + index);
-            if (index == 0) Assert.That(FindText("Tutorial contextual").text, Does.Contain("Paso 2"));
+            LoadAllRawFoodToGrill(game, index);
             Array portions = (Array)GetField(game, "portions");
             object portion = portions.GetValue(index);
             FoodState state = (FoodState)GetField(portion, "State");
@@ -736,13 +832,10 @@ namespace Asadito.Tests.PlayMode
             Vector2 startingPosition = ReadField<Vector2>(portion, "Position");
 
             // Exercise the same public handlers used by the touch-drag component.
-            RectTransform grillArea = (RectTransform)GetField(game, "grillAreaRect");
-            Vector3 moveWorld = grillArea.TransformPoint(new Vector3(grillArea.rect.width * .03f, -grillArea.rect.height * .015f, 0f));
-            Vector2 moveScreen = RectTransformUtility.WorldToScreenPoint(null, moveWorld);
-            DragFoodPiece(game, index, moveScreen, 400 + index);
+            DragActiveFoodToDifferentGrillPosition(game, index, 400 + index);
             Assert.Greater(Vector2.Distance(startingPosition, ReadField<Vector2>(portion, "Position")), .1f,
                 "Dragging the portion must change its normalized grill position.");
-            if (index == 0) Assert.That(FindText("Tutorial contextual").text, Does.Contain("Paso 3"));
+            if (index == 0) Assert.That(FindText("Tutorial contextual").text, Does.Contain("TABLA"));
 
             if (flip)
             {
@@ -755,7 +848,7 @@ namespace Asadito.Tests.PlayMode
                 Assert.GreaterOrEqual(state.CoreTemperatureC, 38f, foodName + " should start warming before flip.");
                 int faceBefore = state.ExposedFace;
                 TapFoodPiece(game, index, 600 + index);
-                Assert.AreNotEqual(faceBefore, state.ExposedFace, foodName + " flip must expose its other side.");
+                Assert.AreEqual(faceBefore, state.ExposedFace, foodName + " repeated taps must keep cooking on one side.");
             }
 
             float elapsed = 0f;
@@ -782,14 +875,14 @@ namespace Asadito.Tests.PlayMode
             return (bool)game.GetType().GetProperty("CanServeFromBoard").GetValue(game);
         }
 
-        private static void DoubleTapBoard(Component game)
+        private static void TapBoard(Component game)
         {
             Image board = (Image)GetField(game, "servingBoardImage");
             Component touch = FindComponent(board.gameObject, "Asadito.Runtime.ServingBoardTouch");
             PointerEventData pointer = MakePointer(board.rectTransform, 900);
-            pointer.clickCount = 2;
+            pointer.clickCount = 1;
             Assert.IsTrue(ExecuteEvents.Execute(touch.gameObject, pointer, ExecuteEvents.pointerClickHandler),
-                "Only the physical cutting board should receive the double-tap-to-serve input.");
+                "Only the physical cutting board should receive the tap-to-serve input.");
         }
 
         private static void DragFoodToBoard(Component game, int index, int pointerId)
@@ -797,6 +890,64 @@ namespace Asadito.Tests.PlayMode
             RectTransform board = ((Image)GetField(game, "servingBoardImage")).rectTransform;
             Vector2 boardPoint = RectTransformUtility.WorldToScreenPoint(null, board.position);
             DragFoodPiece(game, index, boardPoint, pointerId);
+        }
+
+        private static void DragRawFoodToGrill(Component game, int index, int pointerId, float normalizedX = .5f, float normalizedY = .5f)
+        {
+            RectTransform grill = (RectTransform)GetField(game, "grillAreaRect");
+            Vector3 local = new Vector3((normalizedX - .5f) * grill.rect.width, (normalizedY - .5f) * grill.rect.height, 0f);
+            Vector2 grillPoint = RectTransformUtility.WorldToScreenPoint(null, grill.TransformPoint(local));
+            DragFoodPiece(game, index, grillPoint, pointerId);
+        }
+
+        private static void LoadAllRawFoodToGrill(Component game, int activatingIndex)
+        {
+            Array portions = (Array)GetField(game, "portions");
+            Vector2[] grillHomes = (Vector2[])game.GetType().GetMethod("CalculateInitialFoodPositions",
+                BindingFlags.Instance | BindingFlags.NonPublic).Invoke(game, null);
+            for (int i = 0; i < portions.Length; i++)
+            {
+                if (i == activatingIndex || !ReadField<bool>(portions.GetValue(i), "OnSourceTray")) continue;
+                DragRawFoodToGrill(game, i, 100 + i, grillHomes[i].x, grillHomes[i].y);
+            }
+            if (ReadField<bool>(portions.GetValue(activatingIndex), "OnSourceTray"))
+                DragRawFoodToGrill(game, activatingIndex, 300 + activatingIndex,
+                    grillHomes[activatingIndex].x, grillHomes[activatingIndex].y);
+            else if (ReadField<int>(game, "activePortion") != activatingIndex)
+            {
+                Assert.IsTrue((bool)game.GetType().GetMethod("SelectFoodPiece").Invoke(game, new object[] { activatingIndex }),
+                    "Once the tray is empty, the requested portion should become the one active cooking piece.");
+            }
+            int level = ReadField<int>(game, "currentLevelNumber");
+            for (int i = 0; i < portions.Length; i++)
+            {
+                object portion = portions.GetValue(i);
+                Assert.IsTrue(ReadField<bool>(portion, "Started") && !ReadField<bool>(portion, "OnSourceTray"),
+                    "L" + level + " must load every raw portion before cooking; failed portion index " + i + ".");
+            }
+            Assert.IsTrue(ReadField<bool>(game, "cooking"), "L" + level + " should cook the selected piece after loading the tray.");
+            Assert.AreEqual(activatingIndex, ReadField<int>(game, "activePortion"),
+                "L" + level + " should activate the requested portion after emptying the raw tray.");
+        }
+
+        private static void DragActiveFoodToDifferentGrillPosition(Component game, int index, int pointerId)
+        {
+            Array portions = (Array)GetField(game, "portions");
+            Vector2 start = ReadField<Vector2>(portions.GetValue(index), "Position");
+            RectTransform grill = (RectTransform)GetField(game, "grillAreaRect");
+            Vector2[] candidates = { new Vector2(.72f, .18f), new Vector2(.28f, .18f),
+                new Vector2(.72f, .82f), new Vector2(.28f, .82f), new Vector2(.5f, .5f) };
+            for (int i = 0; i < candidates.Length; i++)
+            {
+                if (Vector2.Distance(start, candidates[i]) < .11f) continue;
+                Vector3 local = new Vector3((candidates[i].x - .5f) * grill.rect.width,
+                    (candidates[i].y - .5f) * grill.rect.height, 0f);
+                Vector2 screen = RectTransformUtility.WorldToScreenPoint(null, grill.TransformPoint(local));
+                DragFoodPiece(game, index, screen, pointerId + i);
+                if (Vector2.Distance(start, ReadField<Vector2>(portions.GetValue(index), "Position")) > .1f)
+                    return;
+            }
+            Assert.Fail("The selected portion should move to at least one free touch target on the grill.");
         }
 
         private static void TapFoodPiece(Component game, int index, int pointerId)

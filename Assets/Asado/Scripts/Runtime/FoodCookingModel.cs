@@ -4,7 +4,7 @@ using UnityEngine;
 namespace Asadito.Runtime
 {
     public enum ProvoletaCookingStage { NotApplicable, Cold, Softening, Browning, Ideal, Failed, Burnt }
-    public enum FoodCookVisualStage { Raw, Warming, Browning, Ideal, Overcooked, Burnt }
+    public enum FoodCookVisualStage { Raw, EarlyWarming, Warming, EarlyBrowning, Browning, Ideal, Drying, Overcooked, Charring, Burnt }
 
     [Serializable]
     public struct DonenessBand
@@ -148,23 +148,46 @@ namespace Asadito.Runtime
             {
                 switch (GetProvoletaStage(food))
                 {
-                    case ProvoletaCookingStage.Cold: return FoodCookVisualStage.Raw;
-                    case ProvoletaCookingStage.Softening: return FoodCookVisualStage.Warming;
+                    case ProvoletaCookingStage.Cold: return food.CoreTemperatureC >= 24f ? FoodCookVisualStage.EarlyWarming : FoodCookVisualStage.Raw;
+                    case ProvoletaCookingStage.Softening: return food.CoreTemperatureC >= 40f ? FoodCookVisualStage.EarlyBrowning : FoodCookVisualStage.Warming;
                     case ProvoletaCookingStage.Browning: return FoodCookVisualStage.Browning;
-                    case ProvoletaCookingStage.Ideal: return FoodCookVisualStage.Ideal;
+                    case ProvoletaCookingStage.Ideal: return food.CoreTemperatureC > 63f ? FoodCookVisualStage.Drying : FoodCookVisualStage.Ideal;
                     case ProvoletaCookingStage.Burnt: return FoodCookVisualStage.Burnt;
-                    case ProvoletaCookingStage.Failed: return FoodCookVisualStage.Overcooked;
+                    case ProvoletaCookingStage.Failed: return food.Char >= .52f ? FoodCookVisualStage.Charring : FoodCookVisualStage.Overcooked;
                 }
             }
 
             FoodFaceState face = food.CurrentFace;
             if (face.Char >= .72f) return FoodCookVisualStage.Burnt;
+            if (face.Char >= .52f) return FoodCookVisualStage.Charring;
             if (face.Char >= .32f || food.Moisture <= .28f) return FoodCookVisualStage.Overcooked;
+            if (face.Char >= .18f || food.Moisture <= .42f) return FoodCookVisualStage.Drying;
             if (face.Maillard >= .18f && food.CoreTemperatureC >= profile.DonenessBands[0].MinimumCoreC)
                 return FoodCookVisualStage.Ideal;
             if (face.Maillard >= .04f) return FoodCookVisualStage.Browning;
+            if (face.Maillard >= .02f) return FoodCookVisualStage.EarlyBrowning;
             if (face.SurfaceTemperatureC >= 38f) return FoodCookVisualStage.Warming;
+            if (face.SurfaceTemperatureC >= 28f) return FoodCookVisualStage.EarlyWarming;
             return FoodCookVisualStage.Raw;
+        }
+
+        // Six authored atlas rows remain intact; four half-way composites add ten visible stages.
+        public static void GetVisualBlend(FoodCookVisualStage stage, out int atlasStage, out float blend)
+        {
+            blend = 0f;
+            switch (stage)
+            {
+                case FoodCookVisualStage.EarlyWarming: atlasStage = 0; blend = .5f; break;
+                case FoodCookVisualStage.Warming: atlasStage = 1; break;
+                case FoodCookVisualStage.EarlyBrowning: atlasStage = 1; blend = .5f; break;
+                case FoodCookVisualStage.Browning: atlasStage = 2; break;
+                case FoodCookVisualStage.Ideal: atlasStage = 3; break;
+                case FoodCookVisualStage.Drying: atlasStage = 3; blend = .5f; break;
+                case FoodCookVisualStage.Overcooked: atlasStage = 4; break;
+                case FoodCookVisualStage.Charring: atlasStage = 4; blend = .5f; break;
+                case FoodCookVisualStage.Burnt: atlasStage = 5; break;
+                default: atlasStage = 0; break;
+            }
         }
 
         public static ProvoletaCookingStage GetProvoletaStage(FoodState food)

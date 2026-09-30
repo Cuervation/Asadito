@@ -4,7 +4,7 @@ Fuente de verdad de runtime: [`MvpLevelCatalog.cs`](../../Assets/Asado/Scripts/R
 
 | Nivel | Nombre de diseño | Porciones / comensales | Contenido (IDs del catálogo) | Aprendizaje principal |
 |---:|---|---:|---|---|
-| 1 | El debut | 2 | `tira`, `chorizo` | Tutorial de pinza, tap directo, drag, flip y tabla. |
+| 1 | El debut | 2 | `tira`, `chorizo` | Arrastrar toda la orden desde la bandeja → parrilla (cambia a tabla al vaciarse), reubicar durante la carga y cocinar/servir de a una pieza. |
 | 2 | Una tanda más | 3 | `chorizo`, `tira`, `chorizo` | Manejar más piezas y mantener el ritmo de servicio. |
 | 3 | Puntos distintos | 4 | `tira`, `chorizo`, `tira`, `chorizo` | Resolver varios puntos solicitados. |
 | 4 | El vacío | 4 | `vacio`, `tira`, `chorizo`, `tira` | Incorporar corte grueso y lento. |

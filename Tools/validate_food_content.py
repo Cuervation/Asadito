@@ -186,6 +186,55 @@ def try_pack(area, sizes, gap):
     return centers
 
 
+def try_pack_or_stack(area, sizes, gap):
+    """Pack full-size portions first; deliberately stagger only cuts that overflow the board."""
+    order = sorted(range(len(sizes)), key=lambda i: (-sizes[i][0] * sizes[i][1], i))
+    packed = []
+    centers = [None] * len(sizes)
+    for index in order:
+        candidate_indices = packed + [index]
+        candidate_centers = try_pack(area, [sizes[i] for i in candidate_indices], gap)
+        if candidate_centers is None:
+            continue
+        packed = candidate_indices
+        for local_index, food_index in enumerate(candidate_indices):
+            centers[food_index] = candidate_centers[local_index]
+
+    stacked = [False] * len(sizes)
+    if not sizes:
+        return centers, stacked
+    if not packed:
+        packed = [order[0]]
+        centers[order[0]] = (0.0, 0.0)
+
+    min_x = min(centers[i][0] - sizes[i][0] / 2 for i in packed)
+    max_x = max(centers[i][0] + sizes[i][0] / 2 for i in packed)
+    min_y = min(centers[i][1] - sizes[i][1] / 2 for i in packed)
+    max_y = max(centers[i][1] + sizes[i][1] / 2 for i in packed)
+    shift_x, shift_y = -(min_x + max_x) / 2, -(min_y + max_y) / 2
+    for index in packed:
+        centers[index] = (centers[index][0] + shift_x, centers[index][1] + shift_y)
+
+    anchor = packed[0]
+    offsets = ((1, 1), (-1, 1), (1, -1), (-1, -1), (0, 2), (0, -2), (2, 0), (-2, 0))
+    stack_order = 0
+    for index in order:
+        if centers[index] is not None:
+            continue
+        stacked[index] = True
+        size, anchor_size = sizes[index], sizes[anchor]
+        x = max(24, min(min(size[0], anchor_size[0]) * .28, 72))
+        y = max(24, min(min(size[1], anchor_size[1]) * .42, 80))
+        ox, oy = offsets[stack_order % len(offsets)]
+        stack_order += 1
+        cx = centers[anchor][0] + ox * x
+        cy = centers[anchor][1] + oy * y
+        cx = 0 if size[0] >= area[0] else max((size[0] - area[0]) / 2, min((area[0] - size[0]) / 2, cx))
+        cy = 0 if size[1] >= area[1] else max((size[1] - area[1]) / 2, min((area[1] - size[1]) / 2, cy))
+        centers[index] = (cx, cy)
+    return centers, stacked
+
+
 def audit_transparent_sprite(resource_path: str, expected_size):
     path = ROOT / "Assets/Asado/Resources" / resource_path
     assert path.is_file(), f"Missing generated gameplay sprite: {resource_path}"
@@ -287,6 +336,9 @@ def main():
         return width, area / width
 
     level_ids = audit_progression(set(ids))
+    serving_area = (380.0 * 0.74, (380.0 / 1.5) * 0.56)
+    serving_scales = []
+    serving_stack_counts = []
     for level, food_ids in enumerate(level_ids, 1):
         sizes = [visual_size(by_id[food_id]) for food_id in food_ids]
         centers = try_pack((640, 900), sizes, 16)
@@ -300,6 +352,25 @@ def main():
                 assert not (abs(cx - ox) < (width + ow) / 2 + 15.9 and abs(cy - oy) < (height + oh) / 2 + 15.9), (
                     f"L{level} packed portions {i + 1} and {j + 1} overlap"
                 )
+        board_centers, board_stacked = try_pack_or_stack(serving_area, sizes, 8)
+        assert len(board_centers) == len(sizes) and all(center is not None for center in board_centers), (
+            f"L{level} portions need full-size board positions, with intentional stacking only for overflow"
+        )
+        assert all(-.001 <= (cx / serving_area[0] + .5) <= 1.001 and
+                   -.001 <= (cy / serving_area[1] + .5) <= 1.001 for cx, cy in board_centers), (
+            f"L{level} serving portions must have board-local anchors"
+        )
+        for i, center in enumerate(board_centers):
+            for j in range(i + 1, len(board_centers)):
+                other = board_centers[j]
+                width, height = sizes[i]
+                other_width, other_height = sizes[j]
+                overlap = (abs(center[0] - other[0]) < (width + other_width) / 2 + 7.9 and
+                           abs(center[1] - other[1]) < (height + other_height) / 2 + 7.9)
+                if overlap:
+                    assert board_stacked[i] or board_stacked[j], f"L{level} unmarked board overlap: {i}, {j}"
+        serving_scales.append(1.0)
+        serving_stack_counts.append(sum(board_stacked))
     assert try_pack((640, 900), [visual_size(by_id["chorizo"])] * 10, 8) is not None, "Ten chorizos should fit"
     assert try_pack((640, 900), [visual_size(by_id["vacio"])] * 10, 8) is None, "Ten vacíos must not fit"
     required_resources = (
@@ -311,17 +382,14 @@ def main():
     resources = ROOT / "Assets/Asado/Resources"
     for resource in required_resources:
         assert (resources / resource).is_file(), f"Missing required runtime resource: {resource}"
-    audit_transparent_sprite("Art/Tools/PinzaParrilleraOpen.png", (2172, 724))
-    audit_transparent_sprite("Art/Tools/PinzaParrilleraClosed.png", (2172, 724))
     audit_transparent_sprite("Art/Props/TablaAsador.png", (1536, 1024))
     audit_transparent_sprite("Art/Props/MesitaAsador.png", (1086, 1448))
     game_source = (ROOT / "Assets/Asado/Scripts/AsaditoGame.cs").read_text(encoding="utf-8")
     for runtime_connection in (
-        'LoadSingleSpriteResource("Art/Tools/PinzaParrilleraOpen")',
-        'LoadSingleSpriteResource("Art/Tools/PinzaParrilleraClosed")',
         'LoadSingleSpriteResource("Art/Props/TablaAsador")',
         'Resources.Load<Texture2D>("Art/Props/MesitaAsador")',
-        'MakeImage("Pinza parrillera ilustrada"',
+        'MakeAluminumTraySprite()',
+        'MakeImage("Bandeja aluminio carne cruda"',
         'MakeImage("Mesita auxiliar de asador"',
         'MakeImage("Tabla de asador"',
         'AddComponent<ServingBoardTouch>()',
@@ -329,14 +397,30 @@ def main():
         assert runtime_connection in game_source, f"Generated visual is not connected to gameplay: {runtime_connection}"
     assert 'MakeButton("DAR VUELTA"' not in game_source, "Food flipping must not use a named-food action button"
     assert 'MakeButton("BANDEJA"' not in game_source, "Plating must be direct food drag to the visible board"
-    assert 'MakeButton("SERVIR"' not in game_source, "Serving must be a double-tap on the physical board"
+    assert 'MakeButton("SERVIR"' not in game_source, "Serving must use a tap on the physical board"
+    assert 'OnSourceTray' in game_source and 'PlaceRawPortionOnGrill' in game_source, "Raw portions must transfer from the aluminum source tray to the grill"
+    assert 'OnServingBoardTap' in game_source, "Serving must be connected to a single tap on the physical board"
+    assert 'tongsVisual' not in game_source and 'Pinza parrillera ilustrada' not in game_source, "The tongs visual must remain removed while the tray flow is active"
     assert 'FoodFootprintLayout.CalculateVisualSize' in game_source, "Per-food footprint sizes must be connected to the rendered portions"
     assert 'FoodFootprintLayout.TryPack' in game_source, "Initial food positions must be packed by physical footprint"
+    assert 'FoodFootprintLayout.TryPackOrStack' in game_source, "Full-size board portions should pack first and stack only overflow"
+    assert 'ServingBoardPortionScale' in game_source, "Cooked cuts must retain one per-level relative scale on the board"
+    assert 'Vector2 surfaceSize = new Vector2(380f, 380f / boardAspect)' in game_source, "Both surfaces must share one native-aspect size"
+    assert game_source.count('new Vector2(.5f, .5f), new Vector2(.5f, .5f), surfaceSize') >= 2, (
+        "The source tray and serving board must occupy the same center and exact dimensions"
+    )
+    assert 'const int width = 630;' in game_source and 'const int height = 420;' in game_source, (
+        "The generated aluminum tray must keep the same 3:2 aspect as the serving board"
+    )
+    assert 'RefreshSurfaceState()' in game_source and 'HasRawSourceFood()' in game_source, (
+        "The raw tray and board need explicit mutually-exclusive gameplay visibility"
+    )
+    assert 'servingBoardImage.preserveAspect = true' in game_source, "Serving board art must never be stretched"
     assert 'FoodFootprintLayout.Overlaps' in game_source, "Dragging must prevent physical overlaps"
     assert 'FoodFootprintLayout.GetTouchTargetSize' in game_source, "Mobile hit targets must be derived from visible food size"
     all_atlases = {path.stem for path in ATLAS_DIR.glob("*.png")}
     assert all_atlases == REQUIRED_IDS, f"Unexpected cooking atlas set: missing={sorted(REQUIRED_IDS-all_atlases)}, extra={sorted(all_atlases-REQUIRED_IDS)}"
-    print(f"Food content OK: {len(foods)} unique profiles, {len(foods) * 6} visible/coherent cooking frames, physical footprints and non-overlapping layouts for L1–L12, {len(cards)} level illustrations, runtime art/fonts present.")
+    print(f"Food content OK: {len(foods)} unique profiles, {len(foods) * 6} visible/coherent cooking frames, physical footprints and full-size board layouts for L1–L12 (surface scale 1.000; overflow stacked {min(serving_stack_counts)}–{max(serving_stack_counts)} portions), {len(cards)} level illustrations, runtime art/fonts present.")
 
 
 if __name__ == "__main__":

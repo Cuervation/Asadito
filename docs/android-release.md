@@ -11,7 +11,7 @@
 | Orientación | Portrait; manifiesto empaquetado anuncia `screenOrientation=portrait` |
 | SDK | min 26, target/compile 36 (Android 16) |
 | Arquitectura / backend | ARM64 / IL2CPP |
-| Icono | Android genera XML `adaptive-icon` con imagen de `AsaditoAppIcon`; sin firma productiva |
+| Icono | Android genera XML `adaptive-icon` usando `AsaditoAppIcon` (adaptación cuadrada de la parrilla cenital y la carne de `PortadaAsadito`); sin firma productiva |
 
 Unity API: ejecutar desde CLI `-executeMethod Asadito.Editor.AndroidReleaseBuild.BuildAndroidValidation`; predeterminado `/tmp/Asadito-expanded-android.apk` (override vía `ASADITO_APK_PATH`). `Builds/` no se incluye por ser artefacto.
 
@@ -22,3 +22,5 @@ Build actual del refactor (2026-09-30): Unity 6000.6.3f1 `Succeeded` en el segun
 Límite de smoke test: pese a instalar, el AVD es una imagen **x86_64**, no un teléfono Pixel ARM64. Al abrir el APK ARM64 mostró el aviso de incompatibilidad del emulador y Unity no pudo inicializar `Unity Engine Graphics API`; con SwiftShader la imagen solo anuncia OpenGL ES 3.1, mientras Unity intenta crear contextos ES 3.2/3.1. Por ello **no** se verificaron menú, gameplay, toque, drag, flip o servicio en esta build, y no existe una captura de gameplay Android nueva. La pantalla del bloqueo gráfico quedó en `/tmp/asadito-qa/02-after-hardware-warning.png` solo como evidencia diagnóstica. La build está compilada, firmada para validación e instalada, pero el smoke de runtime requiere teléfono ARM64 compatible; no se publicó ni se usaron claves productivas.
 
 Desde el 31-08-2026 Google Play requiere que nuevas aplicaciones y actualizaciones apunten a API36 o superior ([requisito oficial de Google Play](https://support.google.com/googleplay/android-developer/answer/11926878?hl=es)). Esta configuración cubre el umbral target, pero **no** implica certificación de política, release firmado, QA de teléfono físico ni publicación. El paquete actual usa firma debug. Claves productivas deben permanecer fuera del repo.
+
+Build de icono parrilla (2026-09-30): Unity 6000.6.3f1 `Succeeded`; APK ARM64 `/tmp/Asadito-app-icon-grill-20260930.apk` (60 MiB). `aapt` confirmó `com.cuervation.asadito`, 1.2.0/code3, min26 y target/compile36, y que el launcher usa XML `adaptive-icon` con `ic_launcher_background`/`ic_launcher_foreground`; `apksigner` verificó firma v2 de validación. El teléfono no estaba conectado en esta sesión, así que no se instaló ni se validó el aspecto del launcher en dispositivo físico. La compilación se hizo en una copia aislada porque el Editor Unity abierto bloquea una segunda instancia del mismo proyecto.

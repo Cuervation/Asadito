@@ -6,6 +6,43 @@ namespace Asadito.Tests
     public sealed class HeatAndCookingTests
     {
         [Test]
+        public void CookingVisuals_HaveTenDistinctAtlasCompositions()
+        {
+            var compositions = new System.Collections.Generic.HashSet<string>();
+            foreach (Asadito.Runtime.FoodCookVisualStage stage in System.Enum.GetValues(typeof(Asadito.Runtime.FoodCookVisualStage)))
+            {
+                Asadito.Runtime.FoodCookingModel.GetVisualBlend(stage, out int row, out float blend);
+                Assert.That(row, Is.InRange(0, 5));
+                Assert.IsTrue(blend == 0f || (blend == .5f && row < 5));
+                compositions.Add(row + ":" + blend);
+            }
+            Assert.AreEqual(10, compositions.Count);
+        }
+
+        [Test]
+        public void CookingVisuals_ResolveAllTenThermalStagesForEveryFood()
+        {
+            foreach (var food in Asadito.Runtime.FoodCatalog.GetAll())
+            {
+                var profile = food.Profile;
+                var observed = new System.Collections.Generic.HashSet<Asadito.Runtime.FoodCookVisualStage>();
+                float[] cores = profile.UsesCheeseStages
+                    ? new[] { 20f, 25f, 35f, 42f, 50f, 60f, 65f, 72f, 74f, 80f }
+                    : new[] { 20f, 25f, 30f, 35f, 40f, profile.DonenessBands[0].MinimumCoreC + 1f, 70f, 75f, 80f, 85f };
+                float[] surface = { 20f, 30f, 45f, 120f, 140f, 160f, 180f, 190f, 210f, 220f };
+                float[] maillard = { 0f, 0f, 0f, .025f, .05f, .2f, .3f, .4f, .5f, .8f };
+                float[] chars = { 0f, 0f, 0f, 0f, 0f, 0f, .2f, .35f, .55f, .8f };
+                for (int n = 0; n < 10; n++)
+                {
+                    var state = new Asadito.Runtime.FoodState { CoreTemperatureC = cores[n] };
+                    state.SetCurrentFace(new Asadito.Runtime.FoodFaceState { SurfaceTemperatureC = surface[n], Maillard = maillard[n], Char = chars[n] });
+                    observed.Add(Asadito.Runtime.FoodCookingModel.GetVisualStage(state, profile));
+                }
+                Assert.AreEqual(10, observed.Count, food.Id);
+            }
+        }
+
+        [Test]
         public void GrillHeatModel_IsAlwaysHotAndClampsConfiguredTemperature()
         {
             var grill = new Asadito.Runtime.GrillHeatModel();

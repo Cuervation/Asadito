@@ -2,11 +2,13 @@
 
 **Checked:** 2026-09-30. Canonical quick reference for active behavior; verify code/data when changing it. Dated QA detail: [`docs/ai/current-state.md`](ai/current-state.md), [`docs/ai/mvp-status.md`](ai/mvp-status.md).
 
-- **Scope:** 12 progressive levels, 18 data-driven foods, six visual cooking states each. L1 is the tutorial, not the content limit.
+- **Scope:** 12 progressive levels, 18 data-driven foods, ten runtime visual cooking stages each (six authored atlas rows plus four intermediate blends). L1 is the tutorial, not the content limit.
 - **Loop:** one portrait scene; runtime UI in `Assets/Asado/Scripts/AsaditoGame.cs`. Grill starts uniformly hot (210 °C); no ignition, charcoal, fuel or movable embers.
-- **Input:** tap food to select/manipulate with tongs; drag to move or plate on the serving board; tap selected food to flip; double-tap the board to serve a complete order.
+- **Input:** raw food starts on a generated aluminum tray, automatically packed by visible footprint; overflow stacks only when needed. Invisible mobile touch targets may overlap and resolve to the nearest piece. Drag each cut to the grill; the tray remains until emptied, then vanishes and the serving board appears in the exact same 380×253.3 rect, center, and 3:2 aspect. Food stays at the same unscaled size on raw tray, grill, and board; the board packs full-size pieces and stacks only overflow. While loading, placed grill pieces can be repositioned and wait without heating; after the source is empty, cook one active piece at a time. Tap grilled food to select (no flipping for now) and drag to board; single-tap the full board to serve. Tongs are removed from the active HUD.
 - **Core data:** `FoodCatalog.json`/`FoodCatalog`, `FoodCookingModel`/`FoodState`, `GrillHeatModel` and `MvpLevelCatalog`. See [`repo-map.md`](repo-map.md).
 - **Out of scope:** economy/shop, restaurant management, multiplayer, walking NPCs, other appliances and charcoal management.
-- **Latest documented QA:** footprint update EditMode 21/21 and validator PASS; its PlayMode run stopped at 8/10 (`editor_unfocused`). Physical touch/performance/art sign-off remain unverified. Earlier 10/10 is not evidence for that update.
+- **Latest documented QA:** validator PASS (18 foods / 108 states / 12 levels); Unity EditMode **23/23 PASS**; focused PlayMode surface state and direct-touch/reposition **1/1 PASS each**; normal PlayMode progression L1–L12 **1/1 PASS** (388.47 s). Current-turn test XML and details: [`docs/ai/current-state.md`](ai/current-state.md). No APK or device screenshot was produced, so visual QA on a phone remains pending. Scoped `git diff --check` is recorded for this change; unrelated modified `.png.meta` files previously caused the repository-wide check to report trailing whitespace.
 
 Update this page when live behavior changes. Detailed rules stay in the one relevant spec; test/build evidence stays dated in `docs/ai/`.
+
+- **Current change (2026-09-30):** ten cooking stages, single-sided input; previous QA numbers above predate this change. Removed the inactive-face quality penalty. Isolated Roslyn compilation passed for runtime, gameplay and both test assemblies; scoped whitespace check passed. Unity refresh was blocked by an existing `tests_running` job; EditMode/PlayMode execution and device verification remain pending.

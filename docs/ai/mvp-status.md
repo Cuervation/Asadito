@@ -2,10 +2,26 @@
 
 > Registro fechado de verificación y pendientes; para comportamiento operativo actual usar [`docs/current-project-state.md`](../current-project-state.md). Los resultados pertenecen al alcance/commit anotado en cada sección.
 
+## Intercambio de bandeja/tabla y escala uniforme (2026-09-30)
+
+- Bandeja de aluminio y tabla ahora son superficies intercambiables: ambas tienen igual rect 380×253.3, mismo centro en la mesita y aspecto 3:2; sólo la bandeja aparece con comida cruda y la tabla toma su lugar cuando toda la orden fue movida a la parrilla.
+- Se quitó el ajuste uniforme de escala al emplatar. El multiplicador de tabla es 1.0, igual a bandeja/parrilla; primero se empacan huellas completas y sólo se apila el excedente, sin reducir cortes grandes para que entren.
+- Mientras queden crudos en fuente, se pueden reubicar en parrilla piezas ya cargadas, sin cocción, para que órdenes densas no queden bloqueadas; cocina una por vez al vaciar bandeja. El packing de fallback prueba primero el slot del corte exacto para no reservar mal el único espacio de un corte grande.
+- `Tools/validate_food_content.py` PASS (18 perfiles, 108 frames, 12 cartas, layouts a escala 1.0). EditMode **23/23 PASS**; PlayMode surface swap **1/1**, direct-touch/reposition **1/1**, recorrido normal L1–L12 **1/1 PASS** (388.47 s). XML bajo `/tmp/Asadito-surface-swap-*.xml`. No se generó captura ni APK en este turno; QA visual en teléfono queda pendiente.
+- La verificación global `git diff --check` informa whitespace heredado en `.png.meta` previamente modificados; la verificación limitada a archivos de este ajuste sí pasa.
+
+## Nueva UX de gameplay (2026-09-30)
+
+- Reemplazada la interacción principal: cortes crudos visibles en bandeja de aluminio generada por código → drag a parrilla para cocinar → drag desde parrilla a tabla. Se eliminó del HUD la pinza diminuta. Flip continúa por tap sobre la pieza de parrilla; servir ahora requiere un solo tap en la tabla completa.
+- En gameplay se simplificó el pedido a comensal + cantidad, crecieron labels principales, se redujeron frases contextuales y se actualizó el objetivo del tutorial para carne cruda → parrilla → tabla.
+- Corrección visual: la carne conserva ahora la misma escala de sprite desde la bandeja hasta la parrilla; se agrandó la fuente de aluminio y se distribuyen las piezas en dos columnas.
+- Iteración previa al ajuste superior: la escala de emplatado se calculaba por celda en un grid compacto. Ese layout fue reemplazado por un packing de huellas sobre el área útil y una escala uniforme por nivel.
+- Validator actualizado para verificar bandeja/grafo de interacción y ausencia de pinza en runtime. Validator PASS. **Historial de la primera ejecución, anterior al ajuste superior:** 4/4 PlayMode enfocados; recorrido L1–L12 1/1 PASS en 388.4 s; Retry y pause/settings 2/2 PASS. En esa primera ejecución quedó pendiente confirmar la nueva aserción de tamaño porque batchmode no produjo XML; su reejecución y evidencia están en la sección superior. APK ARM64 IL2CPP `/tmp/Asadito-food-scale-20260930.apk` (56 MiB), package/version/min/target/ABI y firma v2 verificados; BuildReport Succeeded. ADB quedó vacío tras reiniciar; esa APK no se instaló en el teléfono.
+
 ## Actualización de proporciones físicas de alimentos (2026-09-30)
 
 - `FoodCatalog.json` schema 2: `chorizo` permanece en huella 1.0 con su rect legado (236×176×0.92); los otros 17 tamaños se definen en `FootprintAreaMultiplier` y usan el aspecto de su atlas.
-- `FoodFootprintLayout` calcula size sin estirar, packea por área real, comprueba límites/solapamientos del drag y genera hit targets basados en el tamaño visible. Nivel inicial respeta los mismos rectángulos; los slots del board escalan uniformemente para conservar el aspecto.
+- `FoodFootprintLayout` calcula size sin estirar, packea por área real, comprueba límites/solapamientos del drag y genera hit targets basados en el tamaño visible. **En esta iteración histórica** el board usaba slots escalados; el comportamiento vigente empaca las huellas completas a escala 1.0 y apila sólo excedentes, ver la sección superior.
 - EditMode actual 21/21 PASS; validator actual PASS (18 IDs, 108 atlas frames, layouts L1–L12 y prueba de capacidad Chorizo/Vacío); `git diff --check` PASS. Comparativa Unity Editor 1080×1920: `/tmp/asadito-food-scale-comparison.png`.
 - PlayMode del cambio **no verificado**: tras 8 de 10 tests el Editor reportó `editor_unfocused` en el test normal L1–L12, sin fallas reportadas; se detuvo/limpió ese job. El 10/10 documentado abajo fue antes de este cambio. No se generó APK nueva ni se revisó en teléfono.
 
@@ -21,7 +37,7 @@
 - No se reconstruyó APK para este cambio: el APK previo `/tmp/Asadito-always-hot-1.2.0-arm64.apk` no incluye el layout actualizado; verificar compilación/instalación Android tras el commit si el release requiere esta UI.
 
 - Parrilla always-hot uniforme a 210 °C; se eliminaron carbón/encendido, combustible, heat-grid/brasas táctiles, glow de gameplay, SFX de ignition y tutorial asociado. Cocción de alimentos, caras/flip, Maillard, humedad, char y perfiles siguen conectados.
-- Tocar comida directamente selecciona; hitbox invisible ampliada, pinza ilustrada abierta/cerrada, tap repetido voltea; arrastrar a tabla física y doble tap para servirla. No quedan botones de acción DAR VUELTA/BANDEJA/SERVIR ni botones individuales por corte.
+- En la iteración 10bis previa, tocar comida directamente seleccionaba y una pinza ilustrada acompañaba el drag; ese flujo fue reemplazado por la nueva UX de bandeja cruda descrita arriba. No quedan botones de acción DAR VUELTA/BANDEJA/SERVIR ni botones individuales por corte.
 - Catálogo data-driven de 18 alimentos, 108 estados visuales y progresión de 12 niveles; pause/settings mínimos, scoring, save y debug oculto fuera de Editor/development.
 - Specs, arquitectura y manifests documentan la regla y los assets conectados.
 

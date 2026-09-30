@@ -164,6 +164,122 @@ namespace Asadito.Tests
             Assert.IsFalse(Asadito.Runtime.FoodFootprintLayout.TryPack(board, vacios, 8f, out _), "Ten vacíos should not fit in the same grill.");
         }
 
+        [Test]
+        public void RawTrayPacksFoodBeforeStaggeringOnlyOverflow()
+        {
+            Vector2 tray = new Vector2(380f, 310f);
+            var fitsWithoutStacking = new[] { new Vector2(220f, 140f), new Vector2(220f, 140f) };
+            Assert.IsTrue(Asadito.Runtime.FoodFootprintLayout.TryPackOrStack(tray, fitsWithoutStacking, 8f,
+                out Vector2[] fitCenters, out bool[] fitStacked));
+            Assert.IsFalse(fitStacked[0] || fitStacked[1], "Pieces that fit should remain separate.");
+            AssertPackedWithoutOverlap(tray, fitsWithoutStacking, fitCenters, fitStacked);
+
+            var crowded = new[]
+            {
+                new Vector2(180f, 140f), new Vector2(180f, 140f),
+                new Vector2(180f, 140f), new Vector2(180f, 140f)
+            };
+            Assert.IsTrue(Asadito.Runtime.FoodFootprintLayout.TryPackOrStack(tray, crowded, 8f,
+                out Vector2[] crowdedCenters, out bool[] crowdedStacked));
+            int overflowCount = 0;
+            for (int i = 0; i < crowdedStacked.Length; i++) if (crowdedStacked[i]) overflowCount++;
+            Assert.That(overflowCount, Is.GreaterThan(0).And.LessThan(crowded.Length),
+                "A full tray should pack what fits before deliberately stacking the rest.");
+            AssertPackedWithoutOverlap(tray, crowded, crowdedCenters, crowdedStacked);
+
+            for (int i = 0; i < crowded.Length; i++)
+            {
+                if (!crowdedStacked[i]) continue;
+                Vector2 stackedCenter = ToLocal(tray, crowdedCenters[i]);
+                Assert.IsTrue(Asadito.Runtime.FoodFootprintLayout.FitsInside(tray, crowded[i], stackedCenter),
+                    "Even intentionally stacked food should stay within the aluminum tray.");
+                Assert.IsFalse(crowdedCenters[i] == crowdedCenters[0], "Stack offsets should expose the layer beneath.");
+            }
+        }
+
+        [Test]
+        public void EveryLevelKeepsFoodScaleOnServingBoardAndStacksOnlyOverflow()
+        {
+            Asadito.Runtime.FoodVisualReference reference = Asadito.Runtime.FoodCatalog.GetVisualReference();
+            Asadito.Runtime.FoodDefinition referenceFood = Asadito.Runtime.FoodCatalog.Get(reference.FoodId);
+            Texture2D referenceAtlas = Resources.Load<Texture2D>("Art/Foods/States/" + reference.FoodId);
+            Sprite[] referenceSprites = Asadito.Runtime.FoodSpriteLibrary.CreateStateSprites(referenceFood, referenceAtlas);
+            createdSprites.AddRange(referenceSprites);
+            float referenceAspect = referenceSprites[0].rect.width / referenceSprites[0].rect.height;
+
+            var foodSizes = new Dictionary<string, Vector2>(System.StringComparer.OrdinalIgnoreCase);
+            var foodAspects = new Dictionary<string, float>(System.StringComparer.OrdinalIgnoreCase);
+            foreach (Asadito.Runtime.FoodDefinition food in Asadito.Runtime.FoodCatalog.GetAll())
+            {
+                Texture2D atlas = Resources.Load<Texture2D>("Art/Foods/States/" + food.Id);
+                Assert.IsNotNull(atlas, "Missing food atlas " + food.Id);
+                Sprite[] sprites = Asadito.Runtime.FoodSpriteLibrary.CreateStateSprites(food, atlas);
+                createdSprites.AddRange(sprites);
+                float aspect = sprites[0].rect.width / sprites[0].rect.height;
+                foodAspects.Add(food.Id, aspect);
+                foodSizes.Add(food.Id, Asadito.Runtime.FoodFootprintLayout.CalculateVisualSize(reference,
+                    referenceAspect, aspect, food.FootprintAreaMultiplier));
+            }
+
+            // Matches the inset cutting surface on TablaAsador.png, not the rim or handle.
+            Vector2 boardArea = new Vector2(380f * .74f, (380f / 1.5f) * .56f);
+            for (int levelNumber = 1; levelNumber <= Asadito.Runtime.MvpLevelCatalog.Count; levelNumber++)
+            {
+                string[] foodIds = Asadito.Runtime.MvpLevelCatalog.Get(levelNumber).FoodIds;
+                var sizes = new Vector2[foodIds.Length];
+                for (int i = 0; i < sizes.Length; i++) sizes[i] = foodSizes[foodIds[i]];
+
+                Assert.IsTrue(Asadito.Runtime.FoodFootprintLayout.TryPackOrStack(boardArea, sizes, 8f,
+                    out Vector2[] centers, out bool[] stacked), "L" + levelNumber + " portions should be positioned on the board.");
+                Assert.That(centers.Length, Is.EqualTo(sizes.Length));
+                Assert.That(stacked.Length, Is.EqualTo(sizes.Length));
+                for (int i = 0; i < sizes.Length; i++)
+                {
+                    Vector2 displayedSize = sizes[i];
+                    Assert.That(displayedSize.x / displayedSize.y, Is.EqualTo(foodAspects[foodIds[i]]).Within(.001f),
+                        foodIds[i] + " must keep its original food-sprite aspect on the board.");
+                    Vector2 center = ToLocal(boardArea, centers[i]);
+                    if (displayedSize.x <= boardArea.x && displayedSize.y <= boardArea.y)
+                        Assert.IsTrue(Asadito.Runtime.FoodFootprintLayout.FitsInside(boardArea, displayedSize, center),
+                            "L" + levelNumber + " " + foodIds[i] + " must stay on the board's cutting surface when its full size fits.");
+                    Assert.That(stacked[i] || displayedSize.x > boardArea.x || displayedSize.y > boardArea.y ||
+                                Asadito.Runtime.FoodFootprintLayout.FitsInside(boardArea, displayedSize, center),
+                        "Overflow may use an intentional stack or a centered full-size base cut, never a shrunken sprite.");
+                    for (int j = i + 1; j < sizes.Length; j++)
+                    {
+                        Vector2 otherCenter = ToLocal(boardArea, centers[j]);
+                        bool overlap = Asadito.Runtime.FoodFootprintLayout.Overlaps(center, displayedSize,
+                            otherCenter, sizes[j], 7.9f);
+                        if (overlap)
+                            Assert.IsTrue(stacked[i] || stacked[j],
+                                "L" + levelNumber + " portions may overlap only when the layout marks overflow as stacked.");
+                    }
+                }
+            }
+        }
+
+        private static void AssertPackedWithoutOverlap(Vector2 area, Vector2[] sizes, Vector2[] normalizedCenters,
+            bool[] stacked)
+        {
+            for (int i = 0; i < sizes.Length; i++)
+            {
+                if (stacked[i]) continue;
+                Vector2 center = ToLocal(area, normalizedCenters[i]);
+                Assert.IsTrue(Asadito.Runtime.FoodFootprintLayout.FitsInside(area, sizes[i], center),
+                    "Every unstacked piece must fit fully on the tray.");
+                for (int j = i + 1; j < sizes.Length; j++)
+                {
+                    if (stacked[j]) continue;
+                    Assert.IsFalse(Asadito.Runtime.FoodFootprintLayout.Overlaps(center, sizes[i],
+                        ToLocal(area, normalizedCenters[j]), sizes[j], 7.9f),
+                        "Unstacked food pieces must have a visible gap.");
+                }
+            }
+        }
+
+        private static Vector2 ToLocal(Vector2 area, Vector2 normalized) =>
+            new Vector2((normalized.x - .5f) * area.x, (normalized.y - .5f) * area.y);
+
         private static float AspectFor(string foodId)
         {
             Asadito.Runtime.FoodDefinition food = Asadito.Runtime.FoodCatalog.Get(foodId);
