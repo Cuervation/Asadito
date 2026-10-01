@@ -4,9 +4,11 @@
 
 ## Jugable
 - Primer capítulo de 12 asados; **L1–6** disponibles secuencialmente según estrellas. Partida nueva empieza solo con L1; cards restantes Disabled/candado. L7–12 siguen bloqueados hasta implementar sus verticales. Se conservan unlock/stars/scores antiguos.
-- L1–3: cocina simple/cantidad/gustos; L4 presenta monedas y bonus inicial único. L5–6: pedido → carnicería → compra chorizo/tira → heladera/inventario → selección → preparación → bandeja → parrilla → tabla → servicio → evaluación/recompensa/saldo persistido.
+- **Todos L1–6:** pedido → carnicería → compra chorizo/tira → heladera/inventario → selección → preparación → bandeja → parrilla → tabla → servicio → evaluación/recompensa/saldo persistido.
 - Wallet real, stock por jornada, capacidad limitada, selección de cantidades, descarte/pérdida, reward único y Caja del Asador sin soft-lock. Reiniciar cocina conserva el mismo run; un reinicio de app permite reanudarlo desde su nivel sin recomprar. Solo abandono explícito cuenta carne preparada como pérdida.
-- Resultado separa ASADOR/GESTIÓN/OPERACIÓN, general, estrellas, costo utilizado, desperdicio, ingresos, ganancia y saldo. Cocina/comensales conservan los cuatro componentes existentes.
+- L1 compra guiada chorizo/tira con monedas reales; L2 cantidad; L3 gustos/puntos; L4 ganancia/pérdidas; L5 inventario existente; L6 desafío autónomo5comensales. Tutorial/tips persistidos sin repetir; heladera/recovery accesible aun con saldo cero.
+- Saldo inicial650 solo en partidas nuevas; precios100/180 y reward80+150/invitado modulado por rendimiento. Bonus L4 retirado sin quitar/pagar recursos históricos.
+- Resultado separa ASADOR/GESTIÓN/OPERACIÓN, general, estrellas, costo utilizado, desperdicio, ingresos, ganancia y saldo. Pesos60/25/15 con mínimos55ASADOR/50cocción peorpieza/65saciedad; dos/tresestrellas requieren70/85ASADOR. Crudo/quemado no se aprueba por gestión perfecta. Compra/descarte confirmados; reparto justo normalizado por saciedad/gusto/punto.
 
 ## Contratos conservados
 - Una escena portrait1080×1920, safe area, input directo; sin carbón/encendido/apagado ni botón PAUSA visible. VOLVER con flecha; pausa interna por app/Escape durante cocina.
@@ -16,7 +18,7 @@
 ## Arquitectura/datos
 - `ManagementConfig.json`: economía, capacidad, precios, stock, porciones, rewards, pesos y gates; `ChapterOneLevels.json`: pedidos. Catálogo de alimentos sigue siendo fuente de identidad/perfiles/arte.
 - `ManagementState`/`ManagementService`/`Wallet`: reglas y transacciones independientes; `ManagementScreen`: vistas event-driven; AsaditoGame adapta preparación/resultados sin reescribir térmica.
-- Save v4, migración aditiva desde v1–3. Balance/inventario/run/equipamiento/ciclos persistidos; progreso/settings retenidos.
+- Save v5, migración aditiva desde v1–4. Balance/inventario/run/equipamiento/ciclos persistidos; progreso/settings retenidos.
 - Cinco sprites de gestión conectados por referencias en `Resources/ManagementArt.asset`; 85 restantes fuera del runtime. Botones arcade existentes intactos.
 
 ## Preparado, no activado
@@ -25,10 +27,9 @@
 - Roadmap Verticales2–6 en [roadmap](roadmap.md); reglas por dominio enlazadas desde full-game.
 
 ## QA de esta entrega
-- Validator de contenido PASS (18 perfiles,108 frames,12cards/layouts).
-- Compilación/importación Unity6000.6.3f1 real; EditMode **39/39 PASS**; PlayMode general **13/13 PASS** (191.26s); flujo gestión/legibilidad/reinicio final **1/1 PASS** (32.70s), incluye compras/preparación/cocción/servicio/reload y prevención de texto truncado.
-- Renders1080×1920 de planificación/carnicería/heladera/resultado revisados; corregidos canvas de comida encima de resultados y métricas de fuentes.
-- Editor principal MCP continúa en `tests_running`/ping sin respuesta; QA en checkout temporal aislado sin cambiar Library del usuario. Evidencia y límites: [QA Vertical1](ai/management-vertical1-qa.md).
-- Android ARM64/IL2CPP **Succeeded**; APK en `build/Asadito-management-vertical1-20261001.apk`, firma debug v2/metadata/ABI verificados. Hubo una recompilación incremental necesaria tras corregir reanudación del save. Sin teléfono ARM64 accesible por ADB (solo AVDx86_64); no instalación ni QA físico afirmados.
+- Unity6000.6.3f1 real en checkoutQA ya importado; **EditMode53/53 PASS**, focal gestión **3/3 PASS** y recorrido pagado de los seis niveles **1/1 PASS** (153.12s). Validator contenido PASS. Broad12/13 inicial encontró truncadoL6; corregido y probado en cierre del recorrido. Evidencia exacta: [QA gestión desdeL1](ai/management-level1-qa.md).
+- Renders1080×1920 de guíaL1/compra/heladera/resultados revisados. Font ascenders con espacio2.5x y overflow, detalle260px sin reducir fuente; test comprueba geometría/texto.
+- Se conserva aislamiento del Editor principal; no se modifica Library del usuario.
+- Android1.3.0/code4 ARM64/IL2CPP **Succeeded**, APK65MiB en `build/Asadito-1.3.0-management-level1-20261001.apk`; ABI/metadata/firma v2 debug verificados. ADB no detecta dispositivos al cierre; no se instaló esta APK.
 
 El release público requiere playtesting humano y QA táctil/performance ARM64. Esta vertical no equivale a toda la versión definitiva del juego.

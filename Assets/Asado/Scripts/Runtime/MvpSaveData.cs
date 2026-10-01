@@ -15,7 +15,7 @@ namespace Asadito.Runtime
     [Serializable]
     public sealed class MvpSaveData
     {
-        public const int CurrentVersion = 4;
+        public const int CurrentVersion = 5;
         public int Version = CurrentVersion;
         public int MaxUnlockedLevel = 1;
         public int[] StarsByLevel = new int[MvpLevelCatalog.Count];
@@ -53,6 +53,13 @@ namespace Asadito.Runtime
             if (data.Management.Purchases == null) data.Management.Purchases = new System.Collections.Generic.List<PurchaseRecord>();
             data.Management.NextUnitId = Mathf.Max(1, data.Management.NextUnitId);
             foreach (var unit in data.Management.Inventory) data.Management.NextUnitId = Mathf.Max(data.Management.NextUnitId, unit.Id + 1);
+            // Existing management players already know the purchase/preparation loop.
+            // Legacy cooking-only TutorialCompleted does not skip the new L1 buying guide.
+            if (data.Version < 5 && data.Management.Cycle > 0)
+                data.Management.ManagementTutorialCompleted = true;
+            if (data.Management.ActiveRun != null && data.Management.ActiveRun.Units != null)
+                foreach (var unit in data.Management.ActiveRun.Units)
+                    data.Management.NextUnitId = Mathf.Max(data.Management.NextUnitId, unit.Id + 1);
             data.Version = CurrentVersion;
             return data;
         }

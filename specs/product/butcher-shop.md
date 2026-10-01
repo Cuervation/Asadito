@@ -6,3 +6,6 @@ Antes de comprar se conoce pedido, invitados, hambre aproximada, puntos y favori
 ## Promos preparadas, no activadas en V1
 Contrato de cotización cubre porcentaje, BuyNPayM (2x1/3x2 y restos), pack, oferta del día y liquidación como descuento, premium como producto sin descuento. No activar todas al comienzo. Origen/ventana/variantes premium se agregan con Vertical 3 y sus datos; no hay eventos aleatorios ahora.
 Una promoción NO ignora capacidad ni frescura. Comprar excedente ocupa slots e inmoviliza saldo; no debería ser siempre óptimo. Tutorial controla stock, never imposibilita continuar por un evento obligatorio.
+
+## Disponible desde nivel 1
+Saldo visible en todas las vistas y cocina. Cards muestran precio, gramos, stock, unidades propias, cantidad sugerida y faltante. Primer toque en COMPRAR muestra CONFIRMAR y costo; segundo confirma transacción. No se debita al previsualizar, ni al salir. Sonido y aviso ✓ tras compra; error explícito no muta. Primera guía L1 evita excedentes; después se habilita compra libre. Cantidad sugerida elegida sobre compra rápida masiva para no comprar accidentalmente. Descarte también requiere confirmación y no aparece habilitado en la guía inicial.

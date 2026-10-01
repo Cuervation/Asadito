@@ -11,7 +11,7 @@ Abandonar un asado preparado registra el costo como pérdida pendiente. Reinicia
 Descartar una unidad registra pérdida persistente y pendiente de resultado. No destruir progreso para recuperar una partida.
 
 ## Save
-MvpSave v4 migra v1–3 conservando estrellas, mejores scores, unlock y settings. Gestión ausente se inicializa una sola vez con tuning; nunca rellenar monedas en cada load. Arrays se normalizan como antes; ids próximos superan los existentes. JSON roundtrip preserva run/inventario/balance. PlayerPrefs es el almacenamiento local existente; no backend ni sincronización nueva.
+MvpSave v5 migra v1–4 conservando estrellas, mejores scores, unlock y settings. Gestión ausente se inicializa una sola vez con tuning; nunca rellenar monedas en cada load. Arrays se normalizan como antes; ids próximos superan los existentes. JSON roundtrip preserva run/inventario/balance. PlayerPrefs es el almacenamiento local existente; no backend ni sincronización nueva.
 
 ## Futuro
 Lotes grandes, storage freezer/thawing y reservas se añaden solo al implementar su vertical; no copiar catálogos térmicos ni crear inventario paralelo por pantalla.

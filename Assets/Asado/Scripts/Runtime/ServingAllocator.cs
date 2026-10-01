@@ -41,25 +41,22 @@ namespace Asadito.Runtime
                 if (portion == null) continue;
                 int bestGuest = -1;
                 int bestServedCount = int.MaxValue;
-                float bestCoverage = float.NegativeInfinity;
-                int bestFoodPreference = int.MinValue;
-                int bestDoneness = int.MinValue;
+                float bestFit = float.NegativeInfinity;
+                var scoring = new ScoreConfig();
                 for (int guestIndex = 0; guestIndex < guests.Count; guestIndex++)
                 {
                     GuestProfile guest = guests[guestIndex];
                     if (guest == null) continue;
                     float target = Mathf.Max(0f, guest.TargetFoodAmount);
                     float coverage = target <= 0f ? 0f : Mathf.Min(portion.Amount, Mathf.Max(0f, target - assigned[guestIndex]));
-                    int foodPreference = GetFoodPreference(guest, portion.FoodId);
-                    int doneness = guest.PreferredDoneness == portion.Doneness ? 1 : 0;
+                    float satiety = target <= 0f ? 100f : Mathf.Clamp01(coverage / target) * 100f;
+                    float fit = satiety * scoring.SatietyWeight
+                        + GetFoodPreferenceScore(guest, portion.FoodId) * scoring.FoodPreferenceWeight
+                        + (guest.PreferredDoneness == portion.Doneness ? 100f : 0f) * scoring.DonenessMatchWeight;
                     int servedCount = portionsByGuest[guestIndex];
-                    if (servedCount < bestServedCount ||
-                        (servedCount == bestServedCount && coverage > bestCoverage) ||
-                        (servedCount == bestServedCount && Mathf.Approximately(coverage, bestCoverage) && foodPreference > bestFoodPreference) ||
-                        (servedCount == bestServedCount && Mathf.Approximately(coverage, bestCoverage) && foodPreference == bestFoodPreference && doneness > bestDoneness))
+                    if (servedCount < bestServedCount || (servedCount == bestServedCount && fit > bestFit))
                     {
-                        bestGuest = guestIndex; bestServedCount = servedCount; bestCoverage = coverage;
-                        bestFoodPreference = foodPreference; bestDoneness = doneness;
+                        bestGuest = guestIndex; bestServedCount = servedCount; bestFit = fit;
                     }
                 }
                 if (bestGuest < 0) continue;

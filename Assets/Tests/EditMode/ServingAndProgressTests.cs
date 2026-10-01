@@ -6,7 +6,7 @@ namespace Asadito.Tests
     public sealed class ServingAndProgressTests
     {
         [Test]
-        public void ServingAllocator_IsDeterministic_AndUsesFoodPreferenceAfterCoverage()
+        public void ServingAllocator_IsDeterministic_AndBalancesSatietyPreferenceAndPoint()
         {
             var ana = new Asadito.Runtime.GuestProfile { Id = "ana", TargetFoodAmount = .1f };
             ana.FavoriteFoods.Add("tira");
@@ -25,6 +25,18 @@ namespace Asadito.Tests
             Assert.AreEqual(first[1].GuestId, second[1].GuestId);
             Assert.AreEqual("tito", first[0].GuestId);
             Assert.AreEqual("ana", first[1].GuestId);
+        }
+
+        [Test]
+        public void DebutMenuMatchesPreferencesInsteadOfGivingLargestMeatToHungriestGuest()
+        {
+            var guests=Asadito.Runtime.MvpLevelCatalog.CreateGuests(1);
+            var portions=new[]{
+                new Asadito.Runtime.ServingPortion{Id="01",FoodId="tira",Amount=.14f,Doneness=Asadito.Runtime.Doneness.Jugoso},
+                new Asadito.Runtime.ServingPortion{Id="02",FoodId="chorizo",Amount=.10f,Doneness=Asadito.Runtime.Doneness.A_Punto}
+            };
+            var assigned=Asadito.Runtime.ServingAllocator.Allocate(guests,portions);
+            Assert.AreEqual("ana",assigned[0].GuestId);Assert.AreEqual("tito",assigned[1].GuestId);
         }
 
         [Test]

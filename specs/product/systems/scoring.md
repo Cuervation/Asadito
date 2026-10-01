@@ -9,3 +9,6 @@ El resultado por comensal se normaliza a 0–100; el total de nivel se normaliza
 - El desglose identifica las cuatro dimensiones y permite comprobar qué factor alteró el resultado.
 - El mismo estado, preferencias y parámetros producen la misma puntuación.
 - La UI de nivel 1 informa resultados individuales y total 0–200; retry reinicia estado, asignaciones y puntaje.
+
+## Gestión desde nivel1
+ASADOR se agrega como media de estos componentes, general60/25/15 con economía/operación. Estrellas exigen mínimos independientes de cocina/saciedad/asador: ver [economía](../economy.md). Cocción cruda reduce CookingQuality según primer punto del perfil; daño sigue medido individualmente. El general alto no abre progreso si no cumplió esos mínimos.

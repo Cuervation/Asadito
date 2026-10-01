@@ -30,7 +30,10 @@ namespace Asadito.Runtime
         public int FridgeTier = 1, FreezerTier, GrillTier = 1;
         public List<InventoryUnit> Inventory = new List<InventoryUnit>();
         public List<PurchaseRecord> Purchases = new List<PurchaseRecord>();
+        // Legacy bonus retained for compatibility; no longer paid by gameplay.
         public bool IntroRewardGranted;
+        public bool ManagementTutorialCompleted;
+        public int LearningTipsSeen;
         public AsadoRun ActiveRun;
         public static ManagementState New(ManagementConfig config) => new ManagementState { Balance = config.InitialBalance };
     }

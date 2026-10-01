@@ -18,6 +18,11 @@ namespace Asadito
         private GuestProfile[] guests;
         private Action<string[]> begin;
         private Action back;
+        private string pendingPurchase, pendingDiscard;
+        private bool showLearningTip;
+        private bool Guided => order.Number == 1 && !service.State.ManagementTutorialCompleted;
+        private int Required(string id) => Array.FindAll(order.FoodIds, food => food == id).Length;
+        private int Missing(string id) => Math.Max(0, Required(id) - service.Available(id));
         private readonly List<string> selection = new List<string>();
         private static readonly Color Ink = new Color32(34, 61, 45, 255);
         private static readonly Color Cream = new Color32(255, 244, 219, 255);
@@ -48,8 +53,10 @@ namespace Asadito
         private Text Label(string text, float y, int size = 32, Color? color = null, float x = .5f, float width = 880, float height = 64)
         {
             var label = game.MakeText(text, root.transform, text, size, color ?? Ink, TextAnchor.MiddleCenter,
-                x, y, width, Mathf.Max(height, size * 2f), (color ?? Ink) != Ink);
+                x, y, width, Mathf.Max(height, size * 2.5f), (color ?? Ink) != Ink);
             if ((color ?? Ink) == Ink && game.ManagementBodyFont != null) label.font = game.ManagementBodyFont;
+            // Dynamic font ascenders can extend beyond preferredHeight on mobile/camera render.
+            label.verticalOverflow = VerticalWrapMode.Overflow;
             return label;
         }
         private void Panel(string name, float y, float h)
@@ -66,7 +73,11 @@ namespace Asadito
         public void Open(MvpLevelDefinition order, GuestProfile[] guests, Action<string[]> begin, Action back)
         {
             this.order = order; this.guests = guests; this.begin = begin; this.back = back;
-            selection.Clear(); Planning();
+            selection.Clear(); pendingPurchase = pendingDiscard = null;
+            int bit = 1 << (order.Number - 1);
+            showLearningTip = order.Number < 6 && (service.State.LearningTipsSeen & bit) == 0;
+            service.State.LearningTipsSeen |= bit;
+            game.PersistManagement(); Planning();
         }
         private void Planning()
         {
@@ -75,7 +86,8 @@ namespace Asadito
             Label("NIVEL " + order.Number + " · " + order.Title, .77f, 38);
             Label(guests.Length + " COMENSALES · " + order.FoodIds.Length + " PIEZAS", .715f, 32);
             Label(OrderSummary(), .66f, 30);
-            Label("Elegí qué preparar según sus gustos", .60f, 29);
+            Label(Guided ? "1 · Mirá el pedido. Después entrá a la carnicería." :
+                showLearningTip ? order.LearningGoal : "Revisá tus invitados y lo que ya tenés", .60f, 27, height:110);
             for (int i=0;i<guests.Length;i++)
             {
                 float y = .525f - i*.06f;
@@ -89,7 +101,7 @@ namespace Asadito
                     y, 28, Cream, x:.57f, width:770, height:102);
             }
             Button("CARNICERÍA", .28f, .21f, () => Shop(), 430);
-            Button("HELADERA", .72f, .21f, () => Fridge(), 430);
+            Button("HELADERA", .72f, .21f, () => Fridge(), 430).interactable = !Guided || service.CanPrepare(order.FoodIds) || service.CanRecover(order.FoodIds);
             Button("VOLVER", .5f, .12f, () => { Close(); back(); });
         }
         private string OrderSummary()
@@ -102,22 +114,38 @@ namespace Asadito
         private void Shop(string notice = "")
         {
             Page("CARNICERÍA", "ButcherShop_Background");
-            Icon("Butcher_Greeting", .80f,.74f,230,300);
-            Label("Pedido: " + OrderSummary(), .735f, 28, Cream, x:.40f,width:720,height:110);
+            Icon("Butcher_Greeting", .84f,.745f,170,230);
+            Label("Pedido: " + OrderSummary(), .75f, 28, Cream, x:.40f,width:720,height:130);
             for (int i=0;i<service.Config.Products.Length;i++)
             {
-                var product=service.Config.Products[i]; float y=.57f-i*.20f;
-                Panel("Product " + product.FoodId,y,310);
-                var image=game.MakeImage("Shop food " + product.FoodId,root.transform, game.ManagementFoodSprite(product.FoodId),Color.white,new Vector2(.19f,y),new Vector2(.19f,y),new Vector2(220,130)); image.preserveAspect=true;
-                Label(FoodCatalog.Get(product.FoodId).DisplayName,y+.055f,34,x:.60f,width:600);
-                Label(product.Price+" monedas · "+Mathf.RoundToInt(product.PortionAmount*1000)+" g · stock "+service.Stock(product.FoodId),y,29,x:.60f,width:580);
-                var button=Button("COMPRAR +1",.60f,y-.064f,()=> { string error=service.Buy(product.FoodId,1,order.Number); if(error==null) Save(); Shop(error??"¡Guardado en la heladera!"); },440);
+                var product=service.Config.Products[i]; float y=.59f-i*.215f;
+                Panel("Product " + product.FoodId,y,340);
+                var image=game.MakeImage("Shop food " + product.FoodId,root.transform, game.ManagementFoodSprite(product.FoodId),Color.white,new Vector2(.18f,y),new Vector2(.18f,y),new Vector2(210,130)); image.preserveAspect=true;
+                Label(FoodCatalog.Get(product.FoodId).DisplayName,y+.06f,32,x:.61f,width:600);
+                Label(product.Price+" monedas · "+Mathf.RoundToInt(product.PortionAmount*1000)+" g · stock "+service.Stock(product.FoodId),y+.018f,27,x:.61f,width:600);
+                Label("Heladera " + service.Available(product.FoodId) + " · sugeridas " + Required(product.FoodId) + " · faltan " + Missing(product.FoodId),y-.018f,27,x:.61f,width:610);
+                string action = pendingPurchase == product.FoodId ? "CONFIRMAR −" + product.Price : "COMPRAR +1";
+                var button=Button(action,.61f,y-.061f,()=>Purchase(product.FoodId),460);
                 button.name="Comprar " + product.FoodId;
-                button.interactable=order.Number>=product.UnlockLevel && service.Stock(product.FoodId)>0;
+                button.interactable=order.Number>=product.UnlockLevel && service.Stock(product.FoodId)>0 && (!Guided || Missing(product.FoodId)>0);
             }
-            Label(notice,.245f,29,Cream);
-            Button("HELADERA",.5f,.17f,()=>Fridge(),560);
-            Button("VOLVER",.5f,.095f,Planning);
+            if (string.IsNullOrEmpty(notice)) notice = Guided ? service.CanPrepare(order.FoodIds) ? "¡Pedido comprado! Revisá tu heladera." : "2 · Comprá 1 chorizo y 1 tira. Confirmá cada compra." : "Confirmá el precio antes de comprar.";
+            Label(notice,.245f,28,Cream,height:95);
+            Button("HELADERA",.5f,.16f,()=> { pendingPurchase=null; Fridge(); },560).interactable=!Guided || service.CanPrepare(order.FoodIds) || service.CanRecover(order.FoodIds);
+            Button("VOLVER",.5f,.08f,()=> { pendingPurchase=null; Planning(); }).name = "Volver carnicería";
+        }
+        private void Purchase(string id)
+        {
+            if (pendingPurchase != id)
+            {
+                pendingPurchase=id;
+                Shop("Confirmá: " + FoodCatalog.Get(id).DisplayName + " por " + service.Config.Product(id).Price + " monedas.");
+                return;
+            }
+            pendingPurchase=null;
+            string error=service.Buy(id,1,order.Number);
+            if(error==null) Save();
+            Shop(error ?? "✓ ¡Compra lista! Carne guardada en la heladera.");
         }
         private void Fridge(string notice = "")
         {
@@ -132,17 +160,20 @@ namespace Asadito
                 var image=game.MakeImage("Fridge food "+product.FoodId,root.transform,game.ManagementFoodSprite(product.FoodId),Color.white,new Vector2(.17f,y),new Vector2(.17f,y),new Vector2(220,130)); image.preserveAspect=true;
                 int chosen=selection.FindAll(x=>x==product.FoodId).Count;
                 Label(FoodCatalog.Get(product.FoodId).DisplayName,y+.044f,32,x:.57f,width:630);
-                Label("Tenés "+service.Available(product.FoodId)+" · bandeja "+chosen,y,29,x:.57f,width:600);
+                Label("Tenés "+service.Available(product.FoodId)+" · elegidas "+chosen+" · sugeridas "+Required(product.FoodId),y,27,x:.57f,width:650);
                 Button("−",.40f,y-.055f,()=>{ selection.Remove(product.FoodId); Fridge(); },120).interactable=chosen>0;
                 var add = Button("+",.60f,y-.055f,()=>{selection.Add(product.FoodId);Fridge();},120);
                 add.name = "Preparar " + product.FoodId;
-                add.interactable=chosen<service.Available(product.FoodId)&&selection.Count<order.FoodIds.Length;
-                Button("DESCARTAR",.82f,y-.055f,()=>{
+                add.interactable=chosen<service.Available(product.FoodId)&&selection.Count<order.FoodIds.Length && (!Guided || chosen < Required(product.FoodId));
+                var discard=Button(pendingDiscard==product.FoodId?"CONFIRMAR":"DESCARTAR",.82f,y-.055f,()=>{
+                    if (pendingDiscard!=product.FoodId) { pendingDiscard=product.FoodId; Fridge("Descartar pierde lo que pagaste. Confirmá o elegí otra acción."); return; }
+                    pendingDiscard=null;
                     var unit=service.State.Inventory.FindLast(x=>x.FoodId==product.FoodId);
                     if(unit!=null&&service.Discard(unit.Id)){selection.Remove(product.FoodId);Save();} Fridge("Descarte registrado como pérdida");
-                },240).interactable=service.State.Inventory.Exists(x=>x.FoodId==product.FoodId);
+                },240);
+                discard.interactable=!Guided && service.Available(product.FoodId)>0;
             }
-            Label(notice,.265f,28,Cream);
+            Label(string.IsNullOrEmpty(notice) && Guided ? service.CanRecover(order.FoodIds) ? "Si no podés comprar, usá la Caja del Asador para seguir." : "3 · Elegí 1 tira y 1 chorizo con +. Después prepará." : notice,.265f,28,Cream,height:110);
             bool ready=selection.Count==order.FoodIds.Length && service.CanPrepare(selection.ToArray());
             Button("PREPARAR",.5f,.205f,()=>{
                 var selected=selection.ToArray(); if(!service.Prepare(order.Number,selected))return;Save();Close();begin(selected);
@@ -157,8 +188,9 @@ namespace Asadito
         }
         public void Results(EconomicResult result, Action retry, Action next, bool hasNext, string detail)
         {
-            Page("¡ASADO COMPLETADO!", "Patio_Management_Base");
-            Panel("Economic result card",.535f,1020);
+            Page(result.Passed ? "¡ASADO COMPLETADO!" : "¡A SEGUIR PRACTICANDO!", "Patio_Management_Base");
+            root.name = "Management ¡ASADO COMPLETADO!";
+            Panel("Economic result card",.50f,1160);
             Label("ASADOR "+Mathf.RoundToInt(result.Asador)+"%",.75f,42);
             Label("GESTIÓN "+Mathf.RoundToInt(result.Economy)+"% · OPERACIÓN "+Mathf.RoundToInt(result.Operations)+"%",.69f,30);
             Label("GENERAL "+Mathf.RoundToInt(result.Overall)+"%",.635f,38);
@@ -169,8 +201,9 @@ namespace Asadito
             Label("Carne usada "+result.Spending+"  ·  Desperdicio "+result.Waste,.56f,32);
             Label("Ingresos +"+result.Income+"  ·  Ganancia "+(result.Profit>=0?"+":"")+result.Profit,.51f,32);
             Label("SALDO "+result.Balance,.455f,42);
-            Label(result.Recovery?"Caja del Asador: recompensa reducida":"La carne sin preparar sigue en tu heladera",.40f,27);
-            Label(detail,.335f,24,Ink,height:250);
+            Label(result.Recovery?"Caja del Asador: recompensa reducida":result.Passed && hasNext ? "¡Desbloqueaste el próximo nivel!" : "La carne sin preparar sigue en tu heladera",.405f,27);
+            Label(result.Advice,.36f,27,height:100);
+            Label(detail,.275f,24,Ink,height:260);
             Button("OTRO ASADO",.28f,.17f,()=>{Close();retry();},430);
             Button(hasNext?"SIGUIENTE":"NIVELES",.72f,.17f,()=>{Close();next();},430);
         }

@@ -14,6 +14,7 @@ namespace Asadito.Runtime
         public int PlayableLevels, ManagementFromLevel, CoinsFromLevel;
         public float MinimumRewardRatio, WasteEconomyPenalty, WasteOperationsPenalty, SurplusPenalty;
         public int InitialBalance, FridgeCapacity, BaseReward, RewardPerGuest, RecoveryStarCap;
+        public float MinimumAsadorForStar, MinimumCookingForStar, MinimumSatietyForStar, TwoStarAsador, ThreeStarAsador;
         public float FoodWeight, EconomyWeight, OperationsWeight, RecoveryRewardMultiplier;
         public ProductEconomy[] Products;
         public ProductEconomy Product(string id)

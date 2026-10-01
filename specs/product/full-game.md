@@ -4,7 +4,7 @@ ASADITO es un juego móvil de gestión de asados argentinos donde planificás la
 
 ## Loop
 Próximo asado → invitados/necesidades → heladera → carnicería → compra → inventario → preparación → bandeja → estación → tabla → servicio → satisfacción → economía → monedas → mejoras → próximo asado.
-La gestión determina lo que llega al fuego; cocinar sigue siendo habilidad táctil. No se reemplaza el motor térmico.
+Este ciclo de compras pagadas y recompensas existe desde el nivel1, sin regalar mercadería inicial. La gestión determina lo que llega al fuego; cocinar sigue siendo habilidad táctil. No se reemplaza el motor térmico.
 
 ## Alcance por vertical
 1. Compra básica, saldo, heladera, selección, cocina existente, resultado/recompensa y save migrado. Solo chorizo/tira.

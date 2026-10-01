@@ -7,7 +7,7 @@
 | Company | `Cuervation` |
 | Product | `Asadito` |
 | Application ID | `com.cuervation.asadito` |
-| Version / versionCode | `1.2.0` / `3` |
+| Version / versionCode | `1.3.0` / `4` |
 | Orientación | Portrait; manifiesto empaquetado anuncia `screenOrientation=portrait` |
 | SDK | min 26, target/compile 36 (Android 16) |
 | Arquitectura / backend | ARM64 / IL2CPP |
@@ -30,3 +30,6 @@ Build e instalación de `d6a5004` (2026-09-30): validator PASS; Unity EditMode *
 Build de los cambios pendientes de navegación/UI (2026-09-30): `python3 Tools/validate_food_content.py` PASS; Unity EditMode **25/25 PASS** y PlayMode **12/12 PASS** (incluye volver desde gameplay, eliminación de PAUSA, popup y separación título–tarjetas). Unity 6000.6.3f1 Android ARM64/IL2CPP terminó `Succeeded`: `/tmp/Asadito-all-pending-1.2.0-arm64-20260930.apk` (60 MiB). `aapt` verificó `com.cuervation.asadito` 1.2.0/code3, min API26/target+compile API36; `unzip` confirma solamente `arm64-v8a`; `apksigner verify --verbose` valida firma v2. APK local de validación; no instalada en el teléfono en esta solicitud.
 
 Instalación de la APK `20979f4` (2026-09-30): `adb install -r --no-streaming` devolvió `Success` en Motorola Edge 60 Fusion `ZY22MBNWRB` (Android 16/API36), conservando datos. `UnityPlayerGameActivity` quedó en primer plano con el menú principal visible (PID 21581 al verificar). Captura `/tmp/asadito-motorola-20979f4.png` (1220×2712). El transporte ADB del teléfono desapareció al intentar continuar la navegación, después de confirmar instalación y arranque; no se verificó el selector ni gameplay en esta pasada.
+
+## Gestión desde L1 (2026-10-01, actual)
+Unity6000.6.3f1, ARM64/IL2CPP Succeeded en una única compilación final. APK local65MiB `build/Asadito-1.3.0-management-level1-20261001.apk`, version1.3.0/code4,min26,target36; metadata/ABI/firma v2 debug verificadas. SHA256 `6876a9ab20d112c3b257654c540c588248afc5efc369ac04d1021e891604cc61`. Dominio53/53PASS, focalgestión3/3PASS y recorridoL1–6 1/1PASS; detalle/evidencia en [QA](ai/management-level1-qa.md). ADB no detecta dispositivos al cierre, por lo que esta build no se instaló ni se probó táctilmente en teléfono. Mantener datos con `adb install -r` cuando vuelva a estar conectado; no desinstalar ni limpiar PlayerPrefs. Sin publicación/firma productiva.

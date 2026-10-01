@@ -131,6 +131,7 @@ namespace Asadito
         private Text progressText;
         private Text feedbackText;
         private Text scoreText;
+        private Text walletText;
         private Text resultScoreText;
         private Image[] resultStarIcons;
         private Image[] resultFoodIcons;
@@ -382,6 +383,7 @@ namespace Asadito
             gameplayCanvasGroup.blocksRaycasts = false;
 
             MakePanel("Sombra del titulo", gameplayRoot, new Color(0, 0, 0, .32f), .5f, .945f, 950, 96);
+            walletText = MakeText("Saldo parrilla", gameplayRoot, "", 28, Cream, TextAnchor.MiddleRight, .68f, .865f, 550, 60, true);
             MakeText("Marca", gameplayRoot, "ASADITO", 40, Cream, TextAnchor.MiddleCenter, .46f, .945f, 700, 78, true);
             Button gameplayBackButton = MakeButton("VOLVER", gameplayRoot, .09f, .945f, 196f, 72f,
                 new Color32(150, 75, 54, 255), ReturnToLevelsFromGameplay);
@@ -691,6 +693,7 @@ namespace Asadito
             CanvasGroup exitEntrance = exitButton.gameObject.AddComponent<CanvasGroup>();
             enterEntrance.interactable = enterEntrance.blocksRaycasts = false;
             exitEntrance.interactable = exitEntrance.blocksRaycasts = false;
+            MakeText("Versión visible", menuRoot.transform, "v1.3.0 · Compras desde nivel 1", 24, Cream, TextAnchor.MiddleCenter, .5f, .025f, 920, 64, true);
             StartCoroutine(AnimateMenuEntrance(brandRect, brandEntrance, .0f, .34f, 18f));
             StartCoroutine(AnimateMenuEntrance(subtitle.rectTransform, subtitleEntrance, .08f, .34f, 14f));
             StartCoroutine(AnimateMenuEntrance(enterButton.GetComponent<RectTransform>(), enterEntrance, .14f, .34f, 22f));
@@ -1383,6 +1386,7 @@ namespace Asadito
             SetCookingState(false);
             guestName.text = BuildGuestNamesSummary();
             guestOrder.text = "PEDIDO · " + portions.Length + " PIEZAS";
+            walletText.text = "SALDO " + saveData.Management.Balance + " MONEDAS";
             scoreText.text = "NIVEL " + currentLevelNumber + "  •  TABLA 0 / " + portions.Length;
             DrawAvatar();
             servingLocked = cooking = platingInProgress = false;
@@ -2092,10 +2096,12 @@ namespace Asadito
             totalScore = 0;
             guestExpressions = new int[profiles.Length];
             ScoreConfig scoreConfig = new ScoreConfig();
+            float minimumCooking = 100f, totalSatiety = 0f;
+            int cookingWaste = 0;
             for (int i = 0; i < profiles.Length; i++)
             {
                 int portionIndex = FindAssignedPortion(assignments, profiles[i].Id);
-                if (portionIndex < 0) { reactions += profiles[i].Name + ": sin porción\n"; guestExpressions[i] = 3; continue; }
+                if (portionIndex < 0) { minimumCooking = 0; reactions += profiles[i].Name + ": sin porción\n"; guestExpressions[i] = 3; continue; }
                 PlayablePortion portion = portions[portionIndex];
                 float assignedAmount = Mathf.Min(portion.Amount, profiles[i].TargetFoodAmount);
                 ScoreBreakdown breakdown = new ScoreBreakdown
@@ -2105,6 +2111,10 @@ namespace Asadito
                     DonenessMatch = FoodCookingModel.EvaluateDonenessMatch(portion.State, portion.Profile, profiles[i].PreferredDoneness),
                     FoodPreference = ServingAllocator.GetFoodPreferenceScore(profiles[i], servings[portionIndex].FoodId)
                 };
+                minimumCooking = Mathf.Min(minimumCooking, breakdown.CookingQuality);
+                totalSatiety += breakdown.Satiety;
+                if (breakdown.CookingQuality < management.Config.MinimumCookingForStar && management.State.ActiveRun != null)
+                    cookingWaste += management.State.ActiveRun.Units[portionIndex].Cost;
                 int points = Mathf.RoundToInt(breakdown.Total(scoreConfig));
                 guestExpressions[i] = points >= 85 ? 2 : points >= 55 ? 1 : 3;
                 totalScore += points;
@@ -2121,13 +2131,10 @@ namespace Asadito
             }
             if (currentLevelNumber >= management.Config.ManagementFromLevel)
             {
-                economicResult = management.Complete(totalScore / (float)Mathf.Max(1, profiles.Length), profiles.Length, starThresholds);
+                economicResult = management.Complete(totalScore / (float)Mathf.Max(1, profiles.Length), profiles.Length, starThresholds,
+                    minimumCooking, totalSatiety / Mathf.Max(1, profiles.Length), cookingWaste);
+                if (currentLevelNumber == 1) management.State.ManagementTutorialCompleted = true;
                 totalStars = economicResult.Stars;
-            }
-            else if (currentLevelNumber == management.Config.CoinsFromLevel && !saveData.Management.IntroRewardGranted)
-            {
-                management.Wallet.Credit(management.Config.BaseReward);
-                saveData.Management.IntroRewardGranted = true;
             }
             saveData.RecordLevelResult(currentLevelNumber, totalScore, totalStars);
             MvpSave.Save(saveData);
@@ -2149,7 +2156,10 @@ namespace Asadito
 
         private static float GetCookingQuality(PlayablePortion portion)
         {
-            return Mathf.Clamp(100f - portion.State.Char * 65f - (1f - portion.State.Moisture) * 30f + portion.State.Maillard * 12f
+            float firstCookedCore = portion.Profile.DonenessBands[0].MinimumCoreC;
+            foreach (var band in portion.Profile.DonenessBands) firstCookedCore = Mathf.Min(firstCookedCore, band.MinimumCoreC);
+            float readiness = Mathf.InverseLerp(firstCookedCore - 5f, firstCookedCore, portion.State.CoreTemperatureC);
+            return readiness * Mathf.Clamp(100f - portion.State.Char * 65f - (1f - portion.State.Moisture) * 30f + portion.State.Maillard * 12f
                                - portion.State.SplitRisk * 38f, 0f, 100f);
         }
 

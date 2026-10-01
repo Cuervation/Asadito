@@ -9,13 +9,14 @@
         "chorizo"
       ],
       "PortionAmounts": [
-        0.065,
-        0.065
-      ]
+        0.14,
+        0.1
+      ],
+      "LearningGoal": "Comprá un chorizo y una tira. Cociná y ganá tus primeras monedas."
     },
     {
       "Number": 2,
-      "Title": "UNA TANDA MÁS",
+      "Title": "MÁS INVITADOS",
       "GuestCount": 3,
       "FoodIds": [
         "chorizo",
@@ -23,14 +24,15 @@
         "chorizo"
       ],
       "PortionAmounts": [
-        0.06,
-        0.06,
-        0.06
-      ]
+        0.1,
+        0.14,
+        0.1
+      ],
+      "LearningGoal": "Son tres: calculá la cantidad antes de comprar."
     },
     {
       "Number": 3,
-      "Title": "PUNTOS DISTINTOS",
+      "Title": "A GUSTO DEL CLIENTE",
       "GuestCount": 4,
       "FoodIds": [
         "tira",
@@ -39,15 +41,16 @@
         "chorizo"
       ],
       "PortionAmounts": [
-        0.06,
-        0.06,
-        0.06,
-        0.06
-      ]
+        0.14,
+        0.1,
+        0.14,
+        0.1
+      ],
+      "LearningGoal": "Revisá los gustos y el punto que prefiere cada invitado."
     },
     {
       "Number": 4,
-      "Title": "PRIMERAS MONEDAS",
+      "Title": "CUIDÁ TUS MONEDAS",
       "GuestCount": 4,
       "FoodIds": [
         "chorizo",
@@ -56,15 +59,16 @@
         "tira"
       ],
       "PortionAmounts": [
-        0.06,
-        0.06,
-        0.06,
-        0.06
-      ]
+        0.1,
+        0.14,
+        0.1,
+        0.14
+      ],
+      "LearningGoal": "Ingresos menos carne y pérdidas: esa es tu ganancia."
     },
     {
       "Number": 5,
-      "Title": "LA CARNICERÍA",
+      "Title": "EL BUEN ADMINISTRADOR",
       "GuestCount": 4,
       "FoodIds": [
         "tira",
@@ -73,15 +77,16 @@
         "chorizo"
       ],
       "PortionAmounts": [
-        0.06,
-        0.06,
-        0.06,
-        0.06
-      ]
+        0.14,
+        0.1,
+        0.14,
+        0.1
+      ],
+      "LearningGoal": "Revisá la heladera antes de comprar. Aprovechá lo que ya tenés."
     },
     {
       "Number": 6,
-      "Title": "TU PRIMERA COMPRA",
+      "Title": "TU PRIMER DESAFÍO",
       "GuestCount": 5,
       "FoodIds": [
         "chorizo",
@@ -91,12 +96,13 @@
         "chorizo"
       ],
       "PortionAmounts": [
-        0.057,
-        0.057,
-        0.057,
-        0.057,
-        0.057
-      ]
+        0.1,
+        0.14,
+        0.1,
+        0.14,
+        0.1
+      ],
+      "LearningGoal": "Cinco invitados. Organizá el asado sin ayuda obligatoria."
     },
     {
       "Number": 7,

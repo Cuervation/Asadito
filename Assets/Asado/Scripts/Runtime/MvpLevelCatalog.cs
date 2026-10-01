@@ -7,6 +7,7 @@ namespace Asadito.Runtime
     {
         public int Number;
         public string Title;
+        public string LearningGoal;
         public int GuestCount;
         public string[] FoodIds;
         public float[] PortionAmounts;
@@ -63,6 +64,7 @@ namespace Asadito.Runtime
             {
                 Number = source.Number,
                 Title = source.Title,
+                LearningGoal = source.LearningGoal,
                 GuestCount = source.GuestCount,
                 FoodIds = (string[])source.FoodIds.Clone(),
                 PortionAmounts = (float[])source.PortionAmounts.Clone()

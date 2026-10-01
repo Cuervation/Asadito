@@ -7,7 +7,9 @@ namespace Asadito.Runtime
     {
         public float Asador, Economy, Operations, Overall;
         public int Spending, Waste, Income, Profit, Balance, Stars;
-        public bool Recovery;
+        public bool Recovery, Passed;
+        public float Cooking, Satiety;
+        public string Advice;
     }
     /// <summary>Transactions operate on the save aggregate; UI persists only successful state changes.</summary>
     public sealed class ManagementService
@@ -55,6 +57,7 @@ namespace Asadito.Runtime
         }
         public bool CanPrepare(string[] foods)
         {
+            if (foods == null || foods.Length == 0 || State.ActiveRun != null) return false;
             var counts = new Dictionary<string, int>();
             foreach (var food in foods) { if (!counts.ContainsKey(food)) counts[food] = 0; counts[food]++; }
             foreach (var pair in counts) if (Available(pair.Key) < pair.Value) return false;
@@ -62,7 +65,8 @@ namespace Asadito.Runtime
         }
         public bool Prepare(int level, string[] selected)
         {
-            if (!CanPrepare(selected)) return false;
+            if (level < 1 || level > Config.PlayableLevels || !CanPrepare(selected)) return false;
+            foreach (var food in selected) if (Config.Product(food).UnlockLevel > level) return false;
             var run = new AsadoRun { Level = level };
             foreach (var food in selected)
             {
@@ -99,24 +103,38 @@ namespace Asadito.Runtime
             }
             State.ActiveRun = run; return true;
         }
-        public EconomicResult Complete(float asador, int guestCount, StarThresholds thresholds)
+        public EconomicResult Complete(float asador, int guestCount, StarThresholds thresholds, float cooking = 100, float satiety = 100, int cookingWaste = 0)
         {
             if (State.ActiveRun == null) throw new InvalidOperationException("No active order; reward already claimed");
             var run = State.ActiveRun;
+            cookingWaste = Mathf.Clamp(cookingWaste, 0, run.FoodCost);
+            int waste = State.PendingWaste + cookingWaste;
             int retainedCost = 0;
             foreach (var unit in State.Inventory) retainedCost += unit.Cost;
-            float economy = Mathf.Clamp(100f - State.PendingWaste * Config.WasteEconomyPenalty / Math.Max(1, run.FoodCost + State.PendingWaste)
+            float economy = Mathf.Clamp(100f - waste * Config.WasteEconomyPenalty / Math.Max(1, run.FoodCost + State.PendingWaste)
                 - retainedCost * Config.SurplusPenalty / Math.Max(1, run.FoodCost), 0, 100);
-            float operations = State.PendingWaste == 0 ? 100 : Mathf.Clamp(100f - State.PendingWaste * Config.WasteOperationsPenalty / Math.Max(1, run.FoodCost), 0, 100);
+            float operations = waste == 0 ? 100 : Mathf.Clamp(100f - waste * Config.WasteOperationsPenalty / Math.Max(1, run.FoodCost), 0, 100);
             float sum = Config.FoodWeight + Config.EconomyWeight + Config.OperationsWeight;
             float overall = (Mathf.Clamp(asador, 0, 100) * Config.FoodWeight + economy * Config.EconomyWeight + operations * Config.OperationsWeight) / sum;
-            int reward = Mathf.RoundToInt((Config.BaseReward + Config.RewardPerGuest * guestCount) * Mathf.Lerp(Config.MinimumRewardRatio, 1f, overall / 100f) * (run.Recovery ? Config.RecoveryRewardMultiplier : 1));
-            int stars = thresholds.Evaluate(Mathf.RoundToInt(overall * 2));
+            int reward = Mathf.RoundToInt((Config.BaseReward + Config.RewardPerGuest * guestCount) * Mathf.Lerp(Config.MinimumRewardRatio, 1f, Mathf.Min(overall, Mathf.Clamp(asador, 0, 100), Mathf.Clamp(cooking, 0, 100)) / 100f) * (run.Recovery ? Config.RecoveryRewardMultiplier : 1));
+            // Excellent bookkeeping cannot compensate for raw/burnt food or hungry guests.
+            bool passed = asador >= Config.MinimumAsadorForStar && cooking >= Config.MinimumCookingForStar && satiety >= Config.MinimumSatietyForStar;
+            int stars = passed ? thresholds.Evaluate(Mathf.RoundToInt(overall * 2)) : 0;
+            if (asador < Config.TwoStarAsador) stars = Math.Min(stars, 1);
+            else if (asador < Config.ThreeStarAsador) stars = Math.Min(stars, 2);
+            // Recovery is a playable second chance, not a reward for serving uncooked food.
+            if (run.Recovery && !passed) reward = 0;
             if (run.Recovery) stars = Math.Min(stars, Config.RecoveryStarCap);
-            Wallet.Credit(reward); State.TotalRewards += reward;
+            Wallet.Credit(reward); State.TotalRewards += reward; State.TotalWaste += cookingWaste;
             var result = new EconomicResult { Asador = asador, Economy = economy, Operations = operations, Overall = overall,
-                Spending = run.FoodCost, Waste = State.PendingWaste, Income = reward, Profit = reward - run.FoodCost - State.PendingWaste,
-                Balance = Wallet.Balance, Stars = stars, Recovery = run.Recovery };
+                Spending = run.FoodCost, Waste = waste, Income = reward, Profit = reward - run.FoodCost - State.PendingWaste,
+                Balance = Wallet.Balance, Stars = stars, Recovery = run.Recovery, Passed = stars > 0, Cooking = cooking, Satiety = satiety,
+                Advice = cooking < Config.MinimumCookingForStar ? "Había carne cruda o quemada. Revisá cada pieza antes de servir." :
+                    satiety < Config.MinimumSatietyForStar ? "Faltó comida: revisá cantidades y hambre de tus invitados." :
+                    asador < Config.MinimumAsadorForStar ? "Mejorá la cocción y respetá los puntos pedidos." :
+                    waste > 0 ? "Buen asado. Evitá desperdicios para mejorar tu ganancia." :
+                    retainedCost > 0 ? "Bien hecho. Usá lo que quedó en la heladera en el próximo asado." :
+                    asador < Config.ThreeStarAsador ? "Buen asado. Acercate al punto y los gustos de cada invitado." : "¡Excelente! Cocinaste bien y cuidaste tus monedas." };
             State.ActiveRun = null; State.PendingWaste = 0; State.Cycle++; State.Purchases.Clear();
             // Freshness is data/model-ready but does not advance until Vertical 2 is enabled.
             if (Config.EnableFreshness) State.FreshnessCycle++;

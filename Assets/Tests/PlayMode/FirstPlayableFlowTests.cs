@@ -57,15 +57,13 @@ namespace Asadito.Tests.PlayMode
             TapBoard(game);
             yield return new WaitForSecondsRealtime(1.8f);
 
-            Assert.NotNull(GameObject.Find("Fin de nivel"), "Serving must reach the result screen.");
-            Text resultScore = GameObject.Find("Resultado puntos").GetComponent<Text>();
-            Assert.That(resultScore.text, Does.Contain("PUNTOS"));
-            Assert.IsNotNull(GameObject.Find("REINTENTAR"));
+            Assert.NotNull(GameObject.Find("Management ¡ASADO COMPLETADO!"), "Serving must reach the result screen.");
+            Text resultScore = GameObject.Find("GENERAL " + Mathf.RoundToInt(((EconomicResult)GetField(game,"economicResult")).Overall) + "%").GetComponent<Text>();
+            Assert.That(resultScore.text, Does.Contain("GENERAL"));
+            Assert.IsNotNull(GameObject.Find("OTRO ASADO"));
             Button next = GameObject.Find("SIGUIENTE").GetComponent<Button>();
             Assert.IsTrue(next.interactable, "Completing the tutorial unlocks the next asado.");
-            Assert.AreEqual("Asadito UI Icon Star", GameObject.Find("Resultado estrella 1").GetComponent<Image>().sprite.name);
-            Assert.AreEqual("tira_ideal", GameObject.Find("Resultado icon comida TIRA DE ASADO").GetComponent<Image>().sprite.name);
-            Assert.AreEqual("chorizo_ideal", GameObject.Find("Resultado icon comida CHORIZO").GetComponent<Image>().sprite.name);
+            Assert.AreEqual("Asadito UI Icon Star", GameObject.Find("Management star 0").GetComponent<Image>().sprite.name);
             Assert.GreaterOrEqual(ReadSaveInt("MaxUnlockedLevel"), 2);
             MvpSaveData saved = MvpSave.Load();
             Assert.AreEqual(MvpSaveData.CurrentVersion, saved.Version);
@@ -90,15 +88,17 @@ namespace Asadito.Tests.PlayMode
             TapBoard(game);
             yield return new WaitForSecondsRealtime(1.8f);
 
-            Button retry = FindButton("REINTENTAR");
+            Button retry = FindButton("OTRO ASADO");
             Assert.IsTrue(retry.interactable);
             ClickButton(retry);
             yield return new WaitForSecondsRealtime(.1f);
+            Assert.IsNotNull(GameObject.Find("Management PRÓXIMO ASADO"));
+            yield return BuyAndPrepareCurrentOrder(game);
 
             GrillHeatModel grill = (GrillHeatModel)GetField(game, "grillHeat");
             Assert.AreEqual(210f, grill.GetTemperatureC(), .001f, "Retry keeps the always-hot grill ready for the next tanda.");
             Assert.AreEqual(0, ReadField<int>(game, "trayCount"));
-            Assert.IsNull(GameObject.Find("Fin de nivel"));
+            Assert.IsNull(GameObject.Find("Management ¡ASADO COMPLETADO!"));
             Array portions = (Array)GetField(game, "portions");
             for (int i = 0; i < portions.Length; i++)
             {
@@ -797,7 +797,7 @@ namespace Asadito.Tests.PlayMode
             Assert.IsTrue(CanServeFromBoard(game));
             TapBoard(game);
             yield return new WaitForSecondsRealtime(2f);
-            Assert.NotNull(GameObject.Find("Fin de nivel"));
+            Assert.NotNull(GameObject.Find("Management ¡ASADO COMPLETADO!"));
 
             double elapsedSeconds = (DateTime.UtcNow - started).TotalSeconds;
             Assert.LessOrEqual(elapsedSeconds, 180d, "Automated L1 should remain under the 2–3 minute First Playable tuning ceiling at 20x.");
@@ -808,72 +808,34 @@ namespace Asadito.Tests.PlayMode
         [Timeout(600000)]
         public IEnumerator Mvp_TutorialProgressIsSavedAndUnlocksNextAsado()
         {
-            ResetSaveCache();
-            MvpSave.Save(new MvpSaveData());
-            Component game = null;
-            yield return LoadGameScene(value => game = value);
-            Assert.NotNull(game);
-            AssertGameplayGrillArtLoaded(game);
-            SetField(game, "SimulationTimeScale", 120f); // Accelerate 6× while retaining the thermal window at the editor's background frame rate.
-
-            yield return new WaitForSecondsRealtime(.6f);
-            ClickButton("ENTRAR");
-            yield return new WaitForSecondsRealtime(.45f);
-            ClickButton("NIVEL 1");
-            yield return new WaitForSecondsRealtime(.45f);
-            ClickButton("IR A LA PARRILLA");
-            yield return new WaitForSecondsRealtime(.45f);
-
-            int[] expectedPortions = { 2 };
-            for (int level = 1; level <= expectedPortions.Length; level++)
+            Component game=null;yield return LoadGameScene(value=>game=value);
+            SetField(game,"SimulationTimeScale",120f);
+            yield return EnterLevelOne(game);
+            for(int level=1;level<=6;level++)
             {
-                Assert.AreEqual(level, ReadField<int>(game, "currentLevelNumber"));
-                Array portions = (Array)GetField(game, "portions");
-                Array guests = (Array)GetField(game, "activeGuests");
-                Assert.AreEqual(expectedPortions[level - 1], portions.Length, "L" + level + " order size must match its MVP definition.");
-                Assert.AreEqual(expectedPortions[level - 1], guests.Length, "Each portion must serve a guest in L" + level + ".");
-
-                AssertGrillReadyWithoutCoal(game, assertTutorialStep: level == 1);
-                yield return CookAndPlateOrder(game, 90f);
-
-                Assert.IsTrue(CanServeFromBoard(game), "All L" + level + " portions must be plated before service.");
-                TapBoard(game);
-                yield return new WaitForSecondsRealtime(2f);
-
-                Assert.NotNull(GameObject.Find("Fin de nivel"), "L" + level + " must reach results after service.");
-                Assert.That(GameObject.Find("Resultado puntos").GetComponent<Text>().text, Does.Contain("PUNTOS"));
-                int[] guestExpressions = (int[])GetField(game, "guestExpressions");
-                string[] expressionNames = { "neutral", "happy", "very_happy", "disappointed" };
-                for (int guestIndex = 0; guestIndex < guests.Length; guestIndex++)
+                Assert.AreEqual(level,ReadField<int>(game,"currentLevelNumber"));
+                Assert.IsNotNull(MvpSave.Load().Management.ActiveRun,"Every level must use paid preparation.");
+                int balance=MvpSave.Load().Management.Balance;
+                yield return CookAndPlateOrder(game,90f);TapBoard(game);yield return new WaitForSecondsRealtime(2f);
+                Assert.IsNotNull(GameObject.Find("Management ¡ASADO COMPLETADO!"));
+                var result=MvpSave.Load();
+                Assert.Greater(result.Management.Balance,balance,"L"+level+" pays a real reward.");
+                Assert.GreaterOrEqual(result.StarsByLevel[level-1],1,"L"+level+" passes culinary gates.");
+                Assert.IsNull(result.Management.ActiveRun);Assert.AreEqual(level,result.Management.Cycle);
+                Assert.IsTrue(result.Management.ManagementTutorialCompleted);
+                AssertAllManagementTextFits();
+                if(level<6)
                 {
-                    GuestProfile guest = (GuestProfile)guests.GetValue(guestIndex);
-                    GameObject resultPortrait = GameObject.Find("Resultado retrato " + guest.Name);
-                    Assert.NotNull(resultPortrait, guest.Name + " needs an individual portrait on L" + level + " results.");
-                    Assert.AreEqual(guest.Id + "_" + expressionNames[guestExpressions[guestIndex]],
-                        resultPortrait.GetComponent<Image>().sprite.name, "Result portrait expression must match that guest's evaluation.");
-                }
-                MvpSaveData result = MvpSave.Load();
-                Assert.GreaterOrEqual(result.StarsByLevel[level - 1], 1, "L" + level + " must persist the earned star.");
-                Assert.Greater(result.BestScoreByLevel[level - 1], 0, "L" + level + " must persist its score.");
-
-                if (level < expectedPortions.Length)
-                {
-                    Button next = FindButton("SIGUIENTE");
-                    Assert.IsTrue(next.interactable, "Passing L" + level + " must unlock Next.");
-                    ClickButton(next);
-                    yield return new WaitForSecondsRealtime(.55f);
-                    Assert.That(GameObject.Find("Intro título").GetComponent<Text>().text, Does.Contain("NIVEL " + (level + 1)));
-                    Assert.IsNull(GameObject.Find("Resultado retrato " + ((GuestProfile)guests.GetValue(0)).Name),
-                        "Result portraits must be cleared with their overlay when advancing to the next level.");
-                    ClickButton("IR A LA PARRILLA");
-                    yield return new WaitForSecondsRealtime(.45f);
+                    ClickButton("SIGUIENTE");yield return new WaitForSecondsRealtime(.55f);
+                    ClickButton("IR A LA PARRILLA");yield return new WaitForSecondsRealtime(.1f);
+                    yield return BuyAndPrepareCurrentOrder(game);
                 }
                 else
                 {
-                    Assert.GreaterOrEqual(result.MaxUnlockedLevel, 2,
-                        "The save may retain progression while the current playable-level gate remains closed.");
-                    Button next = GameObject.Find("SIGUIENTE").GetComponent<Button>();
-                    Assert.IsTrue(next.interactable, "Passing L1 unlocks L2 in Chapter One.");
+                    Assert.IsNotNull(GameObject.Find("NIVELES"));
+                    Assert.LessOrEqual(result.MaxUnlockedLevel,7);
+                    ClickButton("NIVELES");yield return new WaitForSecondsRealtime(.5f);
+                    Assert.IsFalse(GameObject.Find("NIVEL 7").GetComponent<Button>().interactable);
                 }
             }
         }
@@ -897,13 +859,13 @@ namespace Asadito.Tests.PlayMode
             Assert.IsNotNull(library, "The selected prepared management sprites must load through the reference catalog.");
             Assert.IsNotNull(GameObject.Find("Butcher_Greeting").GetComponent<Image>().sprite);
             CaptureManagementFrame(game, "/tmp/asadito-management-shop.png"); yield return new WaitForSecondsRealtime(.2f);
-            ClickButton("Comprar tira"); yield return null;
-            ClickButton("Comprar tira"); yield return null;
-            ClickButton("Comprar chorizo"); yield return null;
-            ClickButton("Comprar chorizo"); yield return null;
+            BuyConfirmed("tira"); yield return null;
+            BuyConfirmed("tira"); yield return null;
+            BuyConfirmed("chorizo"); yield return null;
+            BuyConfirmed("chorizo"); yield return null;
             Assert.AreEqual(4, MvpSave.Load().Management.Inventory.Count);
             int purchaseBalance = MvpSave.Load().Management.Balance;
-            Assert.AreEqual(440, purchaseBalance);
+            Assert.AreEqual(ManagementConfig.Load().InitialBalance - 560, purchaseBalance);
             ClickButton("HELADERA"); yield return null;
             ClickButton("Preparar tira"); yield return null;
             ClickButton("Preparar tira"); yield return null;
@@ -942,6 +904,54 @@ namespace Asadito.Tests.PlayMode
             ResetSaveCache(); Assert.Greater(MvpSave.Load().Management.Balance, purchaseBalance);
             ClickButton("OTRO ASADO"); yield return null;
             Assert.IsNotNull(GameObject.Find("Management PRÓXIMO ASADO"));
+        }
+
+        [UnityTest]
+        public IEnumerator Management_RawServiceCannotUnlockOrFarmCoins()
+        {
+            Component game=null;yield return LoadGameScene(value=>game=value);
+            yield return EnterLevelOne(game,true);SetField(game,"SimulationTimeScale",0f);
+            LoadAllRawFoodToGrill(game,0);yield return null;
+            for(int i=0;i<2;i++)
+            {
+                DragFoodToBoard(game,i,950+i);
+                float started=Time.realtimeSinceStartup;
+                while(ReadField<bool>(game,"platingInProgress") && Time.realtimeSinceStartup-started<3f) yield return null;
+            }
+            Assert.IsTrue(CanServeFromBoard(game));TapBoard(game);yield return new WaitForSecondsRealtime(2f);
+            var result=(EconomicResult)GetField(game,"economicResult");
+            Assert.AreEqual(0,result.Stars);Assert.IsFalse(result.Passed);Assert.Less(result.Profit,0);
+            Assert.Greater(result.Waste,0);Assert.Less(result.Cooking,ManagementConfig.Load().MinimumCookingForStar);
+            Assert.AreEqual(1,MvpSave.Load().MaxUnlockedLevel);
+            Assert.IsNull(GameObject.Find("SIGUIENTE"));
+            CaptureManagementFrame(game,"/tmp/asadito-level1-raw-result.png");
+        }
+
+        [UnityTest]
+        public IEnumerator Management_DebutRecoveryAndGuideSurviveReloadWithoutResettingMoney()
+        {
+            var save=MvpSaveData.Migrate(new MvpSaveData());save.Management.Balance=0;MvpSave.Save(save);
+            Component game=null;yield return LoadGameScene(value=>game=value);
+            SetField(game,"SimulationTimeScale",120f);
+            yield return new WaitForSecondsRealtime(.6f);ClickButton("ENTRAR");yield return new WaitForSecondsRealtime(.5f);
+            ClickButton("NIVEL 1");yield return new WaitForSecondsRealtime(.5f);ClickButton("IR A LA PARRILLA");yield return null;
+            Assert.IsTrue(FindButton("HELADERA").interactable,"Guided debut must not block recovery when broke.");
+            ClickButton("HELADERA");yield return null;ClickButton("CAJA DEL ASADOR");yield return new WaitForSecondsRealtime(.5f);
+            Assert.AreEqual(0,MvpSave.Load().Management.Balance);Assert.IsTrue(MvpSave.Load().Management.ActiveRun.Recovery);
+            yield return CookAndPlateOrder(game,90f);TapBoard(game);yield return new WaitForSecondsRealtime(2f);
+            var result=(EconomicResult)GetField(game,"economicResult");Assert.Greater(result.Income,0);Assert.AreEqual(1,result.Stars);
+            Assert.IsTrue(MvpSave.Load().Management.ManagementTutorialCompleted);
+            int balance=MvpSave.Load().Management.Balance;
+            ResetSaveCache();yield return LoadGameScene(value=>game=value);
+            Assert.AreEqual(balance,MvpSave.Load().Management.Balance);
+            yield return new WaitForSecondsRealtime(.6f);ClickButton("ENTRAR");yield return new WaitForSecondsRealtime(.5f);
+            ClickButton("NIVEL 1");yield return new WaitForSecondsRealtime(.5f);ClickButton("IR A LA PARRILLA");yield return null;
+            ClickButton("CARNICERÍA");yield return null;
+            ClickButton("Comprar chorizo");yield return null;
+            Assert.AreEqual(balance,MvpSave.Load().Management.Balance,"Preview never spends.");
+            ClickButton("Volver carnicería");yield return null;ClickButton("CARNICERÍA");yield return null;
+            Assert.That(FindButton("Comprar chorizo").GetComponentInChildren<Text>().text,Does.Contain("COMPRAR"),"Leaving cancels pending confirmation.");
+            CaptureManagementFrame(game,"/tmp/asadito-level1-shop.png");
         }
 
         private static void CaptureManagementFrame(Component game, string path)
@@ -1070,7 +1080,7 @@ namespace Asadito.Tests.PlayMode
             guestName.text = "ANA + TITO";
         }
 
-        private static IEnumerator EnterLevelOne(Component game)
+        private static IEnumerator EnterLevelOne(Component game, bool capture = false)
         {
             // Menu CTAs become interactable after the short, staggered cover entrance.
             yield return new WaitForSecondsRealtime(.6f);
@@ -1079,11 +1089,54 @@ namespace Asadito.Tests.PlayMode
             ClickButton("NIVEL 1");
             yield return new WaitForSecondsRealtime(.45f);
             ClickButton("IR A LA PARRILLA");
-            yield return new WaitForSecondsRealtime(.45f);
+            yield return new WaitForSecondsRealtime(.1f);
+            yield return BuyAndPrepareCurrentOrder(game,capture);
             AssertGrillReadyWithoutCoal(game);
             Assert.That(FindText("Estado coccion").text, Does.Contain("ARRASTRÁ"));
             Assert.AreEqual(2, ((Array)GetField(game, "portions")).Length);
             Assert.AreEqual(2, ((Array)GetField(game, "activeGuests")).Length);
+        }
+
+        private static void BuyConfirmed(string id)
+        {
+            int before=MvpSave.Load().Management.Inventory.Count;
+            ClickButton("Comprar "+id);
+            Assert.AreEqual(before,MvpSave.Load().Management.Inventory.Count,"First tap previews cost, never spends.");
+            ClickButton("Comprar "+id);
+            Assert.AreEqual(before+1,MvpSave.Load().Management.Inventory.Count);
+        }
+        private static IEnumerator BuyAndPrepareCurrentOrder(Component game, bool capture = false)
+        {
+            var order=MvpLevelCatalog.Get(ReadField<int>(game,"currentLevelNumber"));
+            Assert.IsNotNull(GameObject.Find("Management PRÓXIMO ASADO"));
+            AssertAllManagementTextFits();
+            if(capture) CaptureManagementFrame(game,"/tmp/asadito-level1-planning.png");
+            ClickButton("CARNICERÍA");yield return null;
+            if(capture) CaptureManagementFrame(game,"/tmp/asadito-level1-guided-shop.png");
+            var needs=new Dictionary<string,int>();
+            foreach(var id in order.FoodIds){if(!needs.ContainsKey(id))needs[id]=0;needs[id]++;}
+            foreach(var pair in needs)
+            {
+                var service=new ManagementService(MvpSave.Load().Management,ManagementConfig.Load());
+                int missing=Mathf.Max(0,pair.Value-service.Available(pair.Key));
+                for(int i=0;i<missing;i++){BuyConfirmed(pair.Key);yield return null;}
+            }
+            AssertAllManagementTextFits();
+            ClickButton("HELADERA");yield return null;
+            foreach(var id in order.FoodIds){ClickButton("Preparar "+id);yield return null;}
+            AssertAllManagementTextFits();
+            if(capture) CaptureManagementFrame(game,"/tmp/asadito-level1-fridge.png");
+            ClickButton("PREPARAR");yield return new WaitForSecondsRealtime(.5f);
+        }
+        private static void AssertAllManagementTextFits()
+        {
+            Canvas.ForceUpdateCanvases();
+            foreach(var label in UnityEngine.Object.FindObjectsByType<Text>(FindObjectsSortMode.None))
+                if(label.transform.root!=null && label.GetComponentInParent<Canvas>()!=null && label.transform.parent.name.StartsWith("Management "))
+                {
+                    Assert.LessOrEqual(label.preferredHeight,label.rectTransform.rect.height+1f,"Truncated: "+label.text);
+                    if(!string.IsNullOrEmpty(label.text)) Assert.Greater(label.cachedTextGenerator.vertexCount,0,"Empty rendered text mesh: "+label.text);
+                }
         }
 
         private static void AssertGrillReadyWithoutCoal(Component game, bool assertTutorialStep = true)

@@ -1,8 +1,8 @@
 {
-  "InitialBalance": 1000,
+  "InitialBalance": 650,
   "FridgeCapacity": 8,
-  "BaseReward": 120,
-  "RewardPerGuest": 180,
+  "BaseReward": 80,
+  "RewardPerGuest": 150,
   "RecoveryStarCap": 1,
   "FoodWeight": 0.6,
   "EconomyWeight": 0.25,
@@ -28,10 +28,15 @@
   ],
   "EnableFreshness": false,
   "PlayableLevels": 6,
-  "ManagementFromLevel": 5,
-  "CoinsFromLevel": 4,
-  "MinimumRewardRatio": 0.35,
+  "ManagementFromLevel": 1,
+  "CoinsFromLevel": 1,
+  "MinimumRewardRatio": 0.2,
   "WasteEconomyPenalty": 100,
   "WasteOperationsPenalty": 50,
-  "SurplusPenalty": 10
+  "SurplusPenalty": 10,
+  "MinimumAsadorForStar": 55,
+  "MinimumCookingForStar": 50,
+  "MinimumSatietyForStar": 65,
+  "TwoStarAsador": 70,
+  "ThreeStarAsador": 85
 }
