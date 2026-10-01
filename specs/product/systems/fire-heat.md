@@ -11,5 +11,5 @@ Al entrar al gameplay, la parrilla ya está caliente. `GrillHeatModel` entrega u
 ## Verificación
 
 - Test EditMode: 210 °C por defecto, valor configurable y clamp 100–300 °C.
-- Test PlayMode: L1 entra sin encendido, no crea botón/estado/grilla/celdas de carbón y una pieza empieza a calentarse al tocarla directamente.
+- Test PlayMode: L1 entra sin encendido, no crea botón/estado/grilla/celdas de carbón; cada pieza arrastrada empieza a calentarse de inmediato con su perfil, incluso mientras quedan cortes crudos en la bandeja y mientras otras piezas cocinan.
 - El barrido visual del runtime no encuentra objetos `Mapa de calor carbón 8x6` ni `Brasa x,y`.

@@ -2,17 +2,23 @@
 
 > Registro fechado de verificación y pendientes; para comportamiento operativo actual usar [`docs/current-project-state.md`](../current-project-state.md). Los resultados pertenecen al alcance/commit anotado en cada sección.
 
+## Cocción simultánea por porción (2026-09-30)
+
+- Cada porción empieza a cocinarse al llegar a la parrilla; `AsaditoGame.Update` avanza todos los cortes que siguen allí, cada uno con su perfil térmico individual, sin esperar que la bandeja cruda quede vacía ni depender del corte seleccionado.
+- El corte seleccionado sólo controla arrastre/emplatado. Emplatar uno no detiene el calor ni los efectos mientras queden otros en la parrilla.
+- Unity 6000.6.3f1: compilación y fixture `FirstPlayableFlowTests` **12/12 PASS** (158.55 s), incluido calentamiento de ambos cortes, servicio en puntos individuales y regresión de VOLVER; XML `/tmp/asadito-concurrent-cooking-playmode-rerun.xml`. Sin APK, instalación en dispositivo ni push.
+
 ## Intercambio de bandeja/tabla y escala uniforme (2026-09-30)
 
 - Bandeja de aluminio y tabla ahora son superficies intercambiables: ambas tienen igual rect 380×253.3, mismo centro en la mesita y aspecto 3:2; sólo la bandeja aparece con comida cruda y la tabla toma su lugar cuando toda la orden fue movida a la parrilla.
 - Se quitó el ajuste uniforme de escala al emplatar. El multiplicador de tabla es 1.0, igual a bandeja/parrilla; primero se empacan huellas completas y sólo se apila el excedente, sin reducir cortes grandes para que entren.
-- Mientras queden crudos en fuente, se pueden reubicar en parrilla piezas ya cargadas, sin cocción, para que órdenes densas no queden bloqueadas; cocina una por vez al vaciar bandeja. El packing de fallback prueba primero el slot del corte exacto para no reservar mal el único espacio de un corte grande.
+- Mientras queden crudos en fuente, se pueden reubicar en parrilla piezas ya cargadas; desde su colocación empiezan a cocinarse a la vez con su perfil térmico propio. El packing de fallback prueba primero el slot del corte exacto para no reservar mal el único espacio de un corte grande.
 - `Tools/validate_food_content.py` PASS (18 perfiles, 108 frames, 12 cartas, layouts a escala 1.0). EditMode **23/23 PASS**; PlayMode surface swap **1/1**, direct-touch/reposition **1/1**, recorrido normal L1–L12 **1/1 PASS** (388.47 s). XML bajo `/tmp/Asadito-surface-swap-*.xml`. No se generó captura ni APK en este turno; QA visual en teléfono queda pendiente.
 - La verificación global `git diff --check` informa whitespace heredado en `.png.meta` previamente modificados; la verificación limitada a archivos de este ajuste sí pasa.
 
 ## Nueva UX de gameplay (2026-09-30)
 
-- Reemplazada la interacción principal: cortes crudos visibles en bandeja de aluminio generada por código → drag a parrilla para cocinar → drag desde parrilla a tabla. Se eliminó del HUD la pinza diminuta. Flip continúa por tap sobre la pieza de parrilla; servir ahora requiere un solo tap en la tabla completa.
+- Reemplazada la interacción principal: cortes crudos visibles en bandeja de aluminio generada por código → drag a parrilla para cocinar → drag desde parrilla a tabla. Se eliminó del HUD la pinza diminuta. Tap sólo selecciona la pieza (cocción a un solo lado); servir requiere un solo tap en la tabla completa.
 - En gameplay se simplificó el pedido a comensal + cantidad, crecieron labels principales, se redujeron frases contextuales y se actualizó el objetivo del tutorial para carne cruda → parrilla → tabla.
 - Corrección visual: la carne conserva ahora la misma escala de sprite desde la bandeja hasta la parrilla; se agrandó la fuente de aluminio y se distribuyen las piezas en dos columnas.
 - Iteración previa al ajuste superior: la escala de emplatado se calculaba por celda en un grid compacto. Ese layout fue reemplazado por un packing de huellas sobre el área útil y una escala uniforme por nivel.
@@ -30,7 +36,7 @@
 ### Actualización 10bis — layout e interacción física
 
 - Fondo vertical gameplay actualizado, parrilla cenital grande a la izquierda; prop `MesitaAsador` a la derecha con `TablaAsador` separada como objeto hijo e interactivo. Los archivos y metadatos de import se conservan en `Resources/Art/`.
-- Quitados los botones de acción de carne `DAR VUELTA`, `BANDEJA` y `SERVIR`. El segundo tap al alimento activo voltea; arrastrar al rect de tabla emplata; doble tap sobre tabla llena sirve. Pinza acompaña el arco grill→tabla; seis slots 3×2 con variación determinista.
+- Quitados los botones de acción de carne `DAR VUELTA`, `BANDEJA` y `SERVIR`. El tap selecciona sin voltear; arrastrar al rect de tabla emplata; tap sobre tabla llena sirve. Pinza acompaña el arco grill→tabla; seis slots 3×2 con variación determinista (flujo anterior).
 - HUD sin barra de cocción, estado contextual en texto; tutorial bajo la zona de parrilla; debug se mantiene sólo para builds de desarrollo y se ocultó manualmente para la captura de presentación.
 - Captura de Unity Editor Game View a 1080×1920: `/tmp/Asadito-gameplay-layout-final.png`. No representa Android ni hardware físico.
 - Tests del código del rediseño: EditMode 19/19 PASS; PlayMode 10/10 PASS (486.94 s) en Unity 6000.6.3f1; validator y consola chequeados. El detalle sigue abajo/actualiza con la última ejecución de este sprint.

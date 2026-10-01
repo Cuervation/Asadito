@@ -83,6 +83,7 @@ namespace Asadito
         private MvpLevelDefinition currentLevel;
         private GuestProfile[] activeGuests;
         private int currentLevelNumber = 1;
+        // activePortion is the currently selected interaction target only; cooking advances every grill portion independently.
         private int activePortion = -1, trayCount;
 
         private Canvas canvas;
@@ -255,16 +256,21 @@ namespace Asadito
                 if (paused) ContinueGame();
                 else PauseGame();
             }
-            if (paused || servingLocked) return;
+            if (paused || servingLocked || gameplayCanvasGroup == null || gameplayCanvasGroup.alpha <= 0f) return;
             float minutes = Time.deltaTime * SimulationTimeScale / 60f;
+            bool anyPortionOnGrill = false;
+            float grillTemperatureC = grillHeat.GetTemperatureC();
             for (int i = 0; i < portions.Length; i++)
             {
                 PlayablePortion portion = portions[i];
-                if (!cooking || activePortion != i || !portion.Started || portion.OnSourceTray || portion.OnTray) continue;
+                if (!portion.Started || portion.OnSourceTray || portion.OnTray) continue;
                 bool onGrill = portion.Position.x >= 0f && portion.Position.x <= 1f && portion.Position.y >= 0f && portion.Position.y <= 1f;
-                float grillTemperatureC = grillHeat.GetTemperatureC();
-                FoodCookingModel.Step(portion.State, portion.Profile, grillTemperatureC, minutes, onGrill);
+                if (!onGrill) continue;
+                anyPortionOnGrill = true;
+                FoodCookingModel.Step(portion.State, portion.Profile, grillTemperatureC, minutes, true);
+                RefreshFoodVisual(i);
             }
+            SetCookingState(anyPortionOnGrill);
             if (cooking) UpdateCookFeedback();
             else if (trayCount > 0 && trayCount < portions.Length && activePortion < 0 && !HasRawSourceFood())
             {
@@ -542,10 +548,7 @@ namespace Asadito
         private void ReturnToLevelsFromGameplay()
         {
             if (menuTransitionActive || servingLocked) return;
-            if (smokeRoutine != null) StopCoroutine(smokeRoutine);
-            smokeRoutine = null;
-            if (sizzleSource != null) sizzleSource.Stop();
-            cooking = false;
+            SetCookingState(false);
             activePortion = -1;
             ShowLevelSelect();
         }
@@ -1191,14 +1194,12 @@ namespace Asadito
                     portionHitTargets[index].position = screenPosition;
                 return;
             }
-            bool loadingRawOrder = HasRawSourceFood();
-            if ((!cooking && !loadingRawOrder) || activePortion != index || !portions[index].Started || grillAreaRect == null) return;
+            if (activePortion != index || !portions[index].Started || grillAreaRect == null) return;
             if (!RectTransformUtility.ScreenPointToLocalPointInRectangle(grillAreaRect, screenPosition, null, out Vector2 local)) return;
             Vector2 size = grillAreaRect.rect.size;
             Vector2 normalized = new Vector2(local.x / size.x + .5f, local.y / size.y + .5f);
             TrySetFoodTargetPosition(index, normalized);
             activePortion = index;
-            cooking = !loadingRawOrder;
         }
 
         public void EndFoodDrag(int index, Vector2 screenPosition)
@@ -1222,8 +1223,8 @@ namespace Asadito
                 }
                 return;
             }
+            if (activePortion != index || !portions[index].Started) return;
             bool loadingRawOrder = HasRawSourceFood();
-            if ((!cooking && !loadingRawOrder) || activePortion != index || !portions[index].Started) return;
             if (!loadingRawOrder && trayRect != null && trayRect.gameObject.activeInHierarchy &&
                 RectTransformUtility.RectangleContainsScreenPoint(trayRect, screenPosition, null))
             {
@@ -1232,7 +1233,6 @@ namespace Asadito
             }
 
             ClampFoodToGrill(index);
-            cooking = !loadingRawOrder;
             activePortion = index;
             activeFoodPointerDragging = false;
             StartCoroutine(ReleaseFood(PortionImage(index).rectTransform));
@@ -1274,14 +1274,13 @@ namespace Asadito
             portions[index].Started = true;
             RefreshSurfaceState();
             bool stillLoading = HasRawSourceFood();
-            activePortion = stillLoading ? -1 : index;
-            cooking = !stillLoading;
+            activePortion = index;
+            SetCookingState(true);
             activeFoodPointerDragging = false;
             portionHitTargets[index].SetAsLastSibling();
             PlaySfx(AsaditoSfxCue.FoodDrop);
             StartCoroutine(PlaceMeat(portionHitTargets[index]));
             StartCoroutine(ReleaseFood(PortionImage(index).rectTransform));
-            if (!stillLoading) StartCookingEffects();
             UpdateFoodSelectionVisuals();
             if (stillLoading)
             {
@@ -1342,6 +1341,7 @@ namespace Asadito
 
         private void RefreshOrder()
         {
+            SetCookingState(false);
             guestName.text = BuildGuestNamesSummary();
             guestOrder.text = "PEDIDO · " + portions.Length + " PIEZAS";
             scoreText.text = "NIVEL " + currentLevelNumber + "  •  TABLA 0 / " + portions.Length;
@@ -1593,8 +1593,31 @@ namespace Asadito
         {
             if (sizzleSource != null && saveData != null && saveData.Settings.SfxVolume > 0f && !sizzleSource.isPlaying)
                 sizzleSource.Play();
+            if (smokeRoutine == null) smokeRoutine = StartCoroutine(SmokePuffs());
+        }
+
+        private void StopCookingEffects()
+        {
             if (smokeRoutine != null) StopCoroutine(smokeRoutine);
-            smokeRoutine = StartCoroutine(SmokePuffs());
+            smokeRoutine = null;
+            if (sizzleSource != null) sizzleSource.Stop();
+        }
+
+        private void SetCookingState(bool shouldCook)
+        {
+            if (cooking == shouldCook) return;
+            cooking = shouldCook;
+            if (cooking) StartCookingEffects();
+            else StopCookingEffects();
+        }
+
+        private int CountGrillPortions()
+        {
+            if (portions == null) return 0;
+            int count = 0;
+            for (int i = 0; i < portions.Length; i++)
+                if (portions[i].Started && !portions[i].OnSourceTray && !portions[i].OnTray) count++;
+            return count;
         }
 
         private void SetPortionVisualScale(int index, float scale)
@@ -1738,7 +1761,7 @@ namespace Asadito
 
         public bool IsFoodPieceSelected(int index)
         {
-            return cooking && index >= 0 && index < portions.Length && activePortion == index &&
+            return index >= 0 && portions != null && index < portions.Length && activePortion == index &&
                    portions[index].Started && !portions[index].OnSourceTray && !portions[index].OnTray;
         }
 
@@ -1761,19 +1784,12 @@ namespace Asadito
             if (index < 0 || portions == null || index >= portions.Length || paused || servingLocked || platingInProgress)
                 return false;
             if (portions[index].OnSourceTray || portions[index].OnTray || !portions[index].Started) return false;
-            if (cooking && activePortion != index)
-            {
-                progressText.text = "TERMINÁ LA CARNE EN LA PARRILLA";
-                return false;
-            }
 
             activePortion = index;
-            bool loadingRawOrder = HasRawSourceFood();
-            cooking = !loadingRawOrder;
-            if (cooking) StartCookingEffects();
+            SetCookingState(true);
             UpdateFoodSelectionVisuals();
             if (tutorialText != null)
-                tutorialText.text = loadingRawOrder ? "UBICÁ LA CARNE EN LA PARRILLA" : "ARRASTRÁ A LA TABLA CUANDO ESTÉ LISTA";
+                tutorialText.text = HasRawSourceFood() ? "ARRASTRÁ TODA LA CARNE A LA PARRILLA" : "ARRASTRÁ A LA TABLA CUANDO ESTÉ LISTA";
             return true;
         }
 
@@ -1782,7 +1798,7 @@ namespace Asadito
             if (portionSelectionHalos == null) return;
             for (int i = 0; i < portionSelectionHalos.Length; i++)
             {
-                bool selected = (cooking || HasRawSourceFood()) && portions[i].Started &&
+                bool selected = portions[i].Started &&
                                 !portions[i].OnSourceTray && !portions[i].OnTray && i == activePortion;
                 if (portionSelectionHalos[i] != null) portionSelectionHalos[i].gameObject.SetActive(selected);
                 // Selection feedback uses halo/shadow, not an idle size change: food keeps
@@ -1799,12 +1815,13 @@ namespace Asadito
 
         private IEnumerator PlatePortion(int index)
         {
-            if (index < 0 || index >= portions.Length || HasRawSourceFood() || !cooking || activePortion != index || portions[index].OnTray || platingInProgress)
+            if (index < 0 || index >= portions.Length || HasRawSourceFood() || activePortion != index ||
+                !portions[index].Started || portions[index].OnSourceTray || portions[index].OnTray || platingInProgress)
                 yield break;
             platingInProgress = true;
-            cooking = false;
             activePortion = -1;
             portions[index].OnTray = true;
+            SetCookingState(CountGrillPortions() > 0);
             if (portionHitTargets[index] != null)
             {
                 portionHitTargets[index].GetComponent<Image>().raycastTarget = false;
@@ -1816,9 +1833,6 @@ namespace Asadito
             if (portionHitTargets[index] != null) portionHitTargets[index].SetAsLastSibling();
             PlaySfx(AsaditoSfxCue.Plate);
             VibrateFeedback();
-            if (smokeRoutine != null) StopCoroutine(smokeRoutine);
-            smokeRoutine = null;
-            if (sizzleSource != null) sizzleSource.Stop();
             yield return ServeAnimation(portionHitTargets[index], index);
             RefreshServingBoardOrder();
             trayCount++;
@@ -2287,19 +2301,34 @@ namespace Asadito
 
         private void UpdateCookFeedback()
         {
-            if (portions == null || activePortion < 0 || activePortion >= portions.Length || progressText == null)
+            if (portions == null || progressText == null) return;
+            if (activePortion < 0 || activePortion >= portions.Length || !portions[activePortion].Started ||
+                portions[activePortion].OnSourceTray || portions[activePortion].OnTray)
             {
-                // A scene/test transition can tear down the active UI between frames.
-                // Do not keep a cooking flag with an invalid portion index or let the
-                // next Update throw while Unity is unloading the old scene.
-                cooking = false;
                 activePortion = -1;
+                for (int i = 0; i < portions.Length; i++)
+                    if (portions[i].Started && !portions[i].OnSourceTray && !portions[i].OnTray)
+                    {
+                        activePortion = i;
+                        break;
+                    }
+                UpdateFoodSelectionVisuals();
+            }
+
+            if (HasRawSourceFood())
+            {
+                progressText.text = "PARRILLA  " + CountGrillPortions() + "/" + portions.Length;
+                if (tutorialText != null) tutorialText.text = "ARRASTRÁ TODA LA CARNE A LA PARRILLA";
                 return;
             }
 
-            PlayablePortion portion = portions[activePortion];
-            progressText.text = portion.Point;
-            RefreshFoodVisual(activePortion);
+            if (activePortion < 0)
+            {
+                progressText.text = "TABLA  " + trayCount + "/" + portions.Length;
+                return;
+            }
+            progressText.text = portions[activePortion].Point;
+            if (tutorialText != null) tutorialText.text = "ARRASTRÁ A LA TABLA CUANDO ESTÉ LISTA";
         }
 
         private void RefreshFoodVisual(int index)
