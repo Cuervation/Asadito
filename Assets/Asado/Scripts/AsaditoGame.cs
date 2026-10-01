@@ -135,7 +135,7 @@ namespace Asadito
         private Text introTitleText;
         private Text introGuestsText;
         private Text introMenuText;
-        private Text introObjectiveText;
+        private Image[] introGuestIcons;
         private Button[] levelCards;
         private Image[] levelCardImages;
         private Text[] levelCardLabels;
@@ -145,7 +145,6 @@ namespace Asadito
         private Image[] introFoodIcons;
         private Coroutine boardReadyPulseRoutine;
         private Button debugScaleButton;
-        private Button pauseButton;
         private Button pauseSoundButton;
         private Button pauseHapticsButton;
         private GameObject pauseRoot;
@@ -372,6 +371,11 @@ namespace Asadito
 
             MakePanel("Sombra del titulo", gameplayRoot, new Color(0, 0, 0, .32f), .5f, .945f, 950, 96);
             MakeText("Marca", gameplayRoot, "ASADITO", 40, Cream, TextAnchor.MiddleCenter, .46f, .945f, 700, 78, true);
+            Button gameplayBackButton = MakeButton("VOLVER", gameplayRoot, .09f, .945f, 196f, 72f,
+                new Color32(150, 75, 54, 255), ReturnToLevelsFromGameplay);
+            Text gameplayBackLabel = gameplayBackButton.GetComponentInChildren<Text>();
+            gameplayBackLabel.rectTransform.offsetMin = new Vector2(65f, 8f);
+            gameplayBackLabel.rectTransform.offsetMax = new Vector2(-8f, -8f);
 
             MakePanel("Pedido", gameplayRoot, new Color32(38, 48, 39, 226), .5f, .795f, 940, 150);
             avatar = new GameObject("Comensal", typeof(RectTransform));
@@ -417,8 +421,6 @@ namespace Asadito
             if (Debug.isDebugBuild)
                 debugScaleButton = MakeButton("CONTROL DEBUG", gameplayRoot, .14f, .855f, 190, 58,
                     new Color32(58, 65, 56, 230), CycleSimulationScale);
-            pauseButton = MakeButton("PAUSA", gameplayRoot, .91f, .945f, 142, 72, Green, PauseGame);
-            UpdateGameplayActionButtons();
             BuildFrontEnd();
             if (Debug.isDebugBuild) RefreshDebugScaleLabel();
             BuildPauseMenu();
@@ -528,13 +530,23 @@ namespace Asadito
             if (sizzleSource != null) sizzleSource.Stop();
             tutorialStep = 0;
             RefreshOrder();
-            UpdateGameplayActionButtons();
             tutorialText.text = "";
         }
 
         private void ReturnToLevelsFromPause()
         {
             ContinueGame();
+            ShowLevelSelect();
+        }
+
+        private void ReturnToLevelsFromGameplay()
+        {
+            if (menuTransitionActive || servingLocked) return;
+            if (smokeRoutine != null) StopCoroutine(smokeRoutine);
+            smokeRoutine = null;
+            if (sizzleSource != null) sizzleSource.Stop();
+            cooking = false;
+            activePortion = -1;
             ShowLevelSelect();
         }
 
@@ -686,7 +698,7 @@ namespace Asadito
             viewportObject.transform.SetParent(levelSelectRoot.transform, false);
             RectTransform viewportRect = viewportObject.GetComponent<RectTransform>();
             viewportRect.anchorMin = new Vector2(.045f, .145f);
-            viewportRect.anchorMax = new Vector2(.955f, .765f);
+            viewportRect.anchorMax = new Vector2(.955f, .815f);
             viewportRect.offsetMin = viewportRect.offsetMax = Vector2.zero;
             Image viewportImage = viewportObject.GetComponent<Image>();
             viewportImage.color = new Color(1f, 1f, 1f, 0f);
@@ -822,14 +834,21 @@ namespace Asadito
             introTitleText.resizeTextForBestFit = true;
             introTitleText.resizeTextMinSize = 48;
             introTitleText.resizeTextMaxSize = 62;
-            introGuestsText = MakeText("Intro comensales", introPopup, "2 COMENSALES", 38, new Color32(47, 63, 48, 255), TextAnchor.MiddleCenter, .53f, .673f, 300, 64, false);
+            introGuestsText = MakeText("Intro comensales", introPopup, "2 COMENSALES", 38, new Color32(47, 63, 48, 255), TextAnchor.MiddleCenter, .5f, .673f, 300, 64, false);
             introGuestsText.font = semiBoldFont;
             introGuestsText.resizeTextForBestFit = true;
             introGuestsText.resizeTextMinSize = 32;
             introGuestsText.resizeTextMaxSize = 40;
-            Image introGuestIcon = MakeImage("Icon comensales intro", introPopup, AsaditoUiIcons.Get(AsaditoUiIcon.Guest), Gold,
-                new Vector2(.25f, .673f), new Vector2(.25f, .673f), new Vector2(36f, 36f));
-            introGuestIcon.preserveAspect = true;
+            introGuestIcons = new Image[MvpLevelCatalog.MaxGuestCount];
+            for (int i = 0; i < introGuestIcons.Length; i++)
+            {
+                Image guestIcon = MakeImage("Icon comensal intro " + (i + 1), introPopup,
+                    AsaditoUiIcons.Get(AsaditoUiIcon.Guest), Gold,
+                    new Vector2(.5f, .673f), new Vector2(.5f, .673f), new Vector2(28f, 28f));
+                guestIcon.preserveAspect = true;
+                guestIcon.gameObject.SetActive(false);
+                introGuestIcons[i] = guestIcon;
+            }
             introMenuText = MakeText("Intro menu", introPopup, "CHORIZO ×1   ·   TIRA DE ASADO ×1", 32, new Color32(45, 60, 46, 255), TextAnchor.MiddleCenter, .5f, .415f, 600, 56, false);
             introMenuText.font = semiBoldFont;
             introMenuText.resizeTextForBestFit = true;
@@ -847,11 +866,7 @@ namespace Asadito
             Image menuDivider = MakeImage("Separador menu popup", introPopup, whiteSprite,
                 new Color32(190, 146, 61, 190), new Vector2(.11f, .352f), new Vector2(.89f, .352f), new Vector2(0f, 2f));
             menuDivider.raycastTarget = false;
-            introObjectiveText = MakeText("Intro objetivo", introPopup, "Arrastrá la carne cruda a la parrilla.\nCuando esté lista, llevala a la tabla.", 30, new Color32(45, 56, 47, 255), TextAnchor.MiddleCenter, .5f, .264f, 600, 100, false);
-            introObjectiveText.resizeTextForBestFit = true;
-            introObjectiveText.resizeTextMinSize = 28;
-            introObjectiveText.resizeTextMaxSize = 30;
-            MakeButton("IR A LA PARRILLA", introPopup, .5f, .108f, 460, 88, new Color32(199, 139, 54, 255), StartLevel);
+            MakeButton("IR A LA PARRILLA", introPopup, .5f, .19f, 460, 88, new Color32(199, 139, 54, 255), StartLevel);
             gameplayCanvasGroup.alpha = 0f;
             gameplayCanvasGroup.interactable = false;
             gameplayCanvasGroup.blocksRaycasts = false;
@@ -960,12 +975,35 @@ namespace Asadito
             RefreshOrder();
             introTitleText.text = "NIVEL " + currentLevelNumber + " · " + currentLevel.Title;
             introGuestsText.text = currentLevel.GuestCount + " COMENSALES";
+            RefreshIntroGuestIcons(currentLevel);
             introMenuText.text = BuildOrderSummary(currentLevel);
             RefreshIntroFoodIcons(currentLevel);
-            introObjectiveText.text = currentLevelNumber == 1
-                ? "Arrastrá la carne cruda a la parrilla.\nCuando esté lista, llevala a la tabla."
-                : "Arrastrá toda la carne a la parrilla.\nCociná y serví cada pieza.";
             StartCoroutine(TransitionToIntro());
+        }
+
+        private void RefreshIntroGuestIcons(MvpLevelDefinition level)
+        {
+            int count = Mathf.Clamp(level != null ? level.GuestCount : 0, 0, introGuestIcons.Length);
+            const float iconSize = 28f;
+            const float iconGap = 5f;
+            const float labelGap = 14f;
+            const float labelWidth = 300f;
+            float iconRowWidth = count > 0 ? count * iconSize + (count - 1) * iconGap : 0f;
+            float rowStart = -(iconRowWidth + labelGap + labelWidth) * .5f;
+
+            for (int i = 0; i < introGuestIcons.Length; i++)
+            {
+                bool visible = i < count;
+                introGuestIcons[i].gameObject.SetActive(visible);
+                if (visible)
+                {
+                    introGuestIcons[i].rectTransform.anchoredPosition = new Vector2(
+                        rowStart + iconSize * .5f + i * (iconSize + iconGap), 0f);
+                }
+            }
+
+            introGuestsText.rectTransform.anchoredPosition = new Vector2(
+                rowStart + iconRowWidth + labelGap + labelWidth * .5f, 0f);
         }
 
         private string BuildOrderSummary() => BuildOrderSummary(currentLevel);
@@ -1245,7 +1283,6 @@ namespace Asadito
             StartCoroutine(ReleaseFood(PortionImage(index).rectTransform));
             if (!stillLoading) StartCookingEffects();
             UpdateFoodSelectionVisuals();
-            UpdateGameplayActionButtons();
             if (stillLoading)
             {
                 int loadedCount = portions.Length - CountRawSourceFood();
@@ -1332,7 +1369,6 @@ namespace Asadito
             tutorialText.text = "";
             feedbackText.text = "";
             UpdateFoodSelectionVisuals();
-            UpdateGameplayActionButtons();
         }
 
         private string BuildGuestNamesSummary()
@@ -1683,11 +1719,6 @@ namespace Asadito
             }
         }
 
-        private void UpdateGameplayActionButtons()
-        {
-            if (pauseButton != null) pauseButton.interactable = !paused && !servingLocked;
-        }
-
         public bool BeginFoodPointer(int index, int pointerId)
         {
             if (index < 0 || portions == null || index >= portions.Length || paused || servingLocked || platingInProgress)
@@ -1741,7 +1772,6 @@ namespace Asadito
             cooking = !loadingRawOrder;
             if (cooking) StartCookingEffects();
             UpdateFoodSelectionVisuals();
-            UpdateGameplayActionButtons();
             if (tutorialText != null)
                 tutorialText.text = loadingRawOrder ? "UBICÁ LA CARNE EN LA PARRILLA" : "ARRASTRÁ A LA TABLA CUANDO ESTÉ LISTA";
             return true;
@@ -1782,7 +1812,6 @@ namespace Asadito
             }
             if (portionSelectionHalos[index] != null) portionSelectionHalos[index].gameObject.SetActive(false);
             UpdateFoodSelectionVisuals();
-            UpdateGameplayActionButtons();
             servingBoardPlateOrder.Add(index);
             if (portionHitTargets[index] != null) portionHitTargets[index].SetAsLastSibling();
             PlaySfx(AsaditoSfxCue.Plate);
@@ -1811,7 +1840,6 @@ namespace Asadito
                     boardReadyPulseRoutine = StartCoroutine(PulseServingBoard());
                 }
             }
-            UpdateGameplayActionButtons();
         }
 
         public void FlipSelectedPortionFromTap(int index)
@@ -2001,7 +2029,6 @@ namespace Asadito
             if (servingLocked || cooking || trayCount != portions.Length) return;
             PlaySfx(AsaditoSfxCue.Serve);
             servingLocked = true;
-            SetActionButtons(false);
             GuestProfile[] profiles = activeGuests;
             var servings = new System.Collections.Generic.List<ServingPortion>(portions.Length);
             for (int i = 0; i < portions.Length; i++)
@@ -2135,7 +2162,6 @@ namespace Asadito
                 (nextUnlocked ? PlayNextLevel : () => { });
             MakeButton(hasNext ? (nextUnlocked ? "SIGUIENTE" : "BLOQUEADO") : "NIVELES", resultContent,
                 .71f, .32f, 390, 86, new Color32(199, 139, 54, 255), nextAction).interactable = !hasNext || nextUnlocked;
-            SetActionButtons(false);
             StartCoroutine(AnimateResultsEntrance(resultsRoot));
         }
 
@@ -2424,12 +2450,6 @@ namespace Asadito
             if (EventSystem.current != null) return;
             var go = new GameObject("EventSystem", typeof(EventSystem), typeof(InputSystemUIInputModule));
             go.GetComponent<InputSystemUIInputModule>().AssignDefaultActions();
-        }
-
-        private void SetActionButtons(bool active)
-        {
-            if (active) UpdateGameplayActionButtons();
-            else if (pauseButton != null) pauseButton.interactable = false;
         }
 
         private Image MakePanel(string objectName, Transform parent, Color color, float x, float y, float width, float height)

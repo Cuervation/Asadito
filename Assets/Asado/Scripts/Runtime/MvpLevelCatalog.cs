@@ -51,6 +51,7 @@ namespace Asadito.Runtime
         };
 
         public static int Count => Levels.Length;
+        public static int MaxGuestCount => Roster.Length;
 
         public static MvpLevelDefinition Get(int levelNumber)
         {
