@@ -1,18 +1,17 @@
-# Asadito
+# ASADITO
 
-Juego móvil casual de parrilla argentina. El MVP actual comprende 12 niveles y 18 alimentos; el nivel 1 introduce el loop completo.
+Juego móvil de gestión de asados argentinos: planificación, compras, inventario y habilidad cocinando para satisfacer invitados.
 
-Repositorio oficial: [Cuervation/Asadito](https://github.com/Cuervation/Asadito), branch `main`.
+Repositorio: [Cuervation/Asadito](https://github.com/Cuervation/Asadito), branch `main`. Unity6000.6.3f1, URP, portrait mobile.
 
-## Proyecto
+## Orientación
+- Dirección canónica: [full-game](specs/product/full-game.md), con specs por dominio enlazadas.
+- Estado jugable y límites: [estado actual](docs/current-project-state.md).
+- Implementación: [repo-map](docs/repo-map.md), [AGENTS](AGENTS.md).
+- Aceptación actual: [Vertical1](specs/acceptance/management-vertical1-gate.md).
+- Evidencia fechada: [QA Vertical1](docs/ai/management-vertical1-qa.md).
+- MCP/Editor: [setup](UNITY_MCP_SETUP.md).
 
-- Unity 6000.6.3f1, URP.
-- MCP for Unity 10.2.0: [setup y compatibilidad](UNITY_MCP_SETUP.md).
-- Fuentes de producto/aceptación: [alcance](specs/product/mvp-scope.md), [gate](specs/acceptance/mvp-gate.md). Las specs se consultan según la tarea, no todas al inicio.
-- Orientación rápida: [estado operativo actual](docs/current-project-state.md), [mapa del repositorio](docs/repo-map.md), [router](AGENTS.md).
-- Evidencia fechada de QA: [mvp-status](docs/ai/mvp-status.md) y [current-state](docs/ai/current-state.md).
-- Contrato de contribución y memoria: [AGENTS.md](AGENTS.md).
+Vertical1 conecta compra de chorizo/tira → heladera → preparación → cocina/servicio → resultado económico → saldo persistente. Tutorial/progresión gradual; futuras verticales en [roadmap](docs/roadmap.md).
 
-## Alcance
-
-Loop principal: parrilla ya caliente, manipulación directa de alimentos con pinza, servir en tabla, evaluación y progresión. No hay encendido/carbón. Ver el [scope del MVP](specs/product/mvp-scope.md); no ampliar sistemas fuera de ese alcance.
+Las specs/auditorías históricas del MVP conservan evidencia del prototipo, no limitan la dirección futura. No carbón/encendido/apagado, energía/vidas, tiempo offline, monetización ni multiplayer.

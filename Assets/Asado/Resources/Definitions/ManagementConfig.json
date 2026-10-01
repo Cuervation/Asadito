@@ -1,0 +1,37 @@
+{
+  "InitialBalance": 1000,
+  "FridgeCapacity": 8,
+  "BaseReward": 120,
+  "RewardPerGuest": 180,
+  "RecoveryStarCap": 1,
+  "FoodWeight": 0.6,
+  "EconomyWeight": 0.25,
+  "OperationsWeight": 0.15,
+  "RecoveryRewardMultiplier": 0.5,
+  "Products": [
+    {
+      "FoodId": "chorizo",
+      "Price": 100,
+      "Stock": 8,
+      "UnlockLevel": 1,
+      "FreshCycles": 3,
+      "PortionAmount": 0.1
+    },
+    {
+      "FoodId": "tira",
+      "Price": 180,
+      "Stock": 8,
+      "UnlockLevel": 1,
+      "FreshCycles": 4,
+      "PortionAmount": 0.14
+    }
+  ],
+  "EnableFreshness": false,
+  "PlayableLevels": 6,
+  "ManagementFromLevel": 5,
+  "CoinsFromLevel": 4,
+  "MinimumRewardRatio": 0.35,
+  "WasteEconomyPenalty": 100,
+  "WasteOperationsPenalty": 50,
+  "SurplusPenalty": 10
+}

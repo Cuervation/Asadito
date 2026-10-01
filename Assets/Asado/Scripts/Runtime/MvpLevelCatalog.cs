@@ -12,27 +12,27 @@ namespace Asadito.Runtime
         public float[] PortionAmounts;
     }
 
-    /// <summary>Progressive 12-level menu: teach direct food handling and turning before mixing cuts, offal and proteins.</summary>
+    /// <summary>Data-driven first chapter; management unlocks progressively while later verticals remain gated.</summary>
     public static class MvpLevelCatalog
     {
-        // Current release gate: only the tutorial is selectable until more levels are approved.
-        public const int MaxPlayableLevel = 1;
+        // Current release gate: Chapter 1 exposes the complete cooking/basic-management arc; later verticals remain locked.
+        public static int MaxPlayableLevel => ManagementConfig.Load().PlayableLevels;
 
-        private static readonly MvpLevelDefinition[] Levels =
+        [Serializable] private sealed class LevelData { public MvpLevelDefinition[] Levels; }
+        private static MvpLevelDefinition[] cached;
+        private static MvpLevelDefinition[] Levels
         {
-            Create(1, "EL DEBUT", new[] { "tira", "chorizo" }, .065f),
-            Create(2, "UNA TANDA MÁS", new[] { "chorizo", "tira", "chorizo" }, .060f),
-            Create(3, "PUNTOS DISTINTOS", new[] { "tira", "chorizo", "tira", "chorizo" }, .060f),
-            Create(4, "EL VACÍO", new[] { "vacio", "tira", "chorizo", "tira" }, .060f),
-            Create(5, "LA GRAN JUNTADA", new[] { "tira", "chorizo", "vacio", "provoleta", "tira", "chorizo" }, .060f),
-            Create(6, "CORTES FINOS", new[] { "entrana", "bife_angosto", "chinchulines", "entrana", "tira" }, .057f),
-            Create(7, "PUNTO JUSTO", new[] { "lomo", "colita_cuadril", "vacio", "lomo" }, .060f),
-            Create(8, "ACHURAS", new[] { "chinchulines", "morcilla", "morcilla_vasca", "chorizo", "tira" }, .055f),
-            Create(9, "OTRAS CARNES", new[] { "matambre_cerdo", "costillita_cerdo", "pollo_deshuesado", "pollo_deshuesado", "provoleta" }, .055f),
-            Create(10, "CORTES PREMIUM", new[] { "bife_ancho", "bife_chorizo", "ojo_bife", "bife_angosto", "lomo", "colita_cuadril" }, .052f),
-            Create(11, "FOGÓN CRIOLLO", new[] { "pollo_deshuesado", "matambre_cerdo", "solomillo_cerdo", "costillita_cerdo", "morcilla_vasca", "entrana" }, .052f),
-            Create(12, "EL ASADO COMPLETO", new[] { "vacio", "ojo_bife", "entrana", "morcilla_vasca", "provoleta", "pollo_deshuesado" }, .050f)
-        };
+            get
+            {
+                if (cached == null)
+                {
+                    var asset = UnityEngine.Resources.Load<UnityEngine.TextAsset>("Definitions/ChapterOneLevels");
+                    if (asset == null) throw new InvalidOperationException("ChapterOneLevels missing");
+                    cached = UnityEngine.JsonUtility.FromJson<LevelData>(asset.text).Levels;
+                }
+                return cached;
+            }
+        }
 
         private static readonly GuestProfile[] Roster =
         {
@@ -67,13 +67,6 @@ namespace Asadito.Runtime
                 FoodIds = (string[])source.FoodIds.Clone(),
                 PortionAmounts = (float[])source.PortionAmounts.Clone()
             };
-        }
-
-        private static MvpLevelDefinition Create(int number, string title, string[] foods, float amount)
-        {
-            var amounts = new float[foods.Length];
-            for (int i = 0; i < amounts.Length; i++) amounts[i] = amount;
-            return new MvpLevelDefinition { Number = number, Title = title, GuestCount = foods.Length, FoodIds = foods, PortionAmounts = amounts };
         }
 
         public static GuestProfile[] CreateGuests(int levelNumber)

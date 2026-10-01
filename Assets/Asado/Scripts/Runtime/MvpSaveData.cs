@@ -15,12 +15,13 @@ namespace Asadito.Runtime
     [Serializable]
     public sealed class MvpSaveData
     {
-        public const int CurrentVersion = 3;
+        public const int CurrentVersion = 4;
         public int Version = CurrentVersion;
         public int MaxUnlockedLevel = 1;
         public int[] StarsByLevel = new int[MvpLevelCatalog.Count];
         public int[] BestScoreByLevel = new int[MvpLevelCatalog.Count];
         public MvpSettings Settings = new MvpSettings();
+        public ManagementState Management;
 
         public void RecordLevelResult(int levelNumber, int score, int stars)
         {
@@ -36,7 +37,7 @@ namespace Asadito.Runtime
 
         public static MvpSaveData Migrate(MvpSaveData data)
         {
-            if (data == null || data.Version < 1 || data.Version > CurrentVersion) return new MvpSaveData();
+            if (data == null || data.Version < 1 || data.Version > CurrentVersion) data = new MvpSaveData();
             if (data.StarsByLevel == null) data.StarsByLevel = new int[0];
             if (data.BestScoreByLevel == null) data.BestScoreByLevel = new int[0];
             Array.Resize(ref data.StarsByLevel, MvpLevelCatalog.Count);
@@ -46,6 +47,12 @@ namespace Asadito.Runtime
             else if (data.Version < 3 && Mathf.Approximately(data.Settings.SimulationTimeScale, 30f))
                 data.Settings.SimulationTimeScale = 20f;
             data.Settings.SimulationTimeScale = Mathf.Clamp(data.Settings.SimulationTimeScale, 20f, 40f);
+            if (data.Management == null) data.Management = ManagementState.New(ManagementConfig.Load());
+            data.Management.Balance = Mathf.Max(0, data.Management.Balance);
+            if (data.Management.Inventory == null) data.Management.Inventory = new System.Collections.Generic.List<InventoryUnit>();
+            if (data.Management.Purchases == null) data.Management.Purchases = new System.Collections.Generic.List<PurchaseRecord>();
+            data.Management.NextUnitId = Mathf.Max(1, data.Management.NextUnitId);
+            foreach (var unit in data.Management.Inventory) data.Management.NextUnitId = Mathf.Max(data.Management.NextUnitId, unit.Id + 1);
             data.Version = CurrentVersion;
             return data;
         }
@@ -60,7 +67,7 @@ namespace Asadito.Runtime
         public static MvpSaveData Load()
         {
             if (cached != null) return cached;
-            if (!PlayerPrefs.HasKey(Key)) return cached = new MvpSaveData();
+            if (!PlayerPrefs.HasKey(Key)) return cached = MvpSaveData.Migrate(new MvpSaveData());
             try
             {
                 MvpSaveData loaded = JsonUtility.FromJson<MvpSaveData>(PlayerPrefs.GetString(Key));
@@ -68,13 +75,14 @@ namespace Asadito.Runtime
             }
             catch (ArgumentException)
             {
-                return cached = new MvpSaveData();
+                return cached = MvpSaveData.Migrate(new MvpSaveData());
             }
         }
 
         public static void Save(MvpSaveData data)
         {
             if (data == null) return;
+            data = MvpSaveData.Migrate(data);
             data.Version = MvpSaveData.CurrentVersion;
             cached = data;
             PlayerPrefs.SetString(Key, JsonUtility.ToJson(data));

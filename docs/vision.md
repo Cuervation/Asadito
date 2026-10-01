@@ -1,5 +1,7 @@
-# Visión — Asadito
+# Visión — ASADITO
 
-Un juego móvil cálido y táctil sobre cocinar en una parrilla argentina y compartir la mesa. El jugador arrastra la carne cruda desde una bandeja de aluminio a la parrilla, controla su cocción y la lleva a la tabla para servir. La carne es el objeto manipulable; no hay pinza visual en esta iteración. La parrilla está lista desde el inicio. El primer prototipo prioriza decisiones claras y feedback inmediato.
+ASADITO es un juego móvil de gestión de asados argentinos donde planificás la juntada, comprás y administrás la carne, mejorás tu patio y demostrás tu habilidad cocinando para que todos se vayan contentos.
 
-**Público y tono:** partidas cortas, humor de sobremesa y estética de patio argentino al atardecer. **Métrica del MVP:** servir la bandeja y entender por qué cada comensal quedó conforme o no.
+La parrilla es el núcleo de habilidad, no todo el juego. Gestión clara y visual, partidas cálidas en un patio argentino, humor de sobremesa, progresión visible. La dirección y límites del producto viven en [full-game](../specs/product/full-game.md); esta página no duplica reglas.
+
+Historia: el MVP de cocción validó interacción/temperatura/comensales. Sus exclusiones de economía y otros métodos ya no representan el producto futuro.

@@ -1,3 +1,5 @@
+> **Documento histórico del MVP de cocción.** Desde 2026-10-01 la dirección futura es [full-game](full-game.md); exclusiones de gestión/economía/métodos aquí no limitan el nuevo producto. Las mecánicas existentes siguen sujetas a sus specs de sistema.
+
 # Alcance de producto — MVP expandido de Asadito
 
 ## Alcance

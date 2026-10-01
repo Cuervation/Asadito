@@ -80,6 +80,10 @@ namespace Asadito
         }
 
         private PlayablePortion[] portions = new PlayablePortion[0];
+        private ManagementService management;
+        private ManagementScreen managementScreen;
+        private EconomicResult economicResult;
+        private Button introStartButton;
         private MvpLevelDefinition currentLevel;
         private GuestProfile[] activeGuests;
         private int currentLevelNumber = 1;
@@ -246,6 +250,8 @@ namespace Asadito
             BuildSizzleAudio();
             if (grillHeat == null) grillHeat = new GrillHeatModel();
             BuildInterface();
+            management = new ManagementService(saveData.Management, ManagementConfig.Load());
+            managementScreen = new ManagementScreen(this, contentRoot, management);
             RefreshOrder();
         }
 
@@ -494,7 +500,7 @@ namespace Asadito
 
         private void PauseGame()
         {
-            if (paused || pauseRoot == null || servingLocked || menuTransitionActive) return;
+            if (paused || pauseRoot == null || servingLocked || menuTransitionActive || (managementScreen != null && managementScreen.IsOpen)) return;
             paused = true;
             if (gameplayCanvasGroup != null)
             {
@@ -542,6 +548,8 @@ namespace Asadito
         private void ReturnToLevelsFromPause()
         {
             ContinueGame();
+            management?.Abandon();
+            if (management != null) MvpSave.Save(saveData);
             ShowLevelSelect();
         }
 
@@ -550,6 +558,8 @@ namespace Asadito
             if (menuTransitionActive || servingLocked) return;
             SetCookingState(false);
             activePortion = -1;
+            management?.Abandon();
+            if (management != null) MvpSave.Save(saveData);
             ShowLevelSelect();
         }
 
@@ -869,7 +879,7 @@ namespace Asadito
             Image menuDivider = MakeImage("Separador menu popup", introPopup, whiteSprite,
                 new Color32(190, 146, 61, 190), new Vector2(.11f, .352f), new Vector2(.89f, .352f), new Vector2(0f, 2f));
             menuDivider.raycastTarget = false;
-            MakeButton("IR A LA PARRILLA", introPopup, .5f, .19f, 460, 88, new Color32(199, 139, 54, 255), StartLevel);
+            introStartButton = MakeButton("IR A LA PARRILLA", introPopup, .5f, .19f, 460, 88, new Color32(199, 139, 54, 255), StartLevel);
             gameplayCanvasGroup.alpha = 0f;
             gameplayCanvasGroup.interactable = false;
             gameplayCanvasGroup.blocksRaycasts = false;
@@ -912,6 +922,8 @@ namespace Asadito
         private IEnumerator TransitionToLevelSelect()
         {
             menuTransitionActive = true;
+            managementScreen?.Close();
+            if (management != null) MvpSave.Save(saveData);
             ClearResultUi();
             gameplayCanvasGroup.alpha = 0f;
             gameplayCanvasGroup.interactable = false;
@@ -976,6 +988,7 @@ namespace Asadito
             ConfigureLevel(levelNumber);
             BuildPortionControls();
             RefreshOrder();
+            introStartButton.GetComponentInChildren<Text>().text = currentLevelNumber >= management.Config.ManagementFromLevel ? "PLANIFICAR ASADO" : "IR A LA PARRILLA";
             introTitleText.text = "NIVEL " + currentLevelNumber + " · " + currentLevel.Title;
             introGuestsText.text = currentLevel.GuestCount + " COMENSALES";
             RefreshIntroGuestIcons(currentLevel);
@@ -1129,7 +1142,33 @@ namespace Asadito
 
         private void StartLevel()
         {
-            if (!menuTransitionActive) StartCoroutine(TransitionToGameplay());
+            if (menuTransitionActive) return;
+            if (currentLevelNumber >= management.Config.ManagementFromLevel)
+            {
+                introRoot.SetActive(false);
+                if (management.State.ActiveRun != null && management.State.ActiveRun.Level == currentLevelNumber)
+                {
+                    BeginPreparedAsado(management.State.ActiveRun.Units.ConvertAll(x => x.FoodId).ToArray());
+                    return;
+                }
+                management.Abandon(); MvpSave.Save(saveData);
+                managementScreen.Open(currentLevel, activeGuests, BeginPreparedAsado, ShowLevelSelect);
+            }
+            else StartCoroutine(TransitionToGameplay());
+        }
+
+        internal Sprite ManagementFoodSprite(string id) => FoodStateSprite(id, 0);
+        internal Sprite ManagementGuestSprite(string id) => GuestPortraitSprite(id, 0);
+        internal Font ManagementBodyFont => semiBoldFont != null ? semiBoldFont : bodyFont;
+        internal void ManagementFeedback() => PlaySfx(AsaditoSfxCue.Serve);
+        internal void PersistManagement() => MvpSave.Save(saveData);
+        private void BeginPreparedAsado(string[] foods)
+        {
+            currentLevel.FoodIds = (string[])foods.Clone();
+            portions = new PlayablePortion[foods.Length];
+            for (int i = 0; i < foods.Length; i++) portions[i] = new PlayablePortion(foods[i], management.Config.Product(foods[i]).PortionAmount);
+            BuildPortionControls(); RefreshOrder();
+            StartCoroutine(TransitionToGameplay());
         }
 
         private IEnumerator TransitionToGameplay()
@@ -2079,9 +2118,19 @@ namespace Asadito
             if (saveData != null && saveData.Settings != null && !saveData.Settings.TutorialCompleted)
             {
                 saveData.Settings.TutorialCompleted = true;
-                MvpSave.Save(saveData);
             }
-            MvpSave.RecordLevelResult(currentLevelNumber, totalScore, totalStars);
+            if (currentLevelNumber >= management.Config.ManagementFromLevel)
+            {
+                economicResult = management.Complete(totalScore / (float)Mathf.Max(1, profiles.Length), profiles.Length, starThresholds);
+                totalStars = economicResult.Stars;
+            }
+            else if (currentLevelNumber == management.Config.CoinsFromLevel && !saveData.Management.IntroRewardGranted)
+            {
+                management.Wallet.Credit(management.Config.BaseReward);
+                saveData.Management.IntroRewardGranted = true;
+            }
+            saveData.RecordLevelResult(currentLevelNumber, totalScore, totalStars);
+            MvpSave.Save(saveData);
             saveData = MvpSave.Load();
             feedbackText.text = reactions;
             StartCoroutine(GuestReaction(totalScore / Mathf.Max(1, activeGuests.Length)));
@@ -2128,6 +2177,15 @@ namespace Asadito
         private void ShowFinalScore()
         {
             PlaySfx(AsaditoSfxCue.Result);
+            if (currentLevelNumber >= management.Config.ManagementFromLevel && economicResult != null)
+            {
+                gameplayCanvasGroup.alpha = 0f;
+                gameplayCanvasGroup.interactable = gameplayCanvasGroup.blocksRaycasts = false;
+                bool nextAvailable = IsLevelAvailable(currentLevelNumber + 1);
+                managementScreen.Results(economicResult, Retry, nextAvailable ? (System.Action)PlayNextLevel : ShowLevelSelect,
+                    nextAvailable, feedbackText.text);
+                return;
+            }
             resultsRoot = new GameObject("Resultados", typeof(RectTransform), typeof(CanvasGroup));
             resultsRoot.transform.SetParent(contentRoot, false);
             RectTransform resultsRect = resultsRoot.GetComponent<RectTransform>();
@@ -2168,6 +2226,8 @@ namespace Asadito
                 resultFoodIcons[i] = food;
             }
             BuildResultGuestPortraits(resultContent);
+            if (currentLevelNumber == management.Config.CoinsFromLevel)
+                MakeText("Saldo inicial", resultContent, "SALDO " + management.Wallet.Balance + " MONEDAS", 32, Gold, TextAnchor.MiddleCenter, .5f, .365f, 820, 55, true);
             MakeButton("REINTENTAR", resultContent, .29f, .32f, 390, 86, Green, Retry).interactable = true;
             bool hasNext = currentLevelNumber < MvpLevelCatalog.Count;
             int nextLevel = currentLevelNumber + 1;
@@ -2270,6 +2330,12 @@ namespace Asadito
         {
             totalScore = 0;
             ClearResultUi();
+            if (currentLevelNumber >= management.Config.ManagementFromLevel)
+            {
+                economicResult = null; ConfigureLevel(currentLevelNumber);
+                gameplayCanvasGroup.alpha = 0; gameplayCanvasGroup.interactable = gameplayCanvasGroup.blocksRaycasts = false;
+                StartLevel(); return;
+            }
             RefreshOrder();
         }
 
@@ -2481,7 +2547,7 @@ namespace Asadito
             go.GetComponent<InputSystemUIInputModule>().AssignDefaultActions();
         }
 
-        private Image MakePanel(string objectName, Transform parent, Color color, float x, float y, float width, float height)
+        internal Image MakePanel(string objectName, Transform parent, Color color, float x, float y, float width, float height)
         {
             Image image = MakeImage(objectName, parent, roundedButtonSprite != null ? roundedButtonSprite : whiteSprite, color,
                 new Vector2(x, y), new Vector2(x, y), new Vector2(width, height));
@@ -2496,7 +2562,7 @@ namespace Asadito
             return icon;
         }
 
-        private Image MakeImage(string objectName, Transform parent, Sprite sprite, Color color, Vector2 min, Vector2 max, Vector2 size)
+        internal Image MakeImage(string objectName, Transform parent, Sprite sprite, Color color, Vector2 min, Vector2 max, Vector2 size)
         {
             var go = new GameObject(objectName, typeof(RectTransform), typeof(CanvasRenderer), typeof(Image));
             go.transform.SetParent(parent, false);
@@ -2513,7 +2579,7 @@ namespace Asadito
             return image;
         }
 
-        private Text MakeText(string objectName, Transform parent, string value, int size, Color color, TextAnchor align, float x, float y, float width, float height, bool bold)
+        internal Text MakeText(string objectName, Transform parent, string value, int size, Color color, TextAnchor align, float x, float y, float width, float height, bool bold)
         {
             var go = new GameObject(objectName, typeof(RectTransform), typeof(CanvasRenderer), typeof(Text));
             go.transform.SetParent(parent, false);
@@ -2546,7 +2612,7 @@ namespace Asadito
             return text;
         }
 
-        private Button MakeButton(string label, Transform parent, float x, float y, float width, float height, Color color, UnityEngine.Events.UnityAction onClick)
+        internal Button MakeButton(string label, Transform parent, float x, float y, float width, float height, Color color, UnityEngine.Events.UnityAction onClick)
         {
             var buttonObject = new GameObject(label, typeof(RectTransform));
             buttonObject.transform.SetParent(parent, false);

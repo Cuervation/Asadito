@@ -1,10 +1,12 @@
-# Roadmap revisado — 2026-09-30
+# Roadmap — gestión de asados (2026-10-01)
 
-1. **Finalización del loop móvil (implementado, QA físico pendiente):** gameplay top-down 1080×1920 con parrilla dominante, mesita auxiliar lateral separada de la tabla interactiva, tap/drag directo sobre carne, segundo tap para flip, drag-to-board para emplatado y doble tap en la tabla llena para servir. Se quitaron la barra de cocción y botones de acción. Evidencia Editor `/tmp/Asadito-gameplay-layout-final.png`; verificar nueva build Android y safe area en teléfono ARM64 antes de release.
-2. **Contenido/jugabilidad MVP (implementado y automatizado):** 18 alimentos con perfiles diferenciados y 6 estados visuales, 12 niveles/progreso/save v3, comensales y scoring existente. Suites locales: EditMode 19/19, PlayMode 10/10; validator ampliado.
-3. **Android build / install (PASS), runtime smoke (bloqueado por AVD):** APK 1.2.0 code3 ARM64 IL2CPP API36 compilado, metadata/firma v2 verificadas e instalación ADB exitosa. El AVD `Pixel 7a` es x86_64 y SwiftShader solo anuncia GLES 3.1; Unity no inicializa la Graphics API, así que no se mostró gameplay L1 ni se capturó gameplay Android del refactor. No es APK productivo firmado ni publicación.
-4. **QA táctil/performance físico (abierto antes de release):** un swipe sintético del APK anterior terminó en ANR (~8 s) y no confirmó bandeja por drag; no es evidencia del APK actual. El APK actual no llegó al gameplay por limitación gráfica del AVD. Repetir drag/drop a la tabla, multi-touch, overlap, bordes, pausa y safe area con Development Build + Unity Profiler y teléfono ARM64 de gama media.
-5. **Evaluación de experiencia:** playtest humano progresivo L1–L12, ritmo por alimento, tutorial, legibilidad y volumen de audio; artwork y SFX actuales son procedurales/provisionales, requieren aprobación.
-6. **Release futura:** cuando owner lo autorice, activar credenciales Unity para CI remoto y revisar metadata/políticas, firmar con keystore protegido fuera de Git y solo después preparar Play Store.
+Fuente de dirección: [full-game](../specs/product/full-game.md). Reglas de progresión: [progression](../specs/product/progression.md).
 
-No se agregan carnicería, economía, multijugador, NPCs, anuncios ni otras features fuera del MVP.
+1. **Vertical 1:** wallet, compra chorizo/tira, inventario/heladera, preparación, cocina existente, resultados económicos, recovery y save v4. Gate L1–6; cerrar con pruebas/domain+PlayMode y lectura visual móvil.
+2. **Vertical 2:** activar frescura por jornada, badges, vencimiento/desperdicio y balance L7–8. No deterioro offline.
+3. **Vertical 3:** promos y stock variable reproducible; decidir entre oportunidad y conservación/capacidad; L9–10.
+4. **Vertical 4:** primeras mejoras funcionales/visibles, patio, L11–12 integrador.
+5. **Vertical 5:** freezer y descongelado de una jornada; Capítulo Gestionar.
+6. **Vertical 6:** asador/cruz real; después disco/horno. Abstracción de estación solo al necesitar segunda implementación.
+
+Entre verticales: playtesting humano, Android ARM64/safe-area/performance, calibrar margen/inflación y pedagogía. No repetir APKs por cada tweak. Historial técnico y builds previos quedan en docs/ai, no sirven como instrucciones actuales.

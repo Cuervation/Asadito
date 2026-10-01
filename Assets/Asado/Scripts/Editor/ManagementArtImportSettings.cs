@@ -25,8 +25,11 @@ namespace Asadito.Editor
 
             importer.textureType = TextureImporterType.Sprite;
             importer.spriteImportMode = SpriteImportMode.Single;
-            importer.spriteMeshType = isBackground ? SpriteMeshType.FullRect : SpriteMeshType.Tight;
-            importer.spriteAlignment = (int)SpriteAlignment.Center;
+            var spriteSettings = new TextureImporterSettings();
+            importer.ReadTextureSettings(spriteSettings);
+            spriteSettings.spriteMeshType = isBackground ? SpriteMeshType.FullRect : SpriteMeshType.Tight;
+            spriteSettings.spriteAlignment = (int)SpriteAlignment.Center;
+            importer.SetTextureSettings(spriteSettings);
             importer.spritePixelsPerUnit = 100f;
             importer.sRGBTexture = true;
             importer.alphaIsTransparency = hasAlpha;

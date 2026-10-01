@@ -392,7 +392,7 @@ namespace Asadito.Tests
         [Test]
         public void SixDinerRosterVariesAppetiteBodyAgeAndIncludesLikesAndDislikes()
         {
-            Asadito.Runtime.GuestProfile[] guests = Asadito.Runtime.MvpLevelCatalog.CreateGuests(5);
+            Asadito.Runtime.GuestProfile[] guests = Asadito.Runtime.MvpLevelCatalog.CreateGuests(12);
             var appetites = new HashSet<float>();
             var weights = new HashSet<float>();
             var ages = new HashSet<int>();

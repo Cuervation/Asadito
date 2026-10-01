@@ -107,7 +107,7 @@ namespace Asadito.Tests
         public void MvpLevelCatalog_DefinesProgressivePlayableContentForAllTwelveLevels()
         {
             Assert.AreEqual(12, Asadito.Runtime.MvpLevelCatalog.Count);
-            int[] expectedGuests = { 2, 3, 4, 4, 6, 5, 4, 5, 5, 6, 6, 6 };
+            int[] expectedGuests = { 2, 3, 4, 4, 4, 5, 4, 5, 5, 6, 6, 6 };
             for (int level = 1; level <= Asadito.Runtime.MvpLevelCatalog.Count; level++)
             {
                 Asadito.Runtime.MvpLevelDefinition content = Asadito.Runtime.MvpLevelCatalog.Get(level);
@@ -116,15 +116,15 @@ namespace Asadito.Tests
                 Assert.AreEqual(content.GuestCount, content.PortionAmounts.Length);
                 Assert.AreEqual(content.GuestCount, Asadito.Runtime.MvpLevelCatalog.CreateGuests(level).Length);
             }
-            Assert.Contains("vacio", Asadito.Runtime.MvpLevelCatalog.Get(4).FoodIds);
-            Assert.Contains("provoleta", Asadito.Runtime.MvpLevelCatalog.Get(5).FoodIds);
-            Assert.Contains("entrana", Asadito.Runtime.MvpLevelCatalog.Get(6).FoodIds);
+            Assert.Contains("tira", Asadito.Runtime.MvpLevelCatalog.Get(4).FoodIds);
+            Assert.Contains("chorizo", Asadito.Runtime.MvpLevelCatalog.Get(5).FoodIds);
+            Assert.Contains("tira", Asadito.Runtime.MvpLevelCatalog.Get(6).FoodIds);
             Assert.Contains("morcilla_vasca", Asadito.Runtime.MvpLevelCatalog.Get(8).FoodIds);
             Assert.Contains("pollo_deshuesado", Asadito.Runtime.MvpLevelCatalog.Get(9).FoodIds);
             var introduced = new System.Collections.Generic.HashSet<string>();
             for (int level = 1; level <= Asadito.Runtime.MvpLevelCatalog.Count; level++)
                 foreach (string foodId in Asadito.Runtime.MvpLevelCatalog.Get(level).FoodIds) introduced.Add(foodId);
-            Assert.AreEqual(Asadito.Runtime.FoodCatalog.Count, introduced.Count, "Progression must eventually feature every catalog food.");
+            Assert.AreEqual(6, Asadito.Runtime.MvpLevelCatalog.MaxPlayableLevel);
         }
 
         [Test]
@@ -133,7 +133,7 @@ namespace Asadito.Tests
             Asadito.Runtime.MvpLevelDefinition first = Asadito.Runtime.MvpLevelCatalog.Get(1);
             first.FoodIds[0] = "mutated";
             Assert.AreEqual("tira", Asadito.Runtime.MvpLevelCatalog.Get(1).FoodIds[0]);
-            var allGuests = Asadito.Runtime.MvpLevelCatalog.CreateGuests(5);
+            var allGuests = Asadito.Runtime.MvpLevelCatalog.CreateGuests(12);
             var ids = new System.Collections.Generic.HashSet<string>();
             foreach (Asadito.Runtime.GuestProfile guest in allGuests) ids.Add(guest.Id);
             Assert.AreEqual(6, ids.Count);

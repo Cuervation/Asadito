@@ -1,6 +1,6 @@
 # Manifest de assets de runtime — ASADITO
 
-Inventario de contenido fuente en `Resources`; las rutas Unity omiten extensión donde corresponda. `PROVISIONAL` = integrado y validable pero sin aprobación artística/física final. Assets raster originales o generados para este proyecto; las fuentes tienen licencia OFL adjunta. No se reclama producción comercial para audio/VFX. La nueva biblioteca de gestión/progresión no pertenece a este inventario runtime porque vive fuera de `Resources` y todavía no está conectada: ver [management-asset-manifest.md](management-asset-manifest.md).
+Inventario de contenido fuente en `Resources`; las rutas Unity omiten extensión donde corresponda. `PROVISIONAL` = integrado y validable pero sin aprobación artística/física final. Assets raster originales o generados para este proyecto; las fuentes tienen licencia OFL adjunta. No se reclama producción comercial para audio/VFX. La biblioteca de gestión/progresión vive fuera de `Resources`; cinco sprites se conectan en Vertical 1 mediante `ManagementArt.asset`, el resto sigue preparado: ver [management-asset-manifest.md](management-asset-manifest.md).
 
 | Familia | Cantidad | Fuentes/runtime | Integración y verificación | Estado |
 |---|---:|---|---|---|
@@ -25,7 +25,7 @@ Inventario de contenido fuente en `Resources`; las rutas Unity omiten extensión
 
 ## Biblioteca futura fuera de runtime
 
-Hay 90 sprites preparados de gestión y progresión, con import settings por sprite, fuera de `Resources` y sin referencias desde código/escenas/prefabs. No incluirlos en la app actual hasta que cada sistema esté implementado y tenga un consumidor explícito. El detalle por archivo, estado, alfa, resolución, destino, animabilidad y pendientes está en [management-asset-manifest.md](management-asset-manifest.md).
+Hay 90 sprites de gestión y progresión fuera de `Resources`; cinco referencias explícitas tienen consumidor en Vertical 1. No incluir el resto hasta implementar sus sistemas. El detalle por archivo, estado, alfa, resolución, destino, animabilidad y pendientes está en [management-asset-manifest.md](management-asset-manifest.md).
 
 ## Auditoría de inventario visual conectado
 

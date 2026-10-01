@@ -121,28 +121,16 @@ def audit_atlas_frames(path: Path, width: int, height: int):
     return frame_counts
 
 
-def audit_progression(food_ids):
-    source = LEVEL_SOURCE.read_text(encoding="utf-8")
-    definitions = re.findall(
-        r'Create\((\d+),\s*"([^"]+)",\s*new\[\]\s*\{([^}]*)\},\s*([0-9.]+)f?\)', source
-    )
-    assert len(definitions) == 12, f"Expected 12 explicit level definitions, found {len(definitions)}"
-    seen = set()
-    present_foods = set()
-    for expected, (number, title, raw_foods, amount) in enumerate(definitions, 1):
-        level = int(number)
-        assert level == expected, f"Level progression must be contiguous; expected L{expected}, got L{level}"
-        assert title.strip(), f"L{level} needs a title"
-        ids = re.findall(r'"([a-z0-9_]+)"', raw_foods)
-        assert ids and all(food_id in food_ids for food_id in ids), f"L{level} references missing food IDs: {ids}"
-        assert len(ids) <= 6, f"L{level} exceeds the mobile MVP order size"
-        assert float(amount) > 0, f"L{level} portion amount must be positive"
-        present_foods.update(ids)
-        seen.add(level)
-    assert seen == set(range(1, 13)), "All levels 1–12 must be present exactly once"
-    assert present_foods == food_ids, f"Every food must appear in progression; missing {sorted(food_ids - present_foods)}"
-    return [[food_id for food_id in re.findall(r'"([a-z0-9_]+)"', raw_foods)]
-            for _, (_, _, raw_foods, _) in enumerate(definitions)]
+def audit_progression(known_ids):
+    levels = json.loads((ROOT / "Assets/Asado/Resources/Definitions/ChapterOneLevels.json").read_text())["Levels"]
+    assert len(levels) == 12
+    for index, level in enumerate(levels, 1):
+        assert level["Number"] == index
+        assert level["GuestCount"] == len(level["FoodIds"]) == len(level["PortionAmounts"])
+        assert set(level["FoodIds"]) <= known_ids
+        assert all(amount > 0 for amount in level["PortionAmounts"])
+    assert all(set(level["FoodIds"]) <= {"chorizo", "tira"} for level in levels[:6])
+    return [level["FoodIds"] for level in levels]
 
 
 def try_pack(area, sizes, gap):

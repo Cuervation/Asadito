@@ -40,7 +40,7 @@ namespace Asadito.Tests.PlayMode
         }
 
         [UnityTest]
-        public IEnumerator FirstPlayable_CookServePersistsResultButKeepsLevelTwoLocked()
+        public IEnumerator FirstPlayable_CookServePersistsResultAndUnlocksNextAsado()
         {
             Component game = null;
             yield return LoadGameScene(value => game = value);
@@ -61,8 +61,8 @@ namespace Asadito.Tests.PlayMode
             Text resultScore = GameObject.Find("Resultado puntos").GetComponent<Text>();
             Assert.That(resultScore.text, Does.Contain("PUNTOS"));
             Assert.IsNotNull(GameObject.Find("REINTENTAR"));
-            Button next = GameObject.Find("BLOQUEADO").GetComponent<Button>();
-            Assert.IsFalse(next.interactable, "Level 2 stays unavailable until it is approved for play.");
+            Button next = GameObject.Find("SIGUIENTE").GetComponent<Button>();
+            Assert.IsTrue(next.interactable, "Completing the tutorial unlocks the next asado.");
             Assert.AreEqual("Asadito UI Icon Star", GameObject.Find("Resultado estrella 1").GetComponent<Image>().sprite.name);
             Assert.AreEqual("tira_ideal", GameObject.Find("Resultado icon comida TIRA DE ASADO").GetComponent<Image>().sprite.name);
             Assert.AreEqual("chorizo_ideal", GameObject.Find("Resultado icon comida CHORIZO").GetComponent<Image>().sprite.name);
@@ -641,12 +641,9 @@ namespace Asadito.Tests.PlayMode
             var levelSave = (MvpSaveData)GetField(levelGame, "saveData");
             levelSave.MaxUnlockedLevel = 2;
             levelGame.GetType().GetMethod("RefreshLevelCards", BindingFlags.Instance | BindingFlags.NonPublic).Invoke(levelGame, null);
-            Assert.IsFalse(levelTwo.interactable, "Persisted progression must not expose Level 2 before it is approved.");
-            Assert.IsTrue(levelTwo.transform.Find("Candado nivel 2").gameObject.activeSelf);
-            Assert.IsTrue(levelTwo.transform.Find("Disabled nivel 2").gameObject.activeSelf);
-            levelGame.GetType().GetMethod("SelectLevel", BindingFlags.Instance | BindingFlags.NonPublic)
-                .Invoke(levelGame, new object[] { 2 });
-            Assert.AreEqual(1, ReadField<int>(levelGame, "currentLevelNumber"), "Direct selection must honor the same lock as the disabled card.");
+            Assert.IsTrue(levelTwo.interactable, "Persisted progression unlocks the next Chapter One asado.");
+            Assert.IsFalse(levelTwo.transform.Find("Candado nivel 2").gameObject.activeSelf);
+            Assert.IsFalse(levelTwo.transform.Find("Disabled nivel 2").gameObject.activeSelf);
             Assert.IsNull(GameObject.Find("Seleccion ayuda"),
                 "The level-selection screen should not add a secondary block of descriptive copy.");
             ClickButton("NIVEL 1");
@@ -809,7 +806,7 @@ namespace Asadito.Tests.PlayMode
 
         [UnityTest]
         [Timeout(600000)]
-        public IEnumerator Mvp_OnlyLevelOneIsPlayableButProgressIsStillSaved()
+        public IEnumerator Mvp_TutorialProgressIsSavedAndUnlocksNextAsado()
         {
             ResetSaveCache();
             MvpSave.Save(new MvpSaveData());
@@ -875,10 +872,97 @@ namespace Asadito.Tests.PlayMode
                 {
                     Assert.GreaterOrEqual(result.MaxUnlockedLevel, 2,
                         "The save may retain progression while the current playable-level gate remains closed.");
-                    Button next = GameObject.Find("BLOQUEADO").GetComponent<Button>();
-                    Assert.IsFalse(next.interactable, "Finishing L1 must not make L2 playable in this release.");
+                    Button next = GameObject.Find("SIGUIENTE").GetComponent<Button>();
+                    Assert.IsTrue(next.interactable, "Passing L1 unlocks L2 in Chapter One.");
                 }
             }
+        }
+
+        [UnityTest]
+        public IEnumerator Management_BuyPrepareCookServeAndPersistBalance()
+        {
+            var save = MvpSaveData.Migrate(new MvpSaveData { MaxUnlockedLevel = 5 });
+            MvpSave.Save(save);
+            Component game = null;
+            yield return LoadGameScene(value => game = value);
+            SetField(game, "SimulationTimeScale", 120f);
+            yield return new WaitForSecondsRealtime(.6f);
+            ClickButton("ENTRAR"); yield return new WaitForSecondsRealtime(.5f);
+            ClickButton("NIVEL 5"); yield return new WaitForSecondsRealtime(.5f);
+            ClickButton("IR A LA PARRILLA"); yield return new WaitForSecondsRealtime(.5f);
+            Assert.IsNotNull(GameObject.Find("Management PRÓXIMO ASADO"));
+            CaptureManagementFrame(game, "/tmp/asadito-management-planning.png");
+            ClickButton("CARNICERÍA"); yield return null;
+            var library = Resources.Load<ScriptableObject>("ManagementArt");
+            Assert.IsNotNull(library, "The selected prepared management sprites must load through the reference catalog.");
+            Assert.IsNotNull(GameObject.Find("Butcher_Greeting").GetComponent<Image>().sprite);
+            CaptureManagementFrame(game, "/tmp/asadito-management-shop.png"); yield return new WaitForSecondsRealtime(.2f);
+            ClickButton("Comprar tira"); yield return null;
+            ClickButton("Comprar tira"); yield return null;
+            ClickButton("Comprar chorizo"); yield return null;
+            ClickButton("Comprar chorizo"); yield return null;
+            Assert.AreEqual(4, MvpSave.Load().Management.Inventory.Count);
+            int purchaseBalance = MvpSave.Load().Management.Balance;
+            Assert.AreEqual(440, purchaseBalance);
+            ClickButton("HELADERA"); yield return null;
+            ClickButton("Preparar tira"); yield return null;
+            ClickButton("Preparar tira"); yield return null;
+            ClickButton("Preparar chorizo"); yield return null;
+            ClickButton("Preparar chorizo"); yield return null;
+            CaptureManagementFrame(game, "/tmp/asadito-management-fridge.png"); yield return new WaitForSecondsRealtime(.2f);
+            ClickButton("PREPARAR"); yield return new WaitForSecondsRealtime(.5f);
+            Assert.AreEqual(0, MvpSave.Load().Management.Inventory.Count);
+            Assert.AreEqual(4, MvpSave.Load().Management.ActiveRun.Units.Count);
+            // A cold app restart must preserve paid prepared food, not silently mark it as waste.
+            ResetSaveCache();
+            yield return LoadGameScene(value => game = value);
+            SetField(game, "SimulationTimeScale", 120f);
+            yield return new WaitForSecondsRealtime(.6f);
+            ClickButton("ENTRAR"); yield return new WaitForSecondsRealtime(.5f);
+            Assert.IsNotNull(MvpSave.Load().Management.ActiveRun);
+            ClickButton("NIVEL 5"); yield return new WaitForSecondsRealtime(.5f);
+            ClickButton("IR A LA PARRILLA"); yield return new WaitForSecondsRealtime(.5f);
+            Assert.AreEqual(purchaseBalance, MvpSave.Load().Management.Balance);
+            Assert.AreEqual(0, MvpSave.Load().Management.Inventory.Count);
+            Assert.AreEqual(0, MvpSave.Load().Management.PendingWaste);
+            Assert.IsNull(GameObject.Find("Management PRÓXIMO ASADO"), "Prepared asado resumes directly without buying twice.");
+            yield return CookAndPlateOrder(game, 90f);
+            TapBoard(game); yield return new WaitForSecondsRealtime(2f);
+            Assert.IsNotNull(GameObject.Find("Management ¡ASADO COMPLETADO!"));
+            Assert.AreEqual(0f, ((CanvasGroup)GetField(game,"gameplayCanvasGroup")).alpha, "Food overlay must not render over management results.");
+            Assert.Greater(MvpSave.Load().Management.Balance, purchaseBalance);
+            Assert.IsNull(MvpSave.Load().Management.ActiveRun);
+            Assert.AreEqual(1, MvpSave.Load().Management.Cycle);
+            Assert.AreEqual(0, MvpSave.Load().Management.FreshnessCycle);
+            Canvas.ForceUpdateCanvases();
+            foreach (Text label in GameObject.Find("Management ¡ASADO COMPLETADO!").GetComponentsInChildren<Text>())
+                Assert.LessOrEqual(label.preferredHeight, label.rectTransform.rect.height + 1f,
+                    "Management result text must not truncate: " + label.text);
+            CaptureManagementFrame(game, "/tmp/asadito-management-result.png"); yield return new WaitForSecondsRealtime(.3f);
+            ResetSaveCache(); Assert.Greater(MvpSave.Load().Management.Balance, purchaseBalance);
+            ClickButton("OTRO ASADO"); yield return null;
+            Assert.IsNotNull(GameObject.Find("Management PRÓXIMO ASADO"));
+        }
+
+        private static void CaptureManagementFrame(Component game, string path)
+        {
+            Canvas canvas = (Canvas)GetField(game, "canvas");
+            var cameraObject = new GameObject("Management QA camera");
+            var camera = cameraObject.AddComponent<Camera>();
+            camera.orthographic = true; camera.orthographicSize = 960; camera.enabled = false;
+            camera.clearFlags = CameraClearFlags.SolidColor; camera.backgroundColor = Color.black;
+            var target = new RenderTexture(1080, 1920, 24);
+            camera.targetTexture = target;
+            var previousMode = canvas.renderMode; var previousCamera = canvas.worldCamera;
+            canvas.renderMode = RenderMode.ScreenSpaceCamera; canvas.worldCamera = camera; canvas.planeDistance = 10;
+            Canvas.ForceUpdateCanvases(); camera.Render();
+            var previous = RenderTexture.active; RenderTexture.active = target;
+            var image = new Texture2D(1080,1920,TextureFormat.RGB24,false);
+            image.ReadPixels(new Rect(0,0,1080,1920),0,0); image.Apply();
+            System.IO.File.WriteAllBytes(path,image.EncodeToPNG());
+            RenderTexture.active = previous; canvas.renderMode = previousMode; canvas.worldCamera = previousCamera;
+            camera.targetTexture = null; target.Release();
+            UnityEngine.Object.Destroy(target); UnityEngine.Object.Destroy(image); UnityEngine.Object.Destroy(cameraObject);
         }
 
         private static IEnumerator CookAndPlateOrder(Component game, float timeoutSeconds)

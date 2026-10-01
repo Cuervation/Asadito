@@ -1,0 +1,25 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: fe87c282aa6340ceafb7eb8d876a86ff, type: 3}
+  m_Name: ManagementArt
+  m_EditorClassIdentifier:
+  Entries:
+  - Name: ButcherShop_Background
+    Sprite: {fileID: 21300000, guid: cc76c9a1a9e746dd936ec0ef98abc4b5, type: 3}
+  - Name: Butcher_Greeting
+    Sprite: {fileID: 21300000, guid: b5500df507f7425c89b82d46f5b53048, type: 3}
+  - Name: Fridge_Tier1_OpenEmpty
+    Sprite: {fileID: 21300000, guid: 80f91f889b624fafb6db32e7170288db, type: 3}
+  - Name: Patio_Management_Base
+    Sprite: {fileID: 21300000, guid: 8e7c208ae4944ce69aa555929c47bf71, type: 3}
+  - Name: AsaditoCoin_Hud
+    Sprite: {fileID: 21300000, guid: 13155858961c47a5b939a80feff3576e, type: 3}

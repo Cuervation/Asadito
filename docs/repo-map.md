@@ -24,6 +24,13 @@ In the table, `Runtime/...` expands to `Assets/Asado/Scripts/Runtime/...`; `Reso
 | Android build/config | `docs/android-release.md`, `Assets/Asado/Scripts/Editor/AndroidReleaseBuild.cs`, `ProjectSettings/` |
 | CI | `.github/workflows/unity-content-and-tests.yml` |
 
+## Gestión
+
+- Config económica: `Resources/Definitions/ManagementConfig.json`; pedidos: `ChapterOneLevels.json`.
+- `Runtime/ManagementConfig.cs`, `ManagementState.cs`, `ManagementService.cs`: reglas/save/transacciones.
+- `Assets/Asado/Scripts/ManagementScreen.cs`: vistas; `Resources/ManagementArt.asset`: solo referencias explícitas al arte implementado.
+- Specs: `specs/product/full-game.md` y dominios enlazados ahí.
+
 ## Large-file symbol index
 
 `Assets/Asado/Scripts/AsaditoGame.cs` is the runtime/UI monolith. Search these exact current symbols, then inspect a small range:
