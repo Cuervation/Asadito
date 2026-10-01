@@ -61,6 +61,22 @@ Animar únicamente para confirmar entrada, volteo, retiro, servicio, cambio tér
 
 La referencia de interfaz adjunta inspira solo rasgos generales de UI arcade (tipografía chunky delineada, botones dorados/rojos elevados, contraste vivo). No copiar su pantalla de ajustes, textos de configuración, etiqueta de versión, layout, assets, logo, iconografía ni composición identificable. Mantener el key art, vocabulario, distribución móvil y mundo cálido propios de Asadito.
 
+## Evolución visual de gestión y patio — biblioteca preparada (2026-10-01)
+
+La biblioteca de progresión debe sentirse del mismo mundo, con cartoon estilizado y materiales pintados/simplificados; no subirla a fotorrealismo. La carnicería puede ser frontal/3⁄4 y vertical; toda parrilla, mesa y estación de cocción destinada a la acción debe ser cenital y legible en portrait.
+
+- **Patio modular:** componer cinco niveles visuales sobre un solo fondo de patio. Superponer módulos de parrilla, heladera, mesada/isla, freezer, mesa, macetero, luces, asador/cruz, disco y horno; desbloquear no reemplaza el lugar por otra locación.
+- **Gestión desacoplada:** cards, popups, ribbons, stickers, contenedores de resultados y stock son marcos vacíos/reutilizables. Precio, nombre, porcentaje, unidades, monedas, satisfacción y métricas se renderizan como texto dinámico; no hornear datos mutables ni botones dentro de imágenes.
+- **Comida en almacenamiento:** utilizar `FoodCatalog`/sus atlas existentes para los slots abiertos de heladera, inventario y frescura, en vez de mantener imágenes duplicadas por carne y tier. Los overlays FRESCA/OK/CONSUMIR PRONTO/PODRIDA comunican tanto etiqueta/ícono como color.
+- **Moneda:** símbolo Asadito único y reconocible en tamaño HUD; reutilizar la misma moneda individual para HUD y precios, con grupos/pilas y cuatro frames discretos para feedback.
+- **Personaje de tienda:** seis poses iniciales del mismo atlas cubren neutral, saludo, compra, oferta, agotado y felicitación. Una ilustración complementaria de sorpresa/evento está preparada, pero su identidad visual debe armonizarse antes de conectarla a la misma persona. Las poses son frames estáticos, no un rig.
+- **Estaciones futuras:** parrillas tier 1–3, asador/cruz, disco y horno en top-down; estados separados para composición/animación. El horno abierto con bandeja es la vista activa con comida. No sumar carbón interactivo, ignición ni apagar la parrilla caliente actual.
+- **Importación y alcance:** PNG nuevos como sprites individuales, centro/100 PPU, filtro bilinear, clamp, sin mipmaps y compresión ETC2 HQ; fondos limitados a 2048 y sprites a 512. Mantenerlos fuera de `Resources` hasta que una pantalla/sistema los consuma para no inflar la build presente. La biblioteca actual está preparada, no conectada; ver [manifest completo](../../docs/art/management-asset-manifest.md).
+
+### Auditoría de conservación
+
+En la fase visual 2026-10-01 se conservaron los 18 atlas de alimentos (108 estados), las 12 level cards, retratos, escenarios, props, logo e icono actuales. Se observó que los niveles 1–5 y 6–12 difieren algo en estilo, pero no se regeneraron por lotes: cualquier armonización será una decisión separada después de revisar referencias y uso.
+
 ## Estado visual al 2026-09-29
 
 El runtime continúa en Canvas/2D procedural y el arte es PROVISIONAL: conectado y automatizable, pero pendiente de aprobación humana y QA físico. `ParrillaTopDownStylized.png` aporta arte cenital; 18 atlas nuevos proveen 108 etapas por alimento; `GuestPortraitAtlas.png` contiene 24 retratos (6 identidades × 4 expresiones). `AsaditoLogo.png` usa Lilita One como wordmark; `AsaditoAppIcon.png` se exporta como icono adaptativo Android. `PortadaAsadito.png` es key art top-down y sitúa la bandera en un repasador. El selector muestra doce postales con solo `Nivel N`.
