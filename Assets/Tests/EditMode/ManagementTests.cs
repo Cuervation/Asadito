@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Generic;
 using Asadito.Runtime;
 using NUnit.Framework;
 using UnityEngine;
@@ -13,6 +14,44 @@ namespace Asadito.Tests
         {
             config = JsonUtility.FromJson<ManagementConfig>(JsonUtility.ToJson(ManagementConfig.Load()));
             state = ManagementState.New(config); service = new ManagementService(state, config);
+        }
+        [Test] public void CartPreviewDoesNotMutateAndCheckoutTransfersWholeBasketPersistently()
+        {
+            var cart=new Dictionary<string,int>{{"tira",2},{"chorizo",2}};
+            int next=state.NextUnitId;
+            var quote=service.QuoteCart(cart,1);
+            Assert.IsTrue(quote.CanBuy);Assert.AreEqual(560,quote.Total);Assert.AreEqual(4,quote.Quantity);
+            Assert.IsEmpty(state.Inventory);Assert.IsEmpty(state.Purchases);Assert.AreEqual(config.InitialBalance,state.Balance);Assert.AreEqual(next,state.NextUnitId);
+            Assert.IsNull(service.BuyCart(cart,1));
+            Assert.AreEqual(config.InitialBalance-quote.Total,state.Balance);Assert.AreEqual(4,state.Inventory.Count);
+            Assert.AreEqual(2,service.Available("tira"));Assert.AreEqual(config.Product("tira").Stock-2,service.Stock("tira"));
+            int cost=0;foreach(var unit in state.Inventory) cost+=unit.Cost;Assert.AreEqual(560,cost);
+            var reloaded=MvpSaveData.Migrate(JsonUtility.FromJson<MvpSaveData>(JsonUtility.ToJson(new MvpSaveData{Management=state}))).Management;
+            Assert.AreEqual(state.Balance,reloaded.Balance);Assert.AreEqual(4,reloaded.Inventory.Count);Assert.AreEqual(state.NextUnitId,reloaded.NextUnitId);
+            Assert.IsNull(reloaded.ActiveRun,"Empty serialized run must not block purchases/preparation");
+            var loadedService=new ManagementService(reloaded,config);Assert.IsTrue(loadedService.CanPrepare(new[]{"tira","chorizo"}));
+        }
+        [TestCase("money")] [TestCase("stock")] [TestCase("capacity")] [TestCase("locked")] [TestCase("active")]
+        public void CartFailureIsAtomicEvenWhenFirstProductCouldBeBought(string reason)
+        {
+            var cart=new Dictionary<string,int>{{"chorizo",1},{"tira",1}};
+            if(reason=="money")state.Balance=200;
+            if(reason=="stock")config.Product("tira").Stock=0;
+            if(reason=="capacity")config.FridgeCapacity=1;
+            if(reason=="locked")config.Product("tira").UnlockLevel=2;
+            if(reason=="active")state.ActiveRun=new AsadoRun{Level=1};
+            string before=JsonUtility.ToJson(state);
+            var quote=service.QuoteCart(cart,1);Assert.IsFalse(quote.CanBuy);Assert.IsNotEmpty(quote.Error);
+            Assert.IsNotNull(service.BuyCart(cart,1));Assert.AreEqual(before,JsonUtility.ToJson(state));
+        }
+        [Test] public void CartCheckoutRevalidatesChangedStockAndRejectsInvalidQuantities()
+        {
+            var cart=new Dictionary<string,int>{{"chorizo",1},{"tira",1}};
+            Assert.IsTrue(service.QuoteCart(cart,1).CanBuy);
+            Assert.IsNull(service.Buy("tira",config.Product("tira").Stock,1,new Promotion{Kind=PromotionKind.Percentage,Percent=100}));
+            string before=JsonUtility.ToJson(state);Assert.IsNotNull(service.BuyCart(cart,1));Assert.AreEqual(before,JsonUtility.ToJson(state));
+            foreach(var invalid in new[]{new Dictionary<string,int>(),new Dictionary<string,int>{{"chorizo",0}},new Dictionary<string,int>{{"unknown",1}},new Dictionary<string,int>{{"tira",int.MaxValue}}})
+            {Assert.IsNotNull(service.BuyCart(invalid,1));Assert.AreEqual(before,JsonUtility.ToJson(state));}
         }
         [Test] public void WalletIsPersistentAndRejectsNegativeOrInsufficientSpending()
         {

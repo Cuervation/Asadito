@@ -7,5 +7,13 @@ Antes de comprar se conoce pedido, invitados, hambre aproximada, puntos y favori
 Contrato de cotización cubre porcentaje, BuyNPayM (2x1/3x2 y restos), pack, oferta del día y liquidación como descuento, premium como producto sin descuento. No activar todas al comienzo. Origen/ventana/variantes premium se agregan con Vertical 3 y sus datos; no hay eventos aleatorios ahora.
 Una promoción NO ignora capacidad ni frescura. Comprar excedente ocupa slots e inmoviliza saldo; no debería ser siempre óptimo. Tutorial controla stock, never imposibilita continuar por un evento obligatorio.
 
-## Disponible desde nivel 1
-Saldo visible en todas las vistas y cocina. Cards muestran precio, gramos, stock, unidades propias, cantidad sugerida y faltante. Primer toque en COMPRAR muestra CONFIRMAR y costo; segundo confirma transacción. No se debita al previsualizar, ni al salir. Sonido y aviso ✓ tras compra; error explícito no muta. Primera guía L1 evita excedentes; después se habilita compra libre. Cantidad sugerida elegida sobre compra rápida masiva para no comprar accidentalmente. Descarte también requiere confirmación y no aparece habilitado en la guía inicial.
+## Mostrador con carrito (desde nivel 1)
+Vitrina ilustrada con bandejas de cortes tocables, cartel de nombre/precio, stock y cantidad seleccionada. FoodCatalog provee sprites y ProductEconomy precios/unlocks/stock. No se duplican alimentos como productos independientes ni se hornean precios en el arte.
+
+- Tocar un corte suma una unidad; highlight, pulso breve, sonido y aviso +1. La selección es libre también en L1; el pedido orienta, no fuerza compras.
+- Carrito visible: cantidades, subtotales, total, +/− y VACIAR. Saldo visible en HUD. No debita ni reserva stock/inventario hasta pagar.
+- PAGAR Y SALIR es una confirmación única del carrito completo y conduce a HELADERA con aviso de éxito. QuoteCart valida sin mutar; BuyCart revalida todo antes del único débito, entrega todas las unidades y registra stock. UI guarda el agregado una vez tras éxito.
+- Carrito vacío o inválido deshabilita pago; mensaje explícito por saldo, stock, capacidad o run activo. Un callback de pago igualmente revalida: jamás entrega una parte del pedido si falla otra.
+- VOLVER/cancelar y navegación a heladera descartan solo el carrito sin pagar; reabrir empieza vacío. La mercadería previamente comprada sigue intacta. Carrito es efímero, no nuevo campo del save.
+- Inventario/prepare/recovery y economía permanecen; no promociones activadas. Heladera/Caja del Asador siguen accesibles si no se puede completar el pedido.
+- Descarte de inventario conserva confirmación y no se habilita en la guía inicial.

@@ -13,7 +13,13 @@
 - Renders portrait revisados (texto legible, sin food overlay sobre resultado). Android una vez al estabilizar; device solo si disponible.
 - Specs por dominio + estado/roadmap actualizados. Sin activar verticales futuras ni funciones prohibidas.
 
-- L1: compra confirmada de un chorizo y una tira, descuento real, heladera/selección/preparación, cocina/servicio y primer ingreso; tutorial no se repite tras completarlo.
+- L1: selección de un chorizo y una tira en el mostrador, confirmación conjunta PAGAR Y SALIR, descuento real, heladera/selección/preparación, cocina/servicio y primer ingreso; tutorial no se repite tras completarlo.
 - Todos los seis niveles: ingresos/costos/reward/progreso persistidos; L7–12 continúan bloqueados.
 - Gestión perfecta con crudo/quemado o hambre no gana estrella; tiers superiores exigen mejor ASADOR.
 - Savev4 conserva balance, inventario, unidades preparadas, estrellas y bonus histórico; no reinicia ni repaga bonus.
+
+## Mostrador / carrito
+- Seleccionar, sumar, restar, vaciar y cancelar no modifican wallet/inventario/stock/IDs.
+- Checkout valida canasta completa por saldo, stock, capacidad, unlock y run activo antes de mutar. Revalida tras una previsualización.
+- Compra exitosa persiste unidades/costos y saldo; conduce a heladera y permite preparar. Recarga conserva unidades y no crea un ActiveRun vacío que bloquee operaciones.
+- Precio y total legibles en portrait, cortes tocables con feedback y botones arcade existentes.

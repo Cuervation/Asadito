@@ -3,6 +3,12 @@ using System.Collections.Generic;
 using UnityEngine;
 namespace Asadito.Runtime
 {
+    public sealed class CartQuote
+    {
+        public int Total, Quantity;
+        public string Error;
+        public bool CanBuy => Error == null;
+    }
     public sealed class EconomicResult
     {
         public float Asador, Economy, Operations, Overall;
@@ -32,21 +38,60 @@ namespace Asadito.Runtime
             foreach (var record in State.Purchases) if (record.FoodId == id) purchased += record.Quantity;
             return Math.Max(0, Config.Product(id).Stock - purchased);
         }
+        // Quote is read-only. Checkout revalidates the complete basket before any debit or unit creation.
+        public CartQuote QuoteCart(IReadOnlyDictionary<string, int> cart, int level, Promotion promotion = null)
+        {
+            var quote = new CartQuote();
+            if (cart == null || cart.Count == 0) { quote.Error = "Elegí un corte para empezar"; return quote; }
+            foreach (var pair in cart)
+            {
+                var product = Array.Find(Config.Products, p => p.FoodId == pair.Key);
+                if (product == null || pair.Value < 1) { quote.Error = "Cantidad o corte inválido"; return quote; }
+                try
+                {
+                    quote.Quantity = checked(quote.Quantity + pair.Value);
+                    quote.Total = checked(quote.Total + (promotion ?? new Promotion()).Quote(product.Price, pair.Value));
+                }
+                catch (OverflowException) { quote.Error = "Cantidad demasiado grande"; return quote; }
+            }
+            if (State.ActiveRun != null) quote.Error = "Terminá el asado actual";
+            else
+            {
+                foreach (var pair in cart)
+                {
+                    if (level < Config.Product(pair.Key).UnlockLevel) { quote.Error = "Corte bloqueado"; break; }
+                    if (Stock(pair.Key) < pair.Value) { quote.Error = "Sin stock de " + FoodCatalog.Get(pair.Key).DisplayName; break; }
+                }
+                if (quote.Error == null && (long)State.Inventory.Count + quote.Quantity > Config.FridgeCapacity) quote.Error = "Heladera llena: quitá piezas del carrito";
+                if (quote.Error == null && quote.Total > Wallet.Balance) quote.Error = "No alcanzan las monedas: quitá piezas del carrito";
+            }
+            return quote;
+        }
+        public string BuyCart(IReadOnlyDictionary<string, int> cart, int level, Promotion promotion = null)
+        {
+            var quote = QuoteCart(cart, level, promotion);
+            if (!quote.CanBuy) return quote.Error;
+            if (!Wallet.Spend(quote.Total)) return "No alcanzan las monedas";
+            // Config order makes unit IDs and cost allocation independent from UI/dictionary order.
+            foreach (var product in Config.Products)
+            {
+                if (!cart.TryGetValue(product.FoodId, out int quantity)) continue;
+                int cost = (promotion ?? new Promotion()).Quote(product.Price, quantity);
+                for (int i = 0; i < quantity; i++)
+                    State.Inventory.Add(new InventoryUnit { Id = State.NextUnitId++, FoodId = product.FoodId,
+                        Cost = cost / quantity + (i < cost % quantity ? 1 : 0), AcquiredCycle = State.FreshnessCycle });
+                State.Purchases.Add(new PurchaseRecord { FoodId = product.FoodId, Quantity = quantity });
+            }
+            return null;
+        }
         public string Buy(string id, int quantity, int level, Promotion promotion = null)
         {
-            if (State.ActiveRun != null) return "Terminá el asado actual";
-            var product = Config.Product(id);
-            if (quantity < 1) return "Cantidad inválida";
-            if (level < product.UnlockLevel) return "Corte bloqueado";
-            if (Stock(id) < quantity) return "Sin stock";
-            if (State.Inventory.Count + quantity > Config.FridgeCapacity) return "Heladera llena";
-            int cost = (promotion ?? new Promotion()).Quote(product.Price, quantity);
-            if (!Wallet.Spend(cost)) return "No alcanzan las monedas";
-            for (int i = 0; i < quantity; i++)
-                State.Inventory.Add(new InventoryUnit { Id = State.NextUnitId++, FoodId = id,
-                    Cost = cost / quantity + (i < cost % quantity ? 1 : 0), AcquiredCycle = State.FreshnessCycle });
-            State.Purchases.Add(new PurchaseRecord { FoodId = id, Quantity = quantity });
-            return null;
+            string error = BuyCart(new Dictionary<string, int> { [id] = quantity }, level, promotion);
+            // Preserve the existing single-product API's short error contract.
+            if (error != null && error.StartsWith("Sin stock de ")) return "Sin stock";
+            if (error != null && error.StartsWith("Heladera llena")) return "Heladera llena";
+            if (error != null && error.StartsWith("No alcanzan las monedas")) return "No alcanzan las monedas";
+            return error;
         }
         public bool Discard(int id)
         {

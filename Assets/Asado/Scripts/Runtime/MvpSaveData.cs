@@ -51,6 +51,11 @@ namespace Asadito.Runtime
             data.Management.Balance = Mathf.Max(0, data.Management.Balance);
             if (data.Management.Inventory == null) data.Management.Inventory = new System.Collections.Generic.List<InventoryUnit>();
             if (data.Management.Purchases == null) data.Management.Purchases = new System.Collections.Generic.List<PurchaseRecord>();
+            // JsonUtility can materialize a null nested class as an empty object on reload.
+            // Only normalize the empty sentinel; a real prepared/recovery run keeps its paid units.
+            var run = data.Management.ActiveRun;
+            if (run != null && run.Level == 0 && run.FoodCost == 0 && (run.Units == null || run.Units.Count == 0))
+                data.Management.ActiveRun = null;
             data.Management.NextUnitId = Mathf.Max(1, data.Management.NextUnitId);
             foreach (var unit in data.Management.Inventory) data.Management.NextUnitId = Mathf.Max(data.Management.NextUnitId, unit.Id + 1);
             // Existing management players already know the purchase/preparation loop.

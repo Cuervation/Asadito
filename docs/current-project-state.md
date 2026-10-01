@@ -8,7 +8,7 @@
 - Wallet real, stock por jornada, capacidad limitada, selección de cantidades, descarte/pérdida, reward único y Caja del Asador sin soft-lock. Reiniciar cocina conserva el mismo run; un reinicio de app permite reanudarlo desde su nivel sin recomprar. Solo abandono explícito cuenta carne preparada como pérdida.
 - L1 compra guiada chorizo/tira con monedas reales; L2 cantidad; L3 gustos/puntos; L4 ganancia/pérdidas; L5 inventario existente; L6 desafío autónomo5comensales. Tutorial/tips persistidos sin repetir; heladera/recovery accesible aun con saldo cero.
 - Saldo inicial650 solo en partidas nuevas; precios100/180 y reward80+150/invitado modulado por rendimiento. Bonus L4 retirado sin quitar/pagar recursos históricos.
-- Resultado separa ASADOR/GESTIÓN/OPERACIÓN, general, estrellas, costo utilizado, desperdicio, ingresos, ganancia y saldo. Pesos60/25/15 con mínimos55ASADOR/50cocción peorpieza/65saciedad; dos/tresestrellas requieren70/85ASADOR. Crudo/quemado no se aprueba por gestión perfecta. Compra/descarte confirmados; reparto justo normalizado por saciedad/gusto/punto.
+- Resultado separa ASADOR/GESTIÓN/OPERACIÓN, general, estrellas, costo utilizado, desperdicio, ingresos, ganancia y saldo. Pesos60/25/15 con mínimos55ASADOR/50cocción peorpieza/65saciedad; dos/tresestrellas requieren70/85ASADOR. Crudo/quemado no se aprueba por gestión perfecta. Compra conjunta confirmada por carrito y descarte confirmado; reparto justo normalizado por saciedad/gusto/punto.
 
 ## Contratos conservados
 - Una escena portrait1080×1920, safe area, input directo; sin carbón/encendido/apagado ni botón PAUSA visible. VOLVER con flecha; pausa interna por app/Escape durante cocina.
@@ -17,8 +17,8 @@
 
 ## Arquitectura/datos
 - `ManagementConfig.json`: economía, capacidad, precios, stock, porciones, rewards, pesos y gates; `ChapterOneLevels.json`: pedidos. Catálogo de alimentos sigue siendo fuente de identidad/perfiles/arte.
-- `ManagementState`/`ManagementService`/`Wallet`: reglas y transacciones independientes; `ManagementScreen`: vistas event-driven; AsaditoGame adapta preparación/resultados sin reescribir térmica.
-- Save v5, migración aditiva desde v1–4. Balance/inventario/run/equipamiento/ciclos persistidos; progreso/settings retenidos.
+- `ManagementState`/`ManagementService`/`Wallet`: reglas y transacciones independientes; `ManagementScreen`: mostrador con vitrina/bandejas tocables y carrito temporal (+/−/vaciar/total), checkout único PAGAR Y SALIR hacia heladera; vistas event-driven; AsaditoGame adapta preparación/resultados sin reescribir térmica.
+- Save v5, migración aditiva desde v1–4; normaliza ActiveRun fantasma vacío materializado por JsonUtility sin eliminar runs preparados reales. Balance/inventario/run/equipamiento/ciclos persistidos; progreso/settings retenidos.
 - Cinco sprites de gestión conectados por referencias en `Resources/ManagementArt.asset`; 85 restantes fuera del runtime. Botones arcade existentes intactos.
 
 ## Preparado, no activado
@@ -30,6 +30,12 @@
 - Unity6000.6.3f1 real en checkoutQA ya importado; **EditMode53/53 PASS**, focal gestión **3/3 PASS** y recorrido pagado de los seis niveles **1/1 PASS** (153.12s). Validator contenido PASS. Broad12/13 inicial encontró truncadoL6; corregido y probado en cierre del recorrido. Evidencia exacta: [QA gestión desdeL1](ai/management-level1-qa.md).
 - Renders1080×1920 de guíaL1/compra/heladera/resultados revisados. Font ascenders con espacio2.5x y overflow, detalle260px sin reducir fuente; test comprueba geometría/texto.
 - Se conserva aislamiento del Editor principal; no se modifica Library del usuario.
-- Android1.3.0/code4 ARM64/IL2CPP **Succeeded**, APK65MiB en `build/Asadito-1.3.0-management-level1-20261001.apk`; ABI/metadata/firma v2 debug verificados. ADB no detecta dispositivos al cierre; no se instaló esta APK.
+- Android1.3.0/code4 ARM64/IL2CPP **Succeeded**, APK65MiB en `build/Asadito-1.3.0-management-level1-20261001.apk`; ABI/metadata/firma v2 debug verificados. Luego se instaló por ADB en Motorola ZY22MBNWRB; menú visible1.3.0 confirmado. APK aún no incluye el rediseño posterior del mostrador/carrito.
 
 El release público requiere playtesting humano y QA táctil/performance ARM64. Esta vertical no equivale a toda la versión definitiva del juego.
+
+## Rediseño posterior: mostrador con carrito (2026-10-01)
+- Vitrina/bandejas tocables con precios, highlight/pulso, stock y carrito visible: cantidades, subtotales, total, +/−/vaciar. Selección libre; pedido orientativo. Reutiliza fondo/food/arcade sprites sin nuevos PNG.
+- QuoteCart/BuyCart mantienen reglas en ManagementService: selección no debita, pago conjunto revalida y muta una sola vez. Éxito persiste y lleva a heladera; cancelar descarta únicamente el carrito.
+- Compilación Unity real y ManagementTests **34/34 PASS**. Cuatro casos PlayMode focalizados aprobados en corridas proporcionales: canasta/cancelación/persistencia/preparación, L5 compra/cocina/servicio/reload, recovery y errores/raycast real. Renders portrait revisados; detalle en [QA mostrador](ai/butcher-counter-cart-qa.md).
+- No se ejecutó suite completa ni nueva build Android por este rediseño. El celular conserva la APK1.3.0 anterior: build/instalación y revisión táctil humana del mostrador quedan pendientes.

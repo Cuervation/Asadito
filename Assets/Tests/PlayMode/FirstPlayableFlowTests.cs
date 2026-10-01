@@ -841,6 +841,70 @@ namespace Asadito.Tests.PlayMode
         }
 
         [UnityTest]
+        public IEnumerator Management_CounterErrorsAreReadableAndNeverPartiallyCharge()
+        {
+            Component game=null;yield return LoadGameScene(value=>game=value);
+            yield return new WaitForSecondsRealtime(.6f);ClickButton("ENTRAR");yield return new WaitForSecondsRealtime(.5f);
+            ClickButton("NIVEL 1");yield return new WaitForSecondsRealtime(.5f);ClickButton("IR A LA PARRILLA");yield return null;
+            ClickButton("CARNICERÍA");yield return null;
+            Canvas.ForceUpdateCanvases();
+            foreach(var id in new[]{"chorizo","tira"})
+            {
+                var food=GameObject.Find("Shop food "+id).GetComponent<RectTransform>();
+                var hits=new List<RaycastResult>();EventSystem.current.RaycastAll(MakePointer(food,700),hits);
+                Assert.IsNotEmpty(hits);Assert.IsNotNull(hits[0].gameObject.GetComponentInParent<Button>(),"Unexpected blocker: "+hits[0].gameObject.name);
+                Assert.AreEqual("Comprar "+id,hits[0].gameObject.GetComponentInParent<Button>().name,"Food overlay must not block its tray's touch target.");
+            }
+            AddToBasket("tira");yield return null;AddToBasket("chorizo");yield return null;
+            var service=(ManagementService)GetField(game,"management");
+            service.State.Balance=0;AddToBasket("chorizo");yield return null;
+            AssertCounterErrorAndAtomicPayment(service,"No alcanzan las monedas");
+            CaptureManagementFrame(game,"/tmp/asadito-counter-no-money.png");
+            service.State.Balance=10000;service.State.Purchases.Add(new PurchaseRecord{FoodId="tira",Quantity=service.Config.Product("tira").Stock});
+            AddToBasket("chorizo");yield return null;AssertCounterErrorAndAtomicPayment(service,"Sin stock");
+            service.State.Purchases.Clear();
+            for(int i=0;i<service.Config.FridgeCapacity;i++)service.State.Inventory.Add(new InventoryUnit{Id=service.State.NextUnitId++,FoodId="chorizo"});
+            AddToBasket("chorizo");yield return null;AssertCounterErrorAndAtomicPayment(service,"Heladera llena");
+            AssertAllManagementTextFits();
+        }
+        private static void AssertCounterErrorAndAtomicPayment(ManagementService service,string expected)
+        {
+            var pay=GameObject.Find("PAGAR Y SALIR").GetComponent<Button>();Assert.IsFalse(pay.interactable);
+            Assert.IsTrue(Array.Exists(GameObject.Find("Management CARNICERÍA").GetComponentsInChildren<Text>(),text=>text.text.Contains(expected)));
+            string before=JsonUtility.ToJson(service.State);
+            pay.onClick.Invoke(); // Bypass disabled appearance to exercise the final transaction guard.
+            Assert.AreEqual(before,JsonUtility.ToJson(service.State));
+        }
+
+        [UnityTest]
+        public IEnumerator Management_CounterBasketCancelsAdjustsPaysAndReloadsIntoFridge()
+        {
+            Component game=null;yield return LoadGameScene(value=>game=value);
+            yield return new WaitForSecondsRealtime(.6f);ClickButton("ENTRAR");yield return new WaitForSecondsRealtime(.5f);
+            ClickButton("NIVEL 1");yield return new WaitForSecondsRealtime(.5f);ClickButton("IR A LA PARRILLA");yield return null;
+            ClickButton("CARNICERÍA");yield return null;
+            Assert.IsNotNull(GameObject.Find("Vitrina de vidrio"));Assert.IsFalse(GameObject.Find("PAGAR Y SALIR").GetComponent<Button>().interactable);
+            CaptureManagementFrame(game,"/tmp/asadito-counter-empty.png");
+            int balance=MvpSave.Load().Management.Balance;
+            AddToBasket("chorizo");yield return null;AddToBasket("chorizo");yield return null;AddToBasket("tira");yield return null;
+            AssertAllManagementTextFits();CaptureManagementFrame(game,"/tmp/asadito-counter-cart.png");
+            ClickButton("Restar carrito chorizo");yield return null;
+            Assert.IsNotNull(GameObject.Find("TOTAL $280"));
+            ClickButton("VACIAR");yield return null;Assert.IsFalse(GameObject.Find("PAGAR Y SALIR").GetComponent<Button>().interactable);
+            AddToBasket("tira");yield return null;ClickButton("Volver carnicería");yield return null;
+            Assert.AreEqual(balance,MvpSave.Load().Management.Balance);Assert.IsEmpty(MvpSave.Load().Management.Inventory);
+            ClickButton("CARNICERÍA");yield return null;Assert.IsNotNull(GameObject.Find("TOTAL $0"));
+            AddToBasket("tira");yield return null;AddToBasket("chorizo");yield return null;
+            ClickButton("PAGAR Y SALIR");yield return null;
+            Assert.IsNotNull(GameObject.Find("Management HELADERA"));Assert.AreEqual(balance-280,MvpSave.Load().Management.Balance);Assert.AreEqual(2,MvpSave.Load().Management.Inventory.Count);
+            AssertAllManagementTextFits();CaptureManagementFrame(game,"/tmp/asadito-counter-paid-fridge.png");
+            ResetSaveCache();Assert.AreEqual(balance-280,MvpSave.Load().Management.Balance);Assert.AreEqual(2,MvpSave.Load().Management.Inventory.Count);
+            ClickButton("Preparar tira");yield return null;ClickButton("Preparar chorizo");yield return null;
+            ClickButton("PREPARAR");yield return new WaitForSecondsRealtime(.5f);
+            Assert.AreEqual(2,MvpSave.Load().Management.ActiveRun.Units.Count);
+        }
+
+        [UnityTest]
         public IEnumerator Management_BuyPrepareCookServeAndPersistBalance()
         {
             var save = MvpSaveData.Migrate(new MvpSaveData { MaxUnlockedLevel = 5 });
@@ -859,14 +923,14 @@ namespace Asadito.Tests.PlayMode
             Assert.IsNotNull(library, "The selected prepared management sprites must load through the reference catalog.");
             Assert.IsNotNull(GameObject.Find("Butcher_Greeting").GetComponent<Image>().sprite);
             CaptureManagementFrame(game, "/tmp/asadito-management-shop.png"); yield return new WaitForSecondsRealtime(.2f);
-            BuyConfirmed("tira"); yield return null;
-            BuyConfirmed("tira"); yield return null;
-            BuyConfirmed("chorizo"); yield return null;
-            BuyConfirmed("chorizo"); yield return null;
+            AddToBasket("tira"); yield return null;
+            AddToBasket("tira"); yield return null;
+            AddToBasket("chorizo"); yield return null;
+            AddToBasket("chorizo"); yield return null;
+            ClickButton("PAGAR Y SALIR"); yield return null;
             Assert.AreEqual(4, MvpSave.Load().Management.Inventory.Count);
             int purchaseBalance = MvpSave.Load().Management.Balance;
             Assert.AreEqual(ManagementConfig.Load().InitialBalance - 560, purchaseBalance);
-            ClickButton("HELADERA"); yield return null;
             ClickButton("Preparar tira"); yield return null;
             ClickButton("Preparar tira"); yield return null;
             ClickButton("Preparar chorizo"); yield return null;
@@ -950,7 +1014,7 @@ namespace Asadito.Tests.PlayMode
             ClickButton("Comprar chorizo");yield return null;
             Assert.AreEqual(balance,MvpSave.Load().Management.Balance,"Preview never spends.");
             ClickButton("Volver carnicería");yield return null;ClickButton("CARNICERÍA");yield return null;
-            Assert.That(FindButton("Comprar chorizo").GetComponentInChildren<Text>().text,Does.Contain("COMPRAR"),"Leaving cancels pending confirmation.");
+            Assert.IsFalse(GameObject.Find("PAGAR Y SALIR").GetComponent<Button>().interactable,"Leaving clears the unpaid basket.");
             CaptureManagementFrame(game,"/tmp/asadito-level1-shop.png");
         }
 
@@ -965,6 +1029,8 @@ namespace Asadito.Tests.PlayMode
             camera.targetTexture = target;
             var previousMode = canvas.renderMode; var previousCamera = canvas.worldCamera;
             canvas.renderMode = RenderMode.ScreenSpaceCamera; canvas.worldCamera = camera; canvas.planeDistance = 10;
+            Canvas.ForceUpdateCanvases(); camera.Render();
+            // First offscreen render can rebuild the dynamic font atlas. Refresh before capturing pixels.
             Canvas.ForceUpdateCanvases(); camera.Render();
             var previous = RenderTexture.active; RenderTexture.active = target;
             var image = new Texture2D(1080,1920,TextureFormat.RGB24,false);
@@ -1097,13 +1163,13 @@ namespace Asadito.Tests.PlayMode
             Assert.AreEqual(2, ((Array)GetField(game, "activeGuests")).Length);
         }
 
-        private static void BuyConfirmed(string id)
+        private static void AddToBasket(string id)
         {
             int before=MvpSave.Load().Management.Inventory.Count;
+            int balance=MvpSave.Load().Management.Balance;
             ClickButton("Comprar "+id);
-            Assert.AreEqual(before,MvpSave.Load().Management.Inventory.Count,"First tap previews cost, never spends.");
-            ClickButton("Comprar "+id);
-            Assert.AreEqual(before+1,MvpSave.Load().Management.Inventory.Count);
+            Assert.AreEqual(before,MvpSave.Load().Management.Inventory.Count,"Selection never spends or creates inventory.");
+            Assert.AreEqual(balance,MvpSave.Load().Management.Balance);
         }
         private static IEnumerator BuyAndPrepareCurrentOrder(Component game, bool capture = false)
         {
@@ -1119,10 +1185,12 @@ namespace Asadito.Tests.PlayMode
             {
                 var service=new ManagementService(MvpSave.Load().Management,ManagementConfig.Load());
                 int missing=Mathf.Max(0,pair.Value-service.Available(pair.Key));
-                for(int i=0;i<missing;i++){BuyConfirmed(pair.Key);yield return null;}
+                for(int i=0;i<missing;i++){AddToBasket(pair.Key);yield return null;}
             }
             AssertAllManagementTextFits();
-            ClickButton("HELADERA");yield return null;
+            if(GameObject.Find("PAGAR Y SALIR").GetComponent<Button>().interactable) ClickButton("PAGAR Y SALIR");
+            else ClickButton("HELADERA");
+            yield return null;
             foreach(var id in order.FoodIds){ClickButton("Preparar "+id);yield return null;}
             AssertAllManagementTextFits();
             if(capture) CaptureManagementFrame(game,"/tmp/asadito-level1-fridge.png");

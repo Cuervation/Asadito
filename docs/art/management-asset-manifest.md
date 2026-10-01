@@ -1,5 +1,8 @@
 # Manifest de arte visual para gestión y progresión — ASADITO
 
+## Mostrador runtime / carrito (2026-10-01)
+El fondo ButcherShop_Background se reutiliza; vitrina, marcos, bandejas, reflejo, precios y cantidades se componen con UI nativa (PROVISIONAL) y sprites crudos de FoodCatalog. Bandeja seleccionada tiene highlight y pulso corto. No se agregaron PNG/dependencias ni se alteraron los originales; precios siguen siendo datos vivos. Los cinco sprites de gestión conectados permanecen iguales.
+
 ## Alcance y estado
 
 Biblioteca de 90 PNG en `Assets/Asado/Art/Management/` (fuera de Resources). Vertical 1 conecta **cinco** sprites mediante referencias explícitas en `Resources/ManagementArt.asset`: patio, fondo de carnicería, carnicera saludando, heladera básica y moneda HUD. Solo esas dependencias entran al runtime; las restantes 85 siguen PREPARADO. Import settings: 512 px sprites, 2048 px fondos, bilinear/clamp/sin mipmaps, ETC2 para Android. Importer validado mediante compilación Unity real (corrección de TextureImporterSettings incluida).
