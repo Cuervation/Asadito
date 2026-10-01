@@ -15,6 +15,9 @@ namespace Asadito.Runtime
     /// <summary>Progressive 12-level menu: teach direct food handling and turning before mixing cuts, offal and proteins.</summary>
     public static class MvpLevelCatalog
     {
+        // Current release gate: only the tutorial is selectable until more levels are approved.
+        public const int MaxPlayableLevel = 1;
+
         private static readonly MvpLevelDefinition[] Levels =
         {
             Create(1, "EL DEBUT", new[] { "tira", "chorizo" }, .065f),

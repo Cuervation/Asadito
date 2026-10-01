@@ -20,7 +20,9 @@ namespace Asadito
         // The procedural aluminum tray's flat center is 84%×71% of the full sprite.
         private const float RawTrayFoodAreaWidth = .84f;
         private const float RawTrayFoodAreaHeight = .71f;
-        private const float RawTrayFoodGap = 8f;
+        // The tray's packing area is already inset from its rim, so only a small food-to-food gap is needed.
+        private const float RawTrayFoodGap = 2f;
+        private const float AuxiliaryTableAnchorX = .78f;
         // The board sprite's usable cutting surface is the inset wood area; leave its raised rim
         // and handle clear when packing cooked portions.
         private const float ServingBoardFoodAreaWidth = .74f;
@@ -381,7 +383,7 @@ namespace Asadito
 
             BuildGrillInteractionArea();
             auxiliaryTableImage = MakeImage("Mesita auxiliar de asador", gameplayRoot, auxiliaryTableSprite, Color.white,
-                new Vector2(.815f, .49f), new Vector2(.815f, .49f), new Vector2(390f, 620f));
+                new Vector2(AuxiliaryTableAnchorX, .49f), new Vector2(AuxiliaryTableAnchorX, .49f), new Vector2(390f, 620f));
             auxiliaryTableImage.preserveAspect = true;
             auxiliaryTableImage.raycastTarget = false;
             float boardAspect = servingBoardSprite != null && servingBoardSprite.rect.height > 0f
@@ -400,7 +402,8 @@ namespace Asadito
             trayDropRect = trayRect;
             servingBoardImage.gameObject.AddComponent<ServingBoardTouch>().Owner = this;
             servingBoardImage.gameObject.SetActive(false);
-            boardHintText = MakeText("Ayuda tabla", gameplayRoot, "", 30, Cream, TextAnchor.MiddleCenter, .815f, .235f, 380, 64, true);
+            boardHintText = MakeText("Ayuda tabla", gameplayRoot, "", 30, Cream, TextAnchor.MiddleCenter,
+                AuxiliaryTableAnchorX, .235f, 380, 64, true);
             boardHintText.gameObject.SetActive(false);
             progressText = MakeText("Estado coccion", gameplayRoot, "ARRASTRÁ A LA PARRILLA", 38, Cream, TextAnchor.MiddleCenter, .35f, .175f, 700, 70, true);
             tutorialText = MakeText("Tutorial contextual", gameplayRoot, "", 30, new Color32(255, 225, 176, 255), TextAnchor.MiddleCenter, .35f, .125f, 740, 64, true);
@@ -720,7 +723,7 @@ namespace Asadito
 
                 Image cardFrame = MakeImage("Marco nivel " + levelNumber, levelContent,
                     roundedButtonSprite, new Color32(55, 34, 23, 255), new Vector2(x, y), new Vector2(x, y),
-                    new Vector2(434f, 296f));
+                    new Vector2(390f, 296f));
                 cardFrame.gameObject.name = "NIVEL " + levelNumber;
                 cardFrame.type = Image.Type.Sliced;
                 cardFrame.raycastTarget = true;
@@ -774,7 +777,7 @@ namespace Asadito
                 labelBacking.raycastTarget = false;
 
                 levelCardLabels[i] = MakeText("Texto Nivel " + levelNumber, levelCards[i].transform,
-                    "Nivel " + levelNumber, 48, Cream, TextAnchor.MiddleCenter, .5f, .145f, 400f, 66f, true);
+                    "Nivel " + levelNumber, 48, Cream, TextAnchor.MiddleCenter, .5f, .145f, 360f, 66f, true);
             }
             MakeButton("VOLVER", levelSelectRoot.transform, .5f, .08f, 390, 82, new Color32(92, 72, 55, 245), BackToMenu);
             RefreshLevelCards();
@@ -788,7 +791,7 @@ namespace Asadito
             var popup = new GameObject("Popup nivel", typeof(RectTransform), typeof(CanvasRenderer), typeof(Image));
             popup.transform.SetParent(introRoot.transform, false);
             RectTransform popupRect = popup.GetComponent<RectTransform>();
-            SetRect(popupRect, .5f, .5f, 774f, 1000f);
+            SetRect(popupRect, .5f, .5f, 640f, 660f);
             Image popupImage = popup.GetComponent<Image>();
             popupImage.sprite = roundedButtonSprite != null ? roundedButtonSprite : whiteSprite;
             popupImage.type = roundedButtonSprite != null ? Image.Type.Sliced : Image.Type.Simple;
@@ -806,49 +809,49 @@ namespace Asadito
             glassSheen.type = Image.Type.Sliced;
             glassSheen.raycastTarget = false;
             Image ruleLeft = MakeImage("Regla vidrio izquierda", introPopup, whiteSprite,
-                new Color32(190, 146, 61, 220), new Vector2(.12f, .88f), new Vector2(.42f, .88f), new Vector2(0f, 2f));
+                new Color32(190, 146, 61, 220), new Vector2(.12f, .93f), new Vector2(.42f, .93f), new Vector2(0f, 2f));
             ruleLeft.raycastTarget = false;
             Image glassFire = MakeImage("Icono fuego vidrio", introPopup, AsaditoUiIcons.Get(AsaditoUiIcon.Fire),
-                new Color32(191, 143, 60, 255), new Vector2(.5f, .88f), new Vector2(.5f, .88f), new Vector2(40f, 40f));
+                new Color32(191, 143, 60, 255), new Vector2(.5f, .93f), new Vector2(.5f, .93f), new Vector2(36f, 36f));
             glassFire.preserveAspect = true;
             Image ruleRight = MakeImage("Regla vidrio derecha", introPopup, whiteSprite,
-                new Color32(190, 146, 61, 220), new Vector2(.58f, .88f), new Vector2(.88f, .88f), new Vector2(0f, 2f));
+                new Color32(190, 146, 61, 220), new Vector2(.58f, .93f), new Vector2(.88f, .93f), new Vector2(0f, 2f));
             ruleRight.raycastTarget = false;
-            introTitleText = MakeText("Intro título", introPopup, "EL DEBUT", 68, new Color32(34, 55, 43, 255), TextAnchor.MiddleCenter, .5f, .78f, 710, 130, false);
+            introTitleText = MakeText("Intro título", introPopup, "EL DEBUT", 62, new Color32(34, 55, 43, 255), TextAnchor.MiddleCenter, .5f, .806f, 600, 100, false);
             introTitleText.font = semiBoldFont;
             introTitleText.resizeTextForBestFit = true;
-            introTitleText.resizeTextMinSize = 44;
-            introTitleText.resizeTextMaxSize = 68;
-            introGuestsText = MakeText("Intro comensales", introPopup, "2 COMENSALES", 40, new Color32(47, 63, 48, 255), TextAnchor.MiddleCenter, .535f, .665f, 360, 64, false);
+            introTitleText.resizeTextMinSize = 48;
+            introTitleText.resizeTextMaxSize = 62;
+            introGuestsText = MakeText("Intro comensales", introPopup, "2 COMENSALES", 38, new Color32(47, 63, 48, 255), TextAnchor.MiddleCenter, .53f, .673f, 300, 64, false);
             introGuestsText.font = semiBoldFont;
             introGuestsText.resizeTextForBestFit = true;
-            introGuestsText.resizeTextMinSize = 34;
-            introGuestsText.resizeTextMaxSize = 42;
+            introGuestsText.resizeTextMinSize = 32;
+            introGuestsText.resizeTextMaxSize = 40;
             Image introGuestIcon = MakeImage("Icon comensales intro", introPopup, AsaditoUiIcons.Get(AsaditoUiIcon.Guest), Gold,
-                new Vector2(.26f, .665f), new Vector2(.26f, .665f), new Vector2(40f, 40f));
+                new Vector2(.25f, .673f), new Vector2(.25f, .673f), new Vector2(36f, 36f));
             introGuestIcon.preserveAspect = true;
-            introMenuText = MakeText("Intro menu", introPopup, "CHORIZO ×1   ·   TIRA DE ASADO ×1", 34, new Color32(45, 60, 46, 255), TextAnchor.MiddleCenter, .5f, .39f, 700, 78, false);
+            introMenuText = MakeText("Intro menu", introPopup, "CHORIZO ×1   ·   TIRA DE ASADO ×1", 32, new Color32(45, 60, 46, 255), TextAnchor.MiddleCenter, .5f, .415f, 600, 56, false);
             introMenuText.font = semiBoldFont;
             introMenuText.resizeTextForBestFit = true;
-            introMenuText.resizeTextMinSize = 27;
-            introMenuText.resizeTextMaxSize = 35;
+            introMenuText.resizeTextMinSize = 26;
+            introMenuText.resizeTextMaxSize = 34;
             introFoodIcons = new Image[4];
             for (int i = 0; i < introFoodIcons.Length; i++)
             {
                 Image icon = MakeImage("Icon comida intro " + (i + 1), introPopup, whiteSprite, Color.white,
-                    new Vector2(.5f, .50f), new Vector2(.5f, .50f), new Vector2(144f, 116f));
+                    new Vector2(.5f, .539f), new Vector2(.5f, .539f), new Vector2(128f, 96f));
                 icon.preserveAspect = true;
                 icon.gameObject.SetActive(false);
                 introFoodIcons[i] = icon;
             }
             Image menuDivider = MakeImage("Separador menu popup", introPopup, whiteSprite,
-                new Color32(190, 146, 61, 190), new Vector2(.11f, .325f), new Vector2(.89f, .325f), new Vector2(0f, 2f));
+                new Color32(190, 146, 61, 190), new Vector2(.11f, .352f), new Vector2(.89f, .352f), new Vector2(0f, 2f));
             menuDivider.raycastTarget = false;
-            introObjectiveText = MakeText("Intro objetivo", introPopup, "Arrastrá la carne a la parrilla,\ncocinala y servila.", 36, new Color32(45, 56, 47, 255), TextAnchor.MiddleCenter, .5f, .245f, 690, 128, false);
+            introObjectiveText = MakeText("Intro objetivo", introPopup, "Arrastrá la carne cruda a la parrilla.\nCuando esté lista, llevala a la tabla.", 30, new Color32(45, 56, 47, 255), TextAnchor.MiddleCenter, .5f, .264f, 600, 100, false);
             introObjectiveText.resizeTextForBestFit = true;
-            introObjectiveText.resizeTextMinSize = 31;
-            introObjectiveText.resizeTextMaxSize = 38;
-            MakeButton("IR A LA PARRILLA", introPopup, .5f, .115f, 500, 108, new Color32(199, 139, 54, 255), StartLevel);
+            introObjectiveText.resizeTextMinSize = 28;
+            introObjectiveText.resizeTextMaxSize = 30;
+            MakeButton("IR A LA PARRILLA", introPopup, .5f, .108f, 460, 88, new Color32(199, 139, 54, 255), StartLevel);
             gameplayCanvasGroup.alpha = 0f;
             gameplayCanvasGroup.interactable = false;
             gameplayCanvasGroup.blocksRaycasts = false;
@@ -925,13 +928,20 @@ namespace Asadito
             levelSelectCanvasGroup.alpha = 0f;
         }
 
+        private bool IsLevelAvailable(int levelNumber)
+        {
+            return saveData != null && levelNumber >= 1
+                && levelNumber <= MvpLevelCatalog.MaxPlayableLevel
+                && levelNumber <= saveData.MaxUnlockedLevel;
+        }
+
         private void RefreshLevelCards()
         {
             if (levelCards == null || saveData == null) return;
             for (int i = 0; i < levelCards.Length; i++)
             {
                 int levelNumber = i + 1;
-                bool unlocked = levelNumber <= saveData.MaxUnlockedLevel;
+                bool unlocked = IsLevelAvailable(levelNumber);
                 levelCardLabels[i].text = "Nivel " + levelNumber;
                 levelCards[i].interactable = unlocked;
                 levelCardImages[i].color = unlocked ? Color.white : new Color32(145, 145, 145, 255);
@@ -943,7 +953,7 @@ namespace Asadito
 
         private void SelectLevel(int levelNumber)
         {
-            if (menuTransitionActive || levelNumber > saveData.MaxUnlockedLevel) return;
+            if (menuTransitionActive || !IsLevelAvailable(levelNumber)) return;
             ClearResultUi();
             ConfigureLevel(levelNumber);
             BuildPortionControls();
@@ -953,7 +963,7 @@ namespace Asadito
             introMenuText.text = BuildOrderSummary(currentLevel);
             RefreshIntroFoodIcons(currentLevel);
             introObjectiveText.text = currentLevelNumber == 1
-                ? "Arrastrá toda la carne cruda a la parrilla.\nDespués, cociná y serví cada pieza."
+                ? "Arrastrá la carne cruda a la parrilla.\nCuando esté lista, llevala a la tabla."
                 : "Arrastrá toda la carne a la parrilla.\nCociná y serví cada pieza.";
             StartCoroutine(TransitionToIntro());
         }
@@ -2120,7 +2130,7 @@ namespace Asadito
             MakeButton("REINTENTAR", resultContent, .29f, .32f, 390, 86, Green, Retry).interactable = true;
             bool hasNext = currentLevelNumber < MvpLevelCatalog.Count;
             int nextLevel = currentLevelNumber + 1;
-            bool nextUnlocked = hasNext && saveData.MaxUnlockedLevel >= nextLevel;
+            bool nextUnlocked = hasNext && IsLevelAvailable(nextLevel);
             UnityEngine.Events.UnityAction nextAction = !hasNext ? (UnityEngine.Events.UnityAction)ShowLevelSelect :
                 (nextUnlocked ? PlayNextLevel : () => { });
             MakeButton(hasNext ? (nextUnlocked ? "SIGUIENTE" : "BLOQUEADO") : "NIVELES", resultContent,
@@ -2244,8 +2254,9 @@ namespace Asadito
 
         private void PlayNextLevel()
         {
-            if (currentLevelNumber >= MvpLevelCatalog.Count) return;
-            SelectLevel(currentLevelNumber + 1);
+            int nextLevel = currentLevelNumber + 1;
+            if (!IsLevelAvailable(nextLevel)) return;
+            SelectLevel(nextLevel);
         }
 
         private void UpdateCookFeedback()

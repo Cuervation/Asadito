@@ -225,6 +225,7 @@ namespace Asadito.Tests
             Vector2 boardArea = new Vector2(380f * .74f, (380f / 1.5f) * .56f);
             // Matches the generated tray's flat center, excluding the rolled aluminum rim.
             Vector2 rawTrayArea = new Vector2(380f * .84f, (380f / 1.5f) * .71f);
+            const float rawTrayFoodGap = 2f;
             for (int levelNumber = 1; levelNumber <= Asadito.Runtime.MvpLevelCatalog.Count; levelNumber++)
             {
                 string[] foodIds = Asadito.Runtime.MvpLevelCatalog.Get(levelNumber).FoodIds;
@@ -232,7 +233,7 @@ namespace Asadito.Tests
                 for (int i = 0; i < sizes.Length; i++) sizes[i] = foodSizes[foodIds[i]];
 
                 float sharedScale = Mathf.Min(
-                    Asadito.Runtime.FoodFootprintLayout.GetMaxUniformFitScale(rawTrayArea, sizes, 8f),
+                    Asadito.Runtime.FoodFootprintLayout.GetMaxUniformFitScale(rawTrayArea, sizes, rawTrayFoodGap),
                     Asadito.Runtime.FoodFootprintLayout.GetMaxUniformFitScale(boardArea, sizes, 8f));
                 Assert.That(sharedScale, Is.GreaterThan(0f).And.LessThanOrEqualTo(1f),
                     "L" + levelNumber + " needs one valid shared tray/grill/board scale.");
@@ -240,7 +241,7 @@ namespace Asadito.Tests
 
                 Assert.IsTrue(Asadito.Runtime.FoodFootprintLayout.TryPackOrStack(boardArea, sizes, 8f,
                     out Vector2[] centers, out bool[] stacked), "L" + levelNumber + " portions should be positioned on the board.");
-                Assert.IsTrue(Asadito.Runtime.FoodFootprintLayout.TryPackOrStack(rawTrayArea, sizes, 8f,
+                Assert.IsTrue(Asadito.Runtime.FoodFootprintLayout.TryPackOrStack(rawTrayArea, sizes, rawTrayFoodGap,
                     out Vector2[] rawCenters, out bool[] rawStacked), "L" + levelNumber + " portions should be positioned on the raw tray.");
                 Assert.That(centers.Length, Is.EqualTo(sizes.Length));
                 Assert.That(stacked.Length, Is.EqualTo(sizes.Length));
@@ -266,7 +267,7 @@ namespace Asadito.Tests
 
                         Vector2 otherRawCenter = ToLocal(rawTrayArea, rawCenters[j]);
                         bool rawOverlap = Asadito.Runtime.FoodFootprintLayout.Overlaps(rawCenter, displayedSize,
-                            otherRawCenter, sizes[j], 7.9f);
+                            otherRawCenter, sizes[j], rawTrayFoodGap - .1f);
                         if (rawOverlap)
                             Assert.IsTrue(rawStacked[i] || rawStacked[j],
                                 "L" + levelNumber + " raw portions may overlap only when marked as stacked overflow.");

@@ -40,7 +40,7 @@ namespace Asadito.Tests.PlayMode
         }
 
         [UnityTest]
-        public IEnumerator FirstPlayable_CookServePersistsResultAndNextOpensLevelTwo()
+        public IEnumerator FirstPlayable_CookServePersistsResultButKeepsLevelTwoLocked()
         {
             Component game = null;
             yield return LoadGameScene(value => game = value);
@@ -62,8 +62,8 @@ namespace Asadito.Tests.PlayMode
             Text resultScore = GameObject.Find("Resultado puntos").GetComponent<Text>();
             Assert.That(resultScore.text, Does.Contain("PUNTOS"));
             Assert.IsNotNull(GameObject.Find("REINTENTAR"));
-            Button next = FindButton("SIGUIENTE");
-            Assert.IsTrue(next.interactable, "A one-star result must unlock the next level.");
+            Button next = GameObject.Find("BLOQUEADO").GetComponent<Button>();
+            Assert.IsFalse(next.interactable, "Level 2 stays unavailable until it is approved for play.");
             Assert.AreEqual("Asadito UI Icon Star", GameObject.Find("Resultado estrella 1").GetComponent<Image>().sprite.name);
             Assert.AreEqual("tira_ideal", GameObject.Find("Resultado icon comida TIRA DE ASADO").GetComponent<Image>().sprite.name);
             Assert.AreEqual("chorizo_ideal", GameObject.Find("Resultado icon comida CHORIZO").GetComponent<Image>().sprite.name);
@@ -74,17 +74,6 @@ namespace Asadito.Tests.PlayMode
             Assert.LessOrEqual(saved.BestScoreByLevel[0], 200, "A two-guest level is capped at 200 points.");
             Assert.GreaterOrEqual(saved.StarsByLevel[0], 1, "Passing level 1 must persist at least one star.");
             Assert.IsTrue(saved.Settings.TutorialCompleted, "Completing the in-game tutorial must persist its completion.");
-
-            ClickButton(next);
-            yield return new WaitForSecondsRealtime(.55f);
-            Text intro = GameObject.Find("Intro título").GetComponent<Text>();
-            Assert.That(intro.text, Does.Contain("NIVEL 2"));
-            ClickButton("IR A LA PARRILLA");
-            yield return new WaitForSecondsRealtime(.45f);
-            Assert.IsNull(GameObject.Find("Fin de nivel"), "The previous results overlay must not survive Next.");
-            Assert.IsNull(GameObject.Find("Resultado puntos"));
-            Assert.AreEqual(2, ReadField<int>(game, "currentLevelNumber"));
-            Assert.AreEqual(3, ((Array)GetField(game, "portions")).Length, "Level 2 must use its own three-portion setup.");
         }
 
         [UnityTest]
@@ -199,6 +188,18 @@ namespace Asadito.Tests.PlayMode
                     if (!rawTrayStacked[i] && !rawTrayStacked[j])
                         Assert.IsFalse(overlap, "Food pieces that fit must remain separate on the raw tray.");
                 }
+
+            Assert.IsFalse(rawTrayStacked[0] || rawTrayStacked[1],
+                "Level 1's tira and chorizo should be laid out separately; the aluminum tray has room for both footprints.");
+            Vector2 foodBoundsMin = new Vector2(float.MaxValue, float.MaxValue);
+            Vector2 foodBoundsMax = new Vector2(float.MinValue, float.MinValue);
+            for (int i = 0; i < portions.Length; i++)
+            {
+                foodBoundsMin = Vector2.Min(foodBoundsMin, rawTrayCenters[i] - rawTrayFoodSizes[i] * .5f);
+                foodBoundsMax = Vector2.Max(foodBoundsMax, rawTrayCenters[i] + rawTrayFoodSizes[i] * .5f);
+            }
+            Assert.That(Vector2.Distance((foodBoundsMin + foodBoundsMax) * .5f, Vector2.zero), Is.LessThan(.01f),
+                "When all portions fit, their overall footprint should be centered on the tray instead of crowded to one side.");
 
             Assert.AreEqual(Debug.isDebugBuild, GameObject.Find("CONTROL DEBUG") != null,
                 "Only Editor/development builds may expose the simulation debug control.");
@@ -316,6 +317,54 @@ namespace Asadito.Tests.PlayMode
             Assert.AreEqual(1, ReadField<int>(game, "trayCount"));
             Assert.That(targets[1].localScale.x, Is.EqualTo(1f).Within(.001f),
                 "Plated meat must preserve its exact grill/source size instead of shrinking into a cell.");
+        }
+
+        [UnityTest]
+        public IEnumerator RemainingChorizo_IsRaycastableAndDraggableAfterTiraMovesToGrill()
+        {
+            ResetSaveCache();
+            MvpSave.Save(new MvpSaveData());
+            Component game = null;
+            yield return LoadGameScene(value => game = value);
+            yield return EnterLevelOne(game);
+
+            RectTransform[] targets = (RectTransform[])GetField(game, "portionHitTargets");
+            DragRawFoodToGrill(game, 0, 70);
+            yield return null;
+            RectTransform auxiliaryTable = ((Image)GetField(game, "auxiliaryTableImage")).rectTransform;
+            Assert.That(auxiliaryTable.anchorMin.x, Is.EqualTo(.78f).Within(.001f),
+                "The tray should be inset from the right edge so the sausage and its touch area stay reachable on narrow phones.");
+
+            Vector2 sourcePoint = RectTransformUtility.WorldToScreenPoint(null, targets[1].position);
+            Assert.IsTrue((bool)game.GetType().GetMethod("IsFoodTargetClosest").Invoke(game,
+                    new object[] { 1, sourcePoint, null }),
+                "The remaining chorizo must remain the closest valid touch target on the tray.");
+
+            var pointer = new PointerEventData(EventSystem.current)
+            {
+                pointerId = 71,
+                button = PointerEventData.InputButton.Left,
+                position = sourcePoint
+            };
+            var hits = new List<RaycastResult>();
+            EventSystem.current.RaycastAll(pointer, hits);
+            Assert.IsTrue(hits.Exists(hit => hit.gameObject.transform == targets[1] ||
+                hit.gameObject.transform.IsChildOf(targets[1])),
+                "Unity's real UI raycast must reach the remaining chorizo, not just direct test callbacks.");
+
+            int foodHit = hits.FindIndex(hit => hit.gameObject.transform == targets[1] ||
+                hit.gameObject.transform.IsChildOf(targets[1]));
+            GameObject hitObject = hits[foodHit].gameObject;
+            Assert.IsTrue(ExecuteEvents.ExecuteHierarchy(hitObject, pointer, ExecuteEvents.pointerDownHandler));
+            Assert.IsTrue(ExecuteEvents.ExecuteHierarchy(hitObject, pointer, ExecuteEvents.beginDragHandler));
+            RectTransform grill = (RectTransform)GetField(game, "grillAreaRect");
+            Vector2 grillPoint = RectTransformUtility.WorldToScreenPoint(null, grill.position);
+            pointer.position = grillPoint;
+            Assert.IsTrue(ExecuteEvents.ExecuteHierarchy(hitObject, pointer, ExecuteEvents.dragHandler));
+            Assert.IsTrue(ExecuteEvents.ExecuteHierarchy(hitObject, pointer, ExecuteEvents.pointerUpHandler));
+            Assert.IsTrue(ExecuteEvents.ExecuteHierarchy(hitObject, pointer, ExecuteEvents.endDragHandler));
+            Assert.IsTrue(ReadField<bool>(((Array)GetField(game, "portions")).GetValue(1), "Started"),
+                "Dragging the chorizo from its tray target onto the grill should load it.");
         }
 
         [UnityTest]
@@ -534,7 +583,8 @@ namespace Asadito.Tests.PlayMode
             float levelContentWidth = levelOneRect.parent.GetComponent<RectTransform>().rect.width;
             float levelCardGap = levelTwoRect.anchorMin.x * levelContentWidth + levelTwoRect.anchoredPosition.x - levelTwoRect.rect.width * .5f
                 - (levelOneRect.anchorMax.x * levelContentWidth + levelOneRect.anchoredPosition.x + levelOneRect.rect.width * .5f);
-            Assert.GreaterOrEqual(levelCardGap, 50f, "The two selector cards need a clear finger-sized gap.");
+            Assert.AreEqual(390f, levelOneRect.rect.width, .01f, "Narrower cards leave a visible center gutter.");
+            Assert.GreaterOrEqual(levelCardGap, 90f, "The odd/even columns need a clearly visible gap.");
             Assert.IsFalse(levelOne.transform.Find("Candado nivel 1").gameObject.activeSelf);
             Assert.IsFalse(levelOne.transform.Find("Disabled nivel 1").gameObject.activeSelf);
             Assert.IsTrue(levelTwo.transform.Find("Candado nivel 2").gameObject.activeSelf);
@@ -543,9 +593,12 @@ namespace Asadito.Tests.PlayMode
             var levelSave = (MvpSaveData)GetField(levelGame, "saveData");
             levelSave.MaxUnlockedLevel = 2;
             levelGame.GetType().GetMethod("RefreshLevelCards", BindingFlags.Instance | BindingFlags.NonPublic).Invoke(levelGame, null);
-            Assert.IsTrue(levelTwo.interactable);
-            Assert.IsFalse(levelTwo.transform.Find("Candado nivel 2").gameObject.activeSelf);
-            Assert.IsFalse(levelTwo.transform.Find("Disabled nivel 2").gameObject.activeSelf);
+            Assert.IsFalse(levelTwo.interactable, "Persisted progression must not expose Level 2 before it is approved.");
+            Assert.IsTrue(levelTwo.transform.Find("Candado nivel 2").gameObject.activeSelf);
+            Assert.IsTrue(levelTwo.transform.Find("Disabled nivel 2").gameObject.activeSelf);
+            levelGame.GetType().GetMethod("SelectLevel", BindingFlags.Instance | BindingFlags.NonPublic)
+                .Invoke(levelGame, new object[] { 2 });
+            Assert.AreEqual(1, ReadField<int>(levelGame, "currentLevelNumber"), "Direct selection must honor the same lock as the disabled card.");
             Assert.IsNull(GameObject.Find("Seleccion ayuda"),
                 "The level-selection screen should not add a secondary block of descriptive copy.");
             ClickButton("NIVEL 1");
@@ -554,8 +607,9 @@ namespace Asadito.Tests.PlayMode
             Assert.AreEqual("tira_ideal", GameObject.Find("Icon comida intro TIRA DE ASADO").GetComponent<Image>().sprite.name);
             Assert.AreEqual("chorizo_ideal", GameObject.Find("Icon comida intro CHORIZO").GetComponent<Image>().sprite.name);
             Transform introPopup = GameObject.Find("Popup nivel").transform;
-            Assert.AreEqual(new Vector2(774f, 1000f), introPopup.GetComponent<RectTransform>().rect.size,
-                "Level intro should use the narrower, shorter centered popup.");
+            RectTransform introPopupRect = introPopup.GetComponent<RectTransform>();
+            Assert.AreEqual(new Vector2(640f, 660f), introPopupRect.rect.size,
+                "The centered level intro should be compact around its content, not nearly screen-sized.");
             Assert.AreEqual(.58f, introPopup.GetComponent<Image>().color.a, .001f, "The white popup should be more translucent than the previous 30%-transparent version.");
             Assert.NotNull(introPopup.GetComponent<Outline>(), "Frosted glass should have a subtle bright rim.");
             Assert.NotNull(introPopup.Find("Reflejo vidrio popup"), "The translucent card should have a soft glass sheen.");
@@ -567,17 +621,25 @@ namespace Asadito.Tests.PlayMode
             Text popupGuests = GameObject.Find("Intro comensales").GetComponent<Text>();
             Text popupMenu = GameObject.Find("Intro menu").GetComponent<Text>();
             Text popupObjective = GameObject.Find("Intro objetivo").GetComponent<Text>();
-            Assert.GreaterOrEqual(popupTitle.fontSize, 66, "The title must be large enough to read on a phone.");
-            Assert.GreaterOrEqual(popupGuests.fontSize, 38, "The guest count must remain comfortably legible.");
-            Assert.GreaterOrEqual(popupMenu.fontSize, 32, "Order copy must not be tiny.");
-            Assert.GreaterOrEqual(popupObjective.fontSize, 34, "Instructions must be comfortably legible.");
+            Assert.GreaterOrEqual(popupTitle.fontSize, 48, "The compact title must remain readable on a phone.");
+            Assert.GreaterOrEqual(popupGuests.fontSize, 32, "The guest count must remain comfortably legible.");
+            Assert.GreaterOrEqual(popupMenu.fontSize, 26, "Order copy must not be tiny.");
+            Assert.GreaterOrEqual(popupObjective.fontSize, 28, "Instructions must be comfortably legible.");
             Assert.LessOrEqual(popupTitle.preferredHeight, popupTitle.rectTransform.rect.height + 1f, "The level title must fit without clipping.");
             Assert.LessOrEqual(popupGuests.preferredHeight, popupGuests.rectTransform.rect.height + 1f, "The guest count must fit without clipping.");
             Assert.LessOrEqual(popupMenu.preferredHeight, popupMenu.rectTransform.rect.height + 1f, "The order must fit without clipping.");
             Assert.LessOrEqual(popupObjective.preferredHeight, popupObjective.rectTransform.rect.height + 1f, "The instructions must fit without clipping.");
-            Assert.AreEqual(new Vector2(144f, 116f), GameObject.Find("Icon comida intro TIRA DE ASADO").GetComponent<RectTransform>().sizeDelta,
-                "Food illustrations should be large enough to match the concept treatment.");
+            Assert.AreEqual(new Vector2(128f, 96f), GameObject.Find("Icon comida intro TIRA DE ASADO").GetComponent<RectTransform>().sizeDelta,
+                "Food illustrations should stay distinct while fitting the compact card.");
             Button introStart = FindButton("IR A LA PARRILLA");
+            Assert.AreEqual(new Vector2(460f, 88f), introStart.GetComponent<RectTransform>().rect.size,
+                "The primary action should fit the compact popup without dominating it.");
+            AssertRectInside(introPopupRect, popupTitle.rectTransform, "Title");
+            AssertRectInside(introPopupRect, popupGuests.rectTransform, "Guest count");
+            AssertRectInside(introPopupRect, popupMenu.rectTransform, "Order");
+            AssertRectInside(introPopupRect, popupObjective.rectTransform, "Instructions");
+            AssertRectInside(introPopupRect, introStart.GetComponent<RectTransform>(), "Primary action");
+            AssertRectInside(introPopupRect, GameObject.Find("Icon comida intro TIRA DE ASADO").GetComponent<RectTransform>(), "Food icon");
             var objectiveCorners = new Vector3[4];
             var ctaCorners = new Vector3[4];
             popupObjective.rectTransform.GetWorldCorners(objectiveCorners);
@@ -688,7 +750,7 @@ namespace Asadito.Tests.PlayMode
 
         [UnityTest]
         [Timeout(600000)]
-        public IEnumerator Mvp_AllTwelveLevels_CookServeResultsUnlockNextAndReturnToSelection()
+        public IEnumerator Mvp_OnlyLevelOneIsPlayableButProgressIsStillSaved()
         {
             ResetSaveCache();
             MvpSave.Save(new MvpSaveData());
@@ -706,7 +768,7 @@ namespace Asadito.Tests.PlayMode
             ClickButton("IR A LA PARRILLA");
             yield return new WaitForSecondsRealtime(.45f);
 
-            int[] expectedPortions = { 2, 3, 4, 4, 6, 5, 4, 5, 5, 6, 6, 6 };
+            int[] expectedPortions = { 2 };
             for (int level = 1; level <= expectedPortions.Length; level++)
             {
                 Assert.AreEqual(level, ReadField<int>(game, "currentLevelNumber"));
@@ -736,7 +798,7 @@ namespace Asadito.Tests.PlayMode
                         resultPortrait.GetComponent<Image>().sprite.name, "Result portrait expression must match that guest's evaluation.");
                 }
                 MvpSaveData result = MvpSave.Load();
-                Assert.GreaterOrEqual(result.StarsByLevel[level - 1], 1, "L" + level + " must earn one star to unlock the next MVP level.");
+                Assert.GreaterOrEqual(result.StarsByLevel[level - 1], 1, "L" + level + " must persist the earned star.");
                 Assert.Greater(result.BestScoreByLevel[level - 1], 0, "L" + level + " must persist its score.");
 
                 if (level < expectedPortions.Length)
@@ -753,10 +815,10 @@ namespace Asadito.Tests.PlayMode
                 }
                 else
                 {
-                    Assert.IsTrue(FindButton("NIVELES").interactable, "The last result must return to level selection.");
-                    ClickButton("NIVELES");
-                    yield return new WaitForSecondsRealtime(.5f);
-                    Assert.NotNull(GameObject.Find("Seleccion de nivel"), "L12 completion must return to level selection.");
+                    Assert.GreaterOrEqual(result.MaxUnlockedLevel, 2,
+                        "The save may retain progression while the current playable-level gate remains closed.");
+                    Button next = GameObject.Find("BLOQUEADO").GetComponent<Button>();
+                    Assert.IsFalse(next.interactable, "Finishing L1 must not make L2 playable in this release.");
                 }
             }
         }
@@ -1067,6 +1129,21 @@ namespace Asadito.Tests.PlayMode
             float iconRight = iconRect.anchoredPosition.x + iconRect.rect.width * .5f;
             Assert.GreaterOrEqual(iconLeft, 0f, label + " action icon must not render outside the left edge of its button.");
             Assert.LessOrEqual(iconRight, buttonRect.rect.width, label + " action icon must remain inside its button.");
+        }
+
+        private static void AssertRectInside(RectTransform container, RectTransform child, string label)
+        {
+            var containerCorners = new Vector3[4];
+            var childCorners = new Vector3[4];
+            container.GetWorldCorners(containerCorners);
+            child.GetWorldCorners(childCorners);
+            for (int i = 0; i < childCorners.Length; i++)
+            {
+                Assert.GreaterOrEqual(childCorners[i].x, containerCorners[0].x - .1f, label + " must remain inside the popup's left edge.");
+                Assert.LessOrEqual(childCorners[i].x, containerCorners[2].x + .1f, label + " must remain inside the popup's right edge.");
+                Assert.GreaterOrEqual(childCorners[i].y, containerCorners[0].y - .1f, label + " must remain inside the popup's bottom edge.");
+                Assert.LessOrEqual(childCorners[i].y, containerCorners[2].y + .1f, label + " must remain inside the popup's top edge.");
+            }
         }
 
         private static void ClickButton(string name) { ClickButton(FindButton(name)); }

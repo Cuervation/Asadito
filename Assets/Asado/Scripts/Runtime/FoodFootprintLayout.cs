@@ -148,7 +148,12 @@ namespace Asadito.Runtime
                 return false;
 
             stacked = new bool[itemSizes.Length];
-            if (itemSizes.Length == 0 || packedCount == itemSizes.Length) return true;
+            if (itemSizes.Length == 0) return true;
+            if (packedCount == itemSizes.Length)
+            {
+                RecenterPackedItems(area, itemSizes, packed, normalizedCenters);
+                return true;
+            }
 
             var ordered = GetAreaSortedIndices(itemSizes);
             if (packedCount == 0)
