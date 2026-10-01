@@ -2,6 +2,12 @@
 
 > Este archivo conserva evidencia fechada y detalle del sprint; no es el resumen operativo por defecto. Para el comportamiento actual conciso, usar [`docs/current-project-state.md`](../current-project-state.md). No atribuir resultados anteriores a cambios posteriores.
 
+## Build física del commit d6a5004 (2026-09-30)
+
+- En estado limpio `d6a5004dc30854bfa33a4fbcd30ee51402774b7e`, el validator pasó (18 perfiles, 108 estados, 12 niveles), EditMode **25/25 PASS** (`/tmp/asadito-d6a5004-editmode.xml`) y PlayMode **11/11 PASS** (`/tmp/asadito-d6a5004-playmode.xml`).
+- Android ARM64/IL2CPP, Unity 6000.6.3f1: `Succeeded`; APK `/tmp/Asadito-d6a5004-1.2.0-arm64.apk` (60 MiB). `aapt`: package `com.cuervation.asadito`, 1.2.0/code3, min API26/target+compile API36. `unzip`: únicamente ABI `arm64-v8a`; `apksigner`: scheme v2 verificado.
+- ADB enumeró Motorola Edge 60 Fusion (`ZY22MBNWRB`, Android 16/API36) y AVD Pixel x86_64. La APK se instaló en el teléfono mediante `adb install -r` → `Success` y se lanzó Unity sin limpiar datos. Captura física `/tmp/asadito-d6a5004-level1-intro.png` muestra el popup Nivel 1 actualizado y el selector con Nivel 2 bloqueado. Sólo se validó navegación y presentación del intro; interacción/cocción no se smoke-testeó en el dispositivo. AVD x86_64 no se usó para runtime ARM64.
+
 ## Intercambio de superficie y escala física (2026-09-30)
 
 - La bandeja de aluminio y la tabla comparten exactamente el mismo rectángulo 380×253.3, centro y aspecto 3:2; no se muestran juntas. El dibujo procedural del aluminio ahora usa 630×420 para corresponder al PNG nativo de tabla 1536×1024. La tabla reemplaza a la bandeja cuando ya no queda comida cruda en ella.
