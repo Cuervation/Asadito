@@ -5,7 +5,7 @@
 `ManagementState` guarda balance, ciclos, unidades, compras de la jornada, estado de equipamiento y ActiveRun. Frescura se deriva de edad + vida por producto; no guardar estados duplicados.
 
 ## Transiciones
-Comprar → heladera. Tocar unidades 3D individuales → bandeja de preparación; volver a tocar o CANCELAR devuelve la selección sin consumir inventario. Confirmar → extraer únicamente las unidades seleccionadas y persistir ActiveRun → construir las porciones existentes de gameplay. Carne no seleccionada permanece guardada. Cantidad preparada inicial = cantidad del pedido; se puede cambiar mezcla chorizo/tira y asumir consecuencias de gustos/puntos.
+Comprar → heladera. Tocar unidades 2D individuales → tabla de preparación; volver a tocar o CANCELAR devuelve la selección sin consumir inventario. Confirmar → extraer únicamente las unidades seleccionadas y persistir ActiveRun → construir las porciones existentes de gameplay. Carne no seleccionada permanece guardada. Cantidad preparada inicial = cantidad del pedido; se puede cambiar mezcla chorizo/tira y asumir consecuencias de gustos/puntos.
 No cocinar carne podrida ni consumir la misma unidad dos veces. Confirmación atómica: o todas las unidades seleccionadas existen o nada se consume. Mientras hay run, no comprar/descartar simultáneamente.
 Abandonar un asado preparado registra el costo como pérdida pendiente. Reiniciar su cocción usa el mismo run sin duplicar inventario. Tras cierre inesperado se conserva run; volver a elegir su nivel reanuda las mismas unidades preparadas sin comprar otra vez. La cocción reinicia fría (no snapshot térmico en V1), igual que retry. Solo VOLVER desde gameplay/pausa o iniciar otro asado abandona y registra pérdida; entrar al selector tras abrir la app NO descarta carne. El siguiente pedido sigue siendo posible mediante recovery.
 Descartar una unidad registra pérdida persistente y pendiente de resultado. No destruir progreso para recuperar una partida.
@@ -16,7 +16,9 @@ MvpSave v5 migra v1–4 conservando estrellas, mejores scores, unlock y settings
 ## Futuro
 Lotes grandes, storage freezer/thawing y reservas se añaden solo al implementar su vertical; no copiar catálogos térmicos ni crear inventario paralelo por pantalla.
 
-## Representación 3D vigente
-Heladera con puerta animada, interior y estantes; cada modelo corresponde exactamente a InventoryUnit.Id. Sin unidades decorativas ficticias. Posiciones automáticas (cuatro slots por estante), capacidad configurable y modelos compartidos con carnicería. Selección temporal reversible, sin reserva ni modificación del save hasta confirmar. PrepareUnits/CanPrepareUnits validan IDs únicos, existentes, no podridos, desbloqueados y run inactivo; consumen exactamente esos IDs en una sola transacción. Prepare por SKU conserva FIFO y delega a la misma transacción. Carne no elegida permanece; preparación/reanudación/recovery/resultados conservan contratos anteriores.
+## Representación 2D vigente
+Heladera ilustrada abierta con estantes/tabla; cada sprite Canvas corresponde exactamente a `InventoryUnit.Id`. Sin unidades decorativas, modelos, cámaras/RenderTextures de gestión ni colliders 3D. Posiciones y capas 2D admiten superposición; la detección por orden visual/máscara alfa elige la pieza expuesta, no una caja transparente de otra unidad. Capacidad actual8 y tamaños originales de parrilla conservados.
 
-Heladera vacía comunica compra/recovery, no botones de SKU como sustituto de mercadería. Frescura queda representable por datos/materiales sin avanzar ciclos ni activar deterioro offline. Upgrades/freezer/thawing no se activan.
+Selección temporal reversible, sin reserva ni modificación del save hasta confirmar. `PrepareUnits`/`CanPrepareUnits` validan IDs únicos, existentes, no podridos, desbloqueados y run inactivo; consumen exactamente esos IDs en una sola transacción. `Prepare` por SKU conserva FIFO y delega a la misma transacción. Carne no elegida permanece; cancelación/cierre/preparación/reanudación/recovery/resultados conservan contratos anteriores.
+
+Heladera vacía comunica compra/recovery, no botones de SKU como sustituto de mercadería. Frescura queda representable con tint/etiquetas 2D sin avanzar ciclos ni activar deterioro offline. Upgrades/freezer/thawing no se activan.

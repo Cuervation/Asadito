@@ -841,307 +841,424 @@ namespace Asadito.Tests.PlayMode
         }
 
         [UnityTest]
-        public IEnumerator Management_3DModelsReceivePhysicsTapsWithoutCards()
+        public IEnumerator Management_2DShopUsesOriginalSpritesUiOrderAndGrillFootprints()
         {
-            Component game=null;yield return LoadGameScene(v=>game=v);
+            Component game=null;yield return LoadGameScene(v=>game=v);ForcePortraitManagementCanvas(game);
             yield return new WaitForSecondsRealtime(.6f);ClickButton("ENTRAR");yield return new WaitForSecondsRealtime(.5f);
             ClickButton("NIVEL 1");yield return new WaitForSecondsRealtime(.5f);ClickButton("IR A LA PARRILLA");yield return null;
-            ClickButton("CARNICERÍA");yield return null;var view=UnityEngine.Object.FindAnyObjectByType<ManagementWorldView>();
+            ClickButton("CARNICERÍA");yield return null;var view=UnityEngine.Object.FindAnyObjectByType<ManagementFoodView>();
             Assert.IsNotNull(view);Assert.IsFalse(view.IsFridge);Assert.AreEqual(48,view.Targets.Count);
-            Assert.IsNotNull(view.Viewport.texture);Assert.AreEqual(1<<30,view.WorldCamera.cullingMask);
-            Assert.IsNull(GameObject.Find("Shop food chorizo"));
+            Assert2DManagementPresentation(view);
             var root=GameObject.Find("Management CARNICERÍA");
+            var exposedFoods=new HashSet<ManagementFoodTarget>();
             foreach(var target in view.Targets)
             {
-                var mesh=target.GetComponent<MeshFilter>().sharedMesh;Assert.Greater(mesh.vertexCount,200);Assert.AreSame(Resources.Load<Mesh>("Management3D/"+target.FoodId+"-grill-relief"),mesh);
-                Assert.AreSame(Resources.Load<Texture2D>("Art/Foods/States/"+target.FoodId),target.Visual.sharedMaterial.mainTexture);Assert.AreEqual(mesh.vertexCount,mesh.uv.Length);
-                Assert.Greater(mesh.bounds.size.z,.3f);Assert.Greater(mesh.bounds.size.y,.15f);
-                Assert.IsNull(target.GetComponent<SpriteRenderer>());Assert.IsNotNull(target.GetComponent<MeshCollider>());
-                Assert.IsTrue(target.Visual.sharedMaterial.shader.isSupported);
-                var first=view.Raycast(view.ScreenPoint(target));Assert.IsNotNull(first,"Pile must remain purchasable "+target.name);Assert.AreEqual(target.FoodId,first.FoodId,"Touching an overlap must select the visible product, not the neighboring SKU");
-            }
-            Assert.AreEqual(24,view.Targets.FindAll(t=>t.FoodId=="chorizo").Count);Assert.AreEqual(24,view.Targets.FindAll(t=>t.FoodId=="tira").Count);
-            Assert.That(SignStock("chorizo").text,Does.Contain("Stock 24"));
-            Assert.That(SignStock("tira").text,Does.Contain("Stock 24"));
-            CaptureManagementFrame(game,"/tmp/asadito-counter-large-signs-initial.png");
-            AssertShopGrillSize(view,game);AssertRetailSigns(view);
-            var signRoot=GameObject.Find("Precio chorizo").transform;
-            var signPoint=ShopWorldScreenPoint(view,signRoot.position);
-            Assert.IsNull(view.Raycast(signPoint),"Reading a price sign must not buy the food behind it");
-            view.OnPointerClick(new PointerEventData(EventSystem.current){position=signPoint});
-            Assert.IsNotNull(GameObject.Find("TOTAL $0"));
-            AssertShopPerspectiveLayout(view);
-            // Tall/narrow safe area keeps full grill size; overlap is allowed, clipping is not.
-            var viewportRect=view.Viewport.rectTransform;var min=viewportRect.anchorMin;var max=viewportRect.anchorMax;
-            viewportRect.anchorMin=viewportRect.anchorMax=new Vector2(.5f,.55f);viewportRect.sizeDelta=new Vector2(780,1100);
-            Canvas.ForceUpdateCanvases();yield return null;
-            foreach(var t in view.Targets)
-            {
-                var bounds=t.GetComponent<MeshFilter>().sharedMesh.bounds;
-                foreach(int x in new[]{-1,1})foreach(int y in new[]{-1,1})foreach(int z in new[]{-1,1})
+                AssertOriginalRawFoodSprite(game,target);
+                if(TryFindExposedFoodPoint(view,target,out var visiblePoint))
                 {
-                    var uv=view.WorldCamera.WorldToViewportPoint(t.transform.TransformPoint(bounds.center+Vector3.Scale(bounds.extents,new Vector3(x,y,z))));
-                    Assert.That(uv.x,Is.InRange(0f,1f),"Food cropped on narrow safe area");Assert.That(uv.y,Is.InRange(0f,1f));
+                    Assert.AreSame(target,view.Raycast(visiblePoint),"An exposed sprite surface must select its visible piece");
+                    exposedFoods.Add(target);
                 }
             }
-            AssertShopPerspectiveLayout(view);AssertShopGrillSize(view,game);AssertRetailSigns(view);
-            viewportRect.anchorMin=min;viewportRect.anchorMax=max;viewportRect.offsetMin=viewportRect.offsetMax=Vector2.zero;Canvas.ForceUpdateCanvases();yield return null;
-            AssertShopPerspectiveLayout(view);
-            int triangles=0,renderers=0;foreach(var t in view.Targets)triangles+=t.GetComponent<MeshFilter>().sharedMesh.triangles.Length/3;
-            foreach(var renderer in view.WorldCamera.transform.parent.GetComponentsInChildren<MeshRenderer>())if(renderer.enabled)renderers++;
-            Assert.Less(triangles,75000);Assert.Less(renderers,60);Debug.Log("3D display budget: "+triangles+" food triangles, "+renderers+" active mesh renderers");
+            foreach(var id in new[]{"chorizo","tira"})Assert.IsTrue(view.Targets.Exists(t=>t.FoodId==id&&exposedFoods.Contains(t)),"Each stocked SKU must have genuine exposed purchasable artwork: "+id);
+            Assert.AreEqual(24,view.Targets.FindAll(t=>t.FoodId=="chorizo").Count);Assert.AreEqual(24,view.Targets.FindAll(t=>t.FoodId=="tira").Count);
+            Assert.That(SignStock("chorizo").text,Does.Contain("Stock 24"));Assert.That(SignStock("tira").text,Does.Contain("Stock 24"));
+            CaptureManagementFrame(game,"/tmp/asadito-2d-shop-full.png");
+            AssertShopGrillSize(view,game);AssertRetailSigns(view);AssertShop2DOverlapLayout(view);
+            var sign=GameObject.Find("Precio chorizo").GetComponent<RectTransform>();
+            var signPoint=UiScreenPoint(sign.position);
+            var hits=new List<RaycastResult>();EventSystem.current.RaycastAll(new PointerEventData(EventSystem.current){position=signPoint},hits);
+            Assert.IsNotEmpty(hits);Assert.IsTrue(hits[0].gameObject.transform==sign||hits[0].gameObject.transform.IsChildOf(sign),"The native UI price card or its painted supports must own its touch");
+            Assert.IsNull(view.Raycast(signPoint),"Reading a price sign must not buy the food behind it");
+            view.OnPointerDown(new PointerEventData(EventSystem.current){position=signPoint,pointerId=798});
+            view.OnPointerClick(new PointerEventData(EventSystem.current){position=signPoint,pointerId=798});
+            Assert.IsNotNull(GameObject.Find("TOTAL $0"));
+            // Portrait/narrow safe area changes layout, never the configured food footprints.
+            CaptureManagementFrame(game,"/tmp/asadito-2d-shop-narrow.png",()=>{
+                AssertShopGrillSize(view,game);AssertShop2DOverlapLayout(view);AssertRetailSigns(view);
+            },720,1600);
+            var viewportRect=view.Viewport.rectTransform;var min=viewportRect.anchorMin;var max=viewportRect.anchorMax;
+            var originalSize=viewportRect.sizeDelta;var originalPosition=viewportRect.anchoredPosition;
+            viewportRect.anchorMin=viewportRect.anchorMax=new Vector2(.5f,.55f);viewportRect.sizeDelta=new Vector2(780,1100);
+            Canvas.ForceUpdateCanvases();view.RefreshLayout();yield return null;
+            AssertShop2DOverlapLayout(view);AssertShopGrillSize(view,game);
+            viewportRect.anchorMin=min;viewportRect.anchorMax=max;viewportRect.sizeDelta=originalSize;viewportRect.anchoredPosition=originalPosition;
+            Canvas.ForceUpdateCanvases();view.RefreshLayout();yield return null;
+            AssertShop2DOverlapLayout(view);
             foreach(var button in root.GetComponentsInChildren<Button>())Assert.GreaterOrEqual(button.GetComponent<RectTransform>().rect.height,132,"44dp-equivalent reference target");
-            int balance=MvpSave.Load().Management.Balance;TapModel(view,view.Targets.Find(t=>t.FoodId=="chorizo"));yield return null;
-            TapModel(view,view.Targets.Find(t=>t.FoodId=="chorizo"));yield return null;
+            int balance=MvpSave.Load().Management.Balance;TapFood(view,view.Targets.Find(t=>t.FoodId=="chorizo"));yield return null;
+            TapFood(view,view.Targets.Find(t=>t.FoodId=="chorizo"));yield return null;
             Assert.AreSame(root,GameObject.Find("Management CARNICERÍA"));Assert.IsNotNull(GameObject.Find("TOTAL $200"));
-            Assert.IsNull(GameObject.Find("Carne al carrito 3D"));Assert.AreEqual(balance,MvpSave.Load().Management.Balance);
-            AddToBasket("tira");yield return new WaitForSecondsRealtime(.45f);Assert.IsNull(GameObject.Find("Carne al carrito 3D"));
-            foreach(var target in view.Targets)Assert.Less(Vector3.Distance(target.HomeScale,target.transform.localScale),.001f,"Pulse must preserve the perspective size");
-            view.CaptureRender();
-            var rt=(RenderTexture)view.Viewport.texture;var prev=RenderTexture.active;RenderTexture.active=rt;
-            var pixels=new Texture2D(rt.width,rt.height,TextureFormat.RGB24,false);pixels.ReadPixels(new Rect(0,0,rt.width,rt.height),0,0);pixels.Apply();
-            System.IO.File.WriteAllBytes("/tmp/asadito-3d-world.png",pixels.EncodeToPNG());RenderTexture.active=prev;UnityEngine.Object.Destroy(pixels);
-            CaptureManagementFrame(game,"/tmp/asadito-3d-shop.png");
-            ClickButton("DETALLE");yield return null;AssertAllManagementTextFits();
-            var remove=FindButton("Restar carrito chorizo");var hits=new List<RaycastResult>();EventSystem.current.RaycastAll(MakePointer(remove.GetComponent<RectTransform>(),799),hits);
-            Assert.AreEqual(remove,hits[0].gameObject.GetComponentInParent<Button>(),"Expanded detail must own its touches");
-            CaptureManagementFrame(game,"/tmp/asadito-3d-cart-expanded.png");
+            Assert.AreEqual(balance,MvpSave.Load().Management.Balance);
+            AddToBasket("tira");yield return new WaitForSecondsRealtime(.45f);
+            Assert.IsNull(GameObject.Find("Dragged food preview"));
+            foreach(var target in view.Targets)Assert.Less(Vector3.Distance(target.HomeScale,target.transform.localScale),.001f,"Pulse must restore the original 2D scale");
+            ClickButton("DETALLE");yield return null;Canvas.ForceUpdateCanvases();AssertAllManagementTextFits();
+            CaptureManagementFrame(game,"/tmp/asadito-2d-cart-expanded.png");
+            var remove=FindButton("Restar carrito chorizo");hits.Clear();EventSystem.current.RaycastAll(MakePointer(remove.GetComponent<RectTransform>(),799),hits);
+            Assert.AreEqual(remove,hits[0].gameObject.GetComponentInParent<Button>(),"Expanded detail must own its touches; hits="+string.Join(",",hits.ConvertAll(h=>h.gameObject.name)));
+            CaptureManagementFrame(game,"/tmp/asadito-2d-cart-expanded.png");
             ClickButton("Volver carnicería");yield return null;yield return null;
-            Assert.IsNull(UnityEngine.Object.FindAnyObjectByType<ManagementWorldView>());
+            Assert.IsNull(UnityEngine.Object.FindAnyObjectByType<ManagementFoodView>());
             Assert.AreEqual(balance,MvpSave.Load().Management.Balance);Assert.IsEmpty(MvpSave.Load().Management.Inventory);
         }
 
         [UnityTest]
-        public IEnumerator Management_PhysicalFridgeTracksExactUnitsCancelAndPrepare()
+        public IEnumerator Management_2DFridgeTracksExactUnitsCancelAndPrepare()
         {
-            Component game=null;yield return LoadGameScene(v=>game=v);
+            Component game=null;yield return LoadGameScene(v=>game=v);ForcePortraitManagementCanvas(game);
             yield return new WaitForSecondsRealtime(.6f);ClickButton("ENTRAR");yield return new WaitForSecondsRealtime(.5f);
             ClickButton("NIVEL 1");yield return new WaitForSecondsRealtime(.5f);ClickButton("IR A LA PARRILLA");yield return null;
             var service=(ManagementService)GetField(game,"management");service.State.Balance=2000;
             ClickButton("CARNICERÍA");yield return null;
             for(int i=0;i<3;i++){AddToBasket("chorizo");yield return null;}for(int i=0;i<2;i++){AddToBasket("tira");yield return null;}
             ClickButton("PAGAR Y SALIR");yield return new WaitForSecondsRealtime(.7f);
-            var view=UnityEngine.Object.FindAnyObjectByType<ManagementWorldView>();Assert.IsTrue(view.IsFridge);Assert.AreEqual(1,view.DoorOpenFraction);
+            var view=UnityEngine.Object.FindAnyObjectByType<ManagementFoodView>();Assert.IsTrue(view.IsFridge);Assert2DManagementPresentation(view);
             Assert.AreEqual(5,view.Targets.Count);Assert.AreEqual(5,service.State.Inventory.Count);Assert.AreEqual(1340,service.State.Balance);
-            foreach(var t in view.Targets){Assert.IsNotNull(service.State.Inventory.Find(u=>u.Id==t.UnitId));Assert.AreSame(t,view.Raycast(view.ScreenPoint(t)),"Inventory unit must be independently selectable: "+t.UnitId);}
+            var ids=new HashSet<int>();
+            foreach(var t in view.Targets)
+            {
+                Assert.IsTrue(ids.Add(t.UnitId),"Each visible unit must have a unique paid inventory ID");
+                var unit=service.State.Inventory.Find(u=>u.Id==t.UnitId);Assert.IsNotNull(unit);Assert.AreEqual(unit.FoodId,t.FoodId);
+                Assert.AreSame(t,view.Raycast(view.ScreenPoint(t)),"Inventory unit must be independently selectable: "+t.UnitId);
+                AssertOriginalRawFoodSprite(game,t);
+            }
             int chorizo=service.State.Inventory[2].Id,tira=service.State.Inventory[4].Id;
             var c=view.Targets.Find(t=>t.UnitId==chorizo);var r=view.Targets.Find(t=>t.UnitId==tira);
-            view.CaptureRender();CaptureManagementFrame(game,"/tmp/asadito-3d-fridge.png");
-            TapModel(view,c);yield return new WaitForSecondsRealtime(.3f);TapModel(view,r);yield return new WaitForSecondsRealtime(.3f);
+            CaptureManagementFrame(game,"/tmp/asadito-2d-fridge.png");
+            TapFood(view,c);yield return new WaitForSecondsRealtime(.3f);TapFood(view,r);yield return new WaitForSecondsRealtime(.3f);
             Assert.IsTrue(c.Selected);Assert.IsTrue(r.Selected);Assert.AreEqual(5,service.State.Inventory.Count,"Selection previews do not consume inventory");
-            CaptureManagementFrame(game,"/tmp/asadito-3d-fridge-selected.png");
+            CaptureManagementFrame(game,"/tmp/asadito-2d-fridge-selected.png");
             ClickButton("CANCELAR");yield return new WaitForSecondsRealtime(.3f);
-            Assert.IsFalse(c.Selected);Assert.Less(Vector3.Distance(c.Home,c.transform.localPosition),.01f);
+            Assert.IsFalse(c.Selected);Assert.IsFalse(r.Selected);Assert.Less(Vector3.Distance(c.Home,c.transform.localPosition),.01f);
             Assert.IsFalse(GameObject.Find("PREPARAR").GetComponent<Button>().interactable);
             // Returning/reopening cancels only the preview, with persistent paid inventory intact.
             ClickButton("VOLVER");yield return null;ResetSaveCache();Assert.AreEqual(5,MvpSave.Load().Management.Inventory.Count);
-            ClickButton("HELADERA");yield return new WaitForSecondsRealtime(.7f);view=UnityEngine.Object.FindAnyObjectByType<ManagementWorldView>();
-            TapModel(view,view.Targets.Find(t=>t.UnitId==chorizo));yield return new WaitForSecondsRealtime(.3f);
-            TapModel(view,view.Targets.Find(t=>t.UnitId==tira));yield return new WaitForSecondsRealtime(.3f);
+            ClickButton("HELADERA");yield return new WaitForSecondsRealtime(.7f);view=UnityEngine.Object.FindAnyObjectByType<ManagementFoodView>();
+            foreach(var t in view.Targets)Assert.IsFalse(t.Selected,"Reopening must not keep a stale preparation preview");
+            TapFood(view,view.Targets.Find(t=>t.UnitId==chorizo));yield return new WaitForSecondsRealtime(.3f);
+            TapFood(view,view.Targets.Find(t=>t.UnitId==tira));yield return new WaitForSecondsRealtime(.3f);
             ClickButton("PREPARAR");yield return new WaitForSecondsRealtime(.5f);
             Assert.AreEqual(chorizo,service.State.ActiveRun.Units[0].Id);Assert.AreEqual(tira,service.State.ActiveRun.Units[1].Id);Assert.AreEqual(3,service.State.Inventory.Count);
-            ResetSaveCache();Assert.AreEqual(chorizo,MvpSave.Load().Management.ActiveRun.Units[0].Id);
-            Assert.IsNull(UnityEngine.Object.FindAnyObjectByType<ManagementWorldView>());
+            Assert.IsNull(service.State.Inventory.Find(u=>u.Id==chorizo));Assert.IsNull(service.State.Inventory.Find(u=>u.Id==tira));
+            ResetSaveCache();Assert.AreEqual(chorizo,MvpSave.Load().Management.ActiveRun.Units[0].Id);Assert.AreEqual(tira,MvpSave.Load().Management.ActiveRun.Units[1].Id);
+            Assert.IsNull(UnityEngine.Object.FindAnyObjectByType<ManagementFoodView>());
         }
 
         [UnityTest]
-        public IEnumerator Management_HybridFridgeFullCapacityKeepsSizeAndPicksVisibleOverlap()
+        public IEnumerator Management_2DFridgeFullCapacityKeepsSizeAndPicksVisibleOverlap()
         {
-            Component game=null;yield return LoadGameScene(v=>game=v);
+            Component game=null;yield return LoadGameScene(v=>game=v);ForcePortraitManagementCanvas(game);
             yield return new WaitForSecondsRealtime(.6f);ClickButton("ENTRAR");yield return new WaitForSecondsRealtime(.5f);
             ClickButton("NIVEL 1");yield return new WaitForSecondsRealtime(.5f);ClickButton("IR A LA PARRILLA");yield return null;
             var service=(ManagementService)GetField(game,"management");service.State.Balance=3000;service.State.ManagementTutorialCompleted=true;
-            // Keep the Editor's wide Game View from pretending this portrait-only UI has a short logical canvas.
-            ((Canvas)GetField(game,"canvas")).GetComponent<CanvasScaler>().matchWidthOrHeight=1;
             ClickButton("CARNICERÍA");yield return null;
             for(int i=0;i<4;i++){AddToBasket("chorizo");yield return null;AddToBasket("tira");yield return null;}
             ClickButton("PAGAR Y SALIR");yield return new WaitForSecondsRealtime(.4f);
-            var view=UnityEngine.Object.FindAnyObjectByType<ManagementWorldView>();
-            Assert.IsTrue(view.IsFridge);Assert.AreEqual(8,view.Targets.Count);Assert.AreEqual(8,service.State.Inventory.Count);
-            Assert.AreEqual(1880,service.State.Balance);Assert.AreEqual(0,view.WorldCamera.backgroundColor.a);
-            Assert.AreEqual(8,view.WorldCamera.transform.parent.GetComponentsInChildren<MeshRenderer>().Length,"Only real inventory food is 3D, no cabinet/duplicate doors");
+            var view=UnityEngine.Object.FindAnyObjectByType<ManagementFoodView>();
+            Assert.IsTrue(view.IsFridge);Assert.AreEqual(8,view.Targets.Count);Assert.AreEqual(8,service.State.Inventory.Count);Assert.AreEqual(1880,service.State.Balance);
+            Assert2DManagementPresentation(view);
             var backdrop=GameObject.Find("Heladera ilustrada").GetComponent<RawImage>();
             Assert.AreEqual("Fridge_Hybrid_OpenEmptyV2",backdrop.texture.name);Assert.IsFalse(backdrop.raycastTarget);
-            Assert.AreEqual(new Vector2(.015f,.295f),GameObject.Find("Hybrid fridge scene").GetComponent<RectTransform>().anchorMin);
             Assert.IsTrue(GameObject.Find("DESCARTAR").GetComponent<RectTransform>().anchorMin.x>.7f);
-            CaptureManagementFrame(game,"/tmp/asadito-hybrid-fridge-full.png",()=>AssertFridgeFoodSize(view,game));
+            CaptureManagementFrame(game,"/tmp/asadito-2d-fridge-full.png",()=>AssertFridgeFoodSize(view,game));
+            CaptureManagementFrame(game,"/tmp/asadito-2d-fridge-full-narrow.png",()=>AssertFridgeFoodSize(view,game),720,1600);
             AssertAllManagementTextFits();
             var cuts=view.Targets.FindAll(t=>t.FoodId=="tira");
-            // A raised overlapping cut must own the touch; moving it reveals the exact underlying ID.
-            cuts[1].DisplayUV=cuts[0].DisplayUV;cuts[1].DisplayHeight=.20f;view.CaptureRender();
-            var ray=view.WorldCamera.ViewportPointToRay(view.WorldCamera.WorldToViewportPoint(cuts[1].transform.TransformPoint(cuts[1].GetComponent<MeshFilter>().sharedMesh.bounds.center)));
-            Assert.IsTrue(Physics.Raycast(ray,out var hit,35,1<<30));Assert.AreSame(cuts[1],hit.collider.GetComponent<ManagementFoodTarget>());
-            Assert.AreSame(cuts[1],view.Raycast(view.ScreenPoint(cuts[1])),"Collider must select the visible upper cut, not the hidden unit");
-            TapModel(view,cuts[1]);yield return new WaitForSecondsRealtime(.3f);
+            // Actual Canvas sibling order must decide which exact inventory ID is visible.
+            cuts[1].DisplayUV=cuts[0].DisplayUV;view.RefreshLayout();cuts[1].transform.SetAsLastSibling();Canvas.ForceUpdateCanvases();
+            Assert.Greater(cuts[1].transform.GetSiblingIndex(),cuts[0].transform.GetSiblingIndex());
+            Assert.AreSame(cuts[1],view.Raycast(view.ScreenPoint(cuts[1])),"The upper 2D cut must own the touch, not the hidden unit");
+            TapFood(view,cuts[1]);yield return new WaitForSecondsRealtime(.3f);
             Assert.IsTrue(cuts[1].Selected);Assert.AreSame(cuts[0],view.Raycast(view.ScreenPoint(cuts[0])));
             Assert.AreEqual(8,service.State.Inventory.Count,"Selecting a preview must not consume or duplicate inventory");
             ClickButton("CANCELAR");yield return new WaitForSecondsRealtime(.3f);
             Assert.IsFalse(cuts[1].Selected);Assert.Less(Vector3.Distance(cuts[1].Home,cuts[1].transform.localPosition),.01f);
-            // Four large cuts on the prep board exercise natural overlap without shrinking/clipping.
+            // Four full-sized cuts on the prep board exercise overlap without count-based scaling.
             for(int i=0;i<cuts.Count;i++)view.MoveSelection(cuts[i],true,i);
             yield return new WaitForSecondsRealtime(.3f);
-            CaptureManagementFrame(game,"/tmp/asadito-hybrid-fridge-four-selected.png",()=>AssertFridgeFoodSize(view,game));
+            CaptureManagementFrame(game,"/tmp/asadito-2d-fridge-four-selected.png",()=>AssertFridgeFoodSize(view,game));
+            CaptureManagementFrame(game,"/tmp/asadito-2d-fridge-selected-narrow.png",()=>AssertFridgeFoodSize(view,game),720,1600);
             for(int i=0;i<cuts.Count;i++)view.MoveSelection(cuts[i],false,0);
             yield return new WaitForSecondsRealtime(.3f);AssertFridgeFoodSize(view,game);
+            // Every capacity slot, including the fifth, has its own reversible visual pose.
+            for(int i=0;i<view.Targets.Count;i++)view.MoveSelection(view.Targets[i],true,i);
+            yield return new WaitForSecondsRealtime(.3f);
+            Assert.Greater(Vector3.Distance(view.Targets[4].Rect.localPosition,view.Targets[0].Rect.localPosition),1f,
+                "The fifth prep slot must not wrap onto the first slot's exact position");
+            for(int i=0;i<view.Targets.Count;i++)Assert.AreEqual(i,view.Targets[i].SelectionSlot);
+            for(int i=0;i<view.Targets.Count;i++)view.MoveSelection(view.Targets[i],false,0);
+            yield return new WaitForSecondsRealtime(.3f);
+            // An interrupted transfer reverses cleanly without consuming an inventory ID.
+            var interrupted=view.Targets[0];int interruptedId=interrupted.UnitId;
+            view.MoveSelection(interrupted,true,0);yield return new WaitForSecondsRealtime(.04f);view.MoveSelection(interrupted,false,0);
+            yield return new WaitForSecondsRealtime(.3f);
+            Assert.IsFalse(interrupted.Selected);Assert.AreEqual(-1,interrupted.SelectionSlot);
+            Assert.Less(Vector3.Distance(interrupted.Home,interrupted.Rect.localPosition),.01f);
+            Assert.AreEqual(interruptedId,interrupted.UnitId);Assert.IsNotNull(service.State.Inventory.Find(u=>u.Id==interruptedId));
             Assert.AreEqual(8,MvpSave.Load().Management.Inventory.Count);
         }
-        private static void AssertFridgeFoodSize(ManagementWorldView view,Component game)
+
+        private static void AssertFridgeFoodSize(ManagementFoodView view,Component game)
         {
             foreach(var target in view.Targets)
             {
-                Assert.IsNotNull(target.GetComponent<MeshCollider>());Assert.IsNull(target.GetComponent<SpriteRenderer>());
-                var projected=ProjectedFoodBounds(view,target);float expected=GrillFoodSize(game,target.FoodId).x;
-                Assert.That(projected.width*view.Viewport.rectTransform.rect.width,Is.EqualTo(expected).Within(expected*.01f),"Fridge shelf/prep cut must retain grill footprint: "+target.UnitId);
-                Assert.That(projected.xMin,Is.GreaterThanOrEqualTo(0));Assert.That(projected.xMax,Is.LessThanOrEqualTo(1));
-                Assert.That(projected.yMin,Is.GreaterThanOrEqualTo(0));Assert.That(projected.yMax,Is.LessThanOrEqualTo(1));
+                AssertOriginalRawFoodSprite(game,target);AssertFoodFootprint(game,target);
+                var projected=ProjectedFoodBounds(view,target);
+                Assert.That(projected.xMin,Is.GreaterThanOrEqualTo(-.001f));Assert.That(projected.xMax,Is.LessThanOrEqualTo(1.001f));
+                Assert.That(projected.yMin,Is.GreaterThanOrEqualTo(-.001f));Assert.That(projected.yMax,Is.LessThanOrEqualTo(1.001f));
             }
         }
 
         [UnityTest]
-        public IEnumerator Management_3DZeroStockAndEmptyFridgeNeverInventUnits()
+        public IEnumerator Management_2DZeroStockAndEmptyFridgeNeverInventUnits()
         {
-            Component game=null;yield return LoadGameScene(v=>game=v);
+            Component game=null;yield return LoadGameScene(v=>game=v);ForcePortraitManagementCanvas(game);
             yield return new WaitForSecondsRealtime(.6f);ClickButton("ENTRAR");yield return new WaitForSecondsRealtime(.5f);
             ClickButton("NIVEL 1");yield return new WaitForSecondsRealtime(.5f);ClickButton("IR A LA PARRILLA");yield return null;
             var service=(ManagementService)GetField(game,"management");service.State.ManagementTutorialCompleted=true;
             foreach(var p in service.Config.Products)service.State.Purchases.Add(new PurchaseRecord{FoodId=p.FoodId,Quantity=p.Stock-(p.FoodId=="chorizo"?5:3)});
-            ClickButton("CARNICERÍA");yield return null;var view=UnityEngine.Object.FindAnyObjectByType<ManagementWorldView>();
-            Assert.AreEqual(8,view.Targets.Count,"One visible piece per remaining stock unit, not48 decorative copies");
+            ClickButton("CARNICERÍA");yield return null;var view=UnityEngine.Object.FindAnyObjectByType<ManagementFoodView>();
+            Assert.AreEqual(8,view.Targets.Count,"One visible sprite per remaining stock unit, not48 decorative copies");
             Assert.AreEqual(5,view.Targets.FindAll(t=>t.FoodId=="chorizo").Count);Assert.AreEqual(3,view.Targets.FindAll(t=>t.FoodId=="tira").Count);
-            Assert.That(SignStock("chorizo").text,Does.Contain("Stock 5"));
-            Assert.That(SignStock("tira").text,Does.Contain("Stock 3"));
+            Assert.That(SignStock("chorizo").text,Does.Contain("Stock 5"));Assert.That(SignStock("tira").text,Does.Contain("Stock 3"));
             foreach(var target in view.Targets)Assert.AreEqual(target.FoodId,view.Raycast(view.ScreenPoint(target)).FoodId);
-            var partialScales=new Dictionary<string,Vector3>();
-            foreach(var target in view.Targets)partialScales[target.FoodId]=target.HomeScale;
+            AssertShopGrillSize(view,game);
             service.State.Purchases.Clear();view.ConfigureShop(1);yield return null;
-            Assert.AreEqual(48,view.Targets.Count);
-            foreach(var target in view.Targets)Assert.Less(Vector3.Distance(partialScales[target.FoodId],target.HomeScale),.001f,"Stock count must not shrink cuts");
+            Assert.AreEqual(48,view.Targets.Count);AssertShopGrillSize(view,game);
             service.State.Purchases.Clear();foreach(var p in service.Config.Products)service.State.Purchases.Add(new PurchaseRecord{FoodId=p.FoodId,Quantity=p.Stock});
             view.ConfigureShop(1);yield return null;
             Assert.IsEmpty(view.Targets);Assert.IsFalse(GameObject.Find("PAGAR Y SALIR").GetComponent<Button>().interactable);
             Assert.That(SignStock("chorizo").text,Does.Contain("AGOTADO"));
-            view.CaptureRender();CaptureManagementFrame(game,"/tmp/asadito-3d-shop-empty-stock.png");
-            ClickButton("HELADERA");yield return new WaitForSecondsRealtime(.7f);view=UnityEngine.Object.FindAnyObjectByType<ManagementWorldView>();
+            CaptureManagementFrame(game,"/tmp/asadito-2d-shop-empty-stock.png");
+            ClickButton("HELADERA");yield return new WaitForSecondsRealtime(.7f);view=UnityEngine.Object.FindAnyObjectByType<ManagementFoodView>();
             Assert.IsEmpty(view.Targets);Assert.IsNotNull(GameObject.Find("Heladera vacía\nComprá carne para tu asado"));
-            view.CaptureRender();CaptureManagementFrame(game,"/tmp/asadito-3d-fridge-empty.png");
+            CaptureManagementFrame(game,"/tmp/asadito-2d-fridge-empty.png");
         }
+
         [UnityTest]
-        public IEnumerator Management_HybridCartDragAddsOnlyOnDropAndCancelsSafely()
+        public IEnumerator Management_2DCartDragAddsOnlyOnDropAndCancelsOtherPointers()
         {
-            Component game=null;yield return LoadGameScene(v=>game=v);
+            Component game=null;yield return LoadGameScene(v=>game=v);ForcePortraitManagementCanvas(game);
             yield return new WaitForSecondsRealtime(.6f);ClickButton("ENTRAR");yield return new WaitForSecondsRealtime(.5f);
             ClickButton("NIVEL 1");yield return new WaitForSecondsRealtime(.5f);ClickButton("IR A LA PARRILLA");yield return null;ClickButton("CARNICERÍA");yield return null;
-            var view=UnityEngine.Object.FindAnyObjectByType<ManagementWorldView>();var service=(ManagementService)GetField(game,"management");
-            Assert.IsNotNull(GameObject.Find("Mostrador ilustrado"));Assert.IsNotNull(GameObject.Find("Changuito"));Assert.AreEqual(0,view.WorldCamera.backgroundColor.a);
-            Assert.AreEqual(1,((RenderTexture)view.Viewport.texture).antiAliasing);
+            var view=UnityEngine.Object.FindAnyObjectByType<ManagementFoodView>();var service=(ManagementService)GetField(game,"management");
+            Assert.IsNotNull(GameObject.Find("Mostrador ilustrado"));Assert.IsNotNull(GameObject.Find("Changuito"));Assert2DManagementPresentation(view);
             var shopSizes=new Dictionary<string,Vector2>{{"chorizo",GrillFoodSize(game,"chorizo")},{"tira",GrillFoodSize(game,"tira")}};
             AssertShopGrillSize(view,game);
             string state=JsonUtility.ToJson(service.State);var target=view.Targets.Find(t=>t.FoodId=="chorizo");
-            var data=StartCartDrag(view,target,900);yield return null;Assert.IsTrue(view.IsDragging);Assert.IsNotNull(GameObject.Find("Dragged food preview"));Assert.AreEqual(shopSizes["chorizo"],GameObject.Find("Dragged food preview").GetComponent<RectTransform>().sizeDelta);Assert.IsNotNull(GameObject.Find("TOTAL $0"));
-            var extra=StartCartDrag(view,target,901);ExecuteEvents.Execute(view.gameObject,extra,ExecuteEvents.endDragHandler);Assert.IsTrue(view.IsDragging,"Other finger cannot complete the active drag");
-            data.position=view.ScreenPoint(target);ExecuteEvents.Execute(view.gameObject,data,ExecuteEvents.endDragHandler);yield return null;
+            var data=StartCartDrag(view,target,900);yield return null;
+            Assert.IsTrue(view.IsDragging);Assert.IsNotNull(GameObject.Find("Dragged food preview"));
+            Assert.AreEqual(shopSizes["chorizo"],GameObject.Find("Dragged food preview").GetComponent<RectTransform>().sizeDelta);Assert.IsNotNull(GameObject.Find("TOTAL $0"));
+            var extra=new PointerEventData(EventSystem.current){position=data.position,pressPosition=data.pressPosition,pointerId=901,button=PointerEventData.InputButton.Left};
+            ExecuteEvents.Execute(view.gameObject,extra,ExecuteEvents.pointerDownHandler);yield return null;
+            Assert.IsFalse(view.IsDragging,"A second finger DOWN cancels the original drag");Assert.IsNull(GameObject.Find("Dragged food preview"));
+            data.position=UiScreenPoint(view.CartDropZone.position);
+            ExecuteEvents.Execute(view.gameObject,data,ExecuteEvents.endDragHandler);ExecuteEvents.Execute(view.gameObject,data,ExecuteEvents.pointerClickHandler);yield return null;
+            Assert.IsNotNull(GameObject.Find("TOTAL $0"),"The cancelled original pointer must not buy on later release");
+            data=StartCartDrag(view,target,902);
+            var wrongEnd=new PointerEventData(EventSystem.current){position=UiScreenPoint(view.CartDropZone.position),pointerId=9902,button=PointerEventData.InputButton.Left};
+            ExecuteEvents.Execute(view.gameObject,wrongEnd,ExecuteEvents.endDragHandler);yield return null;
+            Assert.IsFalse(view.IsDragging,"An EndDrag from the wrong pointer must cancel, not commit or leave a ghost");
+            Assert.IsNull(GameObject.Find("Dragged food preview"));Assert.IsNotNull(GameObject.Find("TOTAL $0"));
+            data=StartCartDrag(view,target,903);data.position=view.ScreenPoint(target);ExecuteEvents.Execute(view.gameObject,data,ExecuteEvents.endDragHandler);yield return null;
             Assert.IsFalse(view.IsDragging);Assert.IsNull(GameObject.Find("Dragged food preview"));Assert.IsNotNull(GameObject.Find("TOTAL $0"));
-            data=StartCartDrag(view,target,902);data.position=RectTransformUtility.WorldToScreenPoint(null,view.CartDropZone.position);
+            data=StartCartDrag(view,target,904);data.position=UiScreenPoint(view.CartDropZone.position);
             ExecuteEvents.Execute(view.gameObject,data,ExecuteEvents.dragHandler);ExecuteEvents.Execute(view.gameObject,data,ExecuteEvents.endDragHandler);
-            ExecuteEvents.Execute(view.gameObject,data,ExecuteEvents.pointerClickHandler);yield return null;
-            Assert.IsNotNull(GameObject.Find("TOTAL $100"),"Drop adds exactly once; release is not also a tap");Assert.AreEqual(state,JsonUtility.ToJson(service.State));
-            Assert.IsTrue(GameObject.Find("Contenido changuito chorizo").activeSelf);
-            target=view.Targets.Find(t=>t.FoodId=="tira");data=StartCartDrag(view,target,903);data.position=RectTransformUtility.WorldToScreenPoint(null,view.CartDropZone.position);
+            ExecuteEvents.Execute(view.gameObject,data,ExecuteEvents.endDragHandler);ExecuteEvents.Execute(view.gameObject,data,ExecuteEvents.pointerClickHandler);yield return null;
+            Assert.IsNotNull(GameObject.Find("TOTAL $100"),"Drop adds exactly once; duplicate release or synthesized click cannot buy again");
+            Assert.AreEqual(state,JsonUtility.ToJson(service.State));Assert.IsTrue(GameObject.Find("Contenido changuito chorizo").activeSelf);
+            target=view.Targets.Find(t=>t.FoodId=="tira");data=StartCartDrag(view,target,905);data.position=UiScreenPoint(view.CartDropZone.position);
             ExecuteEvents.Execute(view.gameObject,data,ExecuteEvents.endDragHandler);yield return new WaitForSecondsRealtime(.4f);Assert.IsNotNull(GameObject.Find("TOTAL $280"));
-            Assert.IsNull(GameObject.Find("Carne al carrito 3D"));Assert.IsNull(GameObject.Find("Dragged food preview"));Assert.AreEqual(48,view.Targets.Count);
-            AssertShopPerspectiveLayout(view);
+            Assert.IsNull(GameObject.Find("Dragged food preview"));Assert.AreEqual(48,view.Targets.Count);AssertShop2DOverlapLayout(view);
             foreach(var piece in view.Targets)Assert.Less(Vector3.Distance(piece.HomeScale,piece.transform.localScale),.001f,"Drag/pulse must restore each piece's layout scale");
-            CaptureManagementFrame(game,"/tmp/asadito-counter-large-signs-cart.png");AssertAllManagementTextFits();
+            CaptureManagementFrame(game,"/tmp/asadito-2d-cart.png");AssertAllManagementTextFits();
             ClickButton("PAGAR Y SALIR");yield return new WaitForSecondsRealtime(.7f);
             Assert.AreEqual(2,service.State.Inventory.Count);Assert.AreEqual(2,MvpSave.Load().Management.Inventory.Count);
-            view=UnityEngine.Object.FindAnyObjectByType<ManagementWorldView>();Assert.IsTrue(view.IsFridge);CaptureManagementFrame(game,"/tmp/asadito-hybrid-fridge.png");
-            foreach(var unit in view.Targets){Assert.AreSame(unit,view.Raycast(view.ScreenPoint(unit)));TapModel(view,unit);yield return new WaitForSecondsRealtime(.3f);}
+            view=UnityEngine.Object.FindAnyObjectByType<ManagementFoodView>();Assert.IsTrue(view.IsFridge);CaptureManagementFrame(game,"/tmp/asadito-2d-cart-paid-fridge.png");
+            foreach(var unit in view.Targets){Assert.AreSame(unit,view.Raycast(view.ScreenPoint(unit)));TapFood(view,unit);yield return new WaitForSecondsRealtime(.3f);}
             ClickButton("PREPARAR");yield return new WaitForSecondsRealtime(.5f);
-            var portions=(Array)GetField(game,"portions");var sizes=(Vector2[])GetField(game,"portionVisualSizes");
-            var images=(Image[])GetField(game,"portionImages");
+            var portions=(Array)GetField(game,"portions");var sizes=(Vector2[])GetField(game,"portionVisualSizes");var images=(Image[])GetField(game,"portionImages");
             for(int i=0;i<portions.Length;i++)
             {
                 var profile=(FoodCookProfile)GetField(portions.GetValue(i),"Profile");
-                Assert.AreEqual(shopSizes[profile.FoodId],sizes[i],"Prepared grill must reuse the same footprint");
-                Assert.AreEqual(sizes[i],images[i].rectTransform.sizeDelta);
+                Assert.AreEqual(shopSizes[profile.FoodId],sizes[i],"Prepared grill must reuse the same footprint");Assert.AreEqual(sizes[i],images[i].rectTransform.sizeDelta);
             }
             SetField(game,"SimulationTimeScale",0f);LoadAllRawFoodToGrill(game,0);yield return new WaitForSecondsRealtime(.4f);
             for(int i=0;i<portions.Length;i++)Assert.AreEqual(shopSizes[((FoodCookProfile)GetField(portions.GetValue(i),"Profile")).FoodId],images[i].rectTransform.sizeDelta);
-            CaptureManagementFrame(game,"/tmp/asadito-counter-grill-size-reference.png",()=>
+            CaptureManagementFrame(game,"/tmp/asadito-2d-grill-size-reference.png",()=>
             {
-                // Offscreen portrait QA changes Canvas mode: recompute only test positioning,
-                // otherwise cached world-space food positions belong to the Editor's old aspect.
+                // Offscreen portrait QA changes Canvas mode; refresh only the fixture's food placement.
                 var place=game.GetType().GetMethod("SetFoodTargetPosition",BindingFlags.Instance|BindingFlags.NonPublic);
                 for(int i=0;i<portions.Length;i++)place.Invoke(game,new object[]{i,new Vector2(.45f,.43f+i*.25f)});
             });
         }
+
         [UnityTest]
-        public IEnumerator Management_HybridDragRejectsButtonsMoneyAndLeavesNoCopies()
+        public IEnumerator Management_2DDragRejectsButtonsMoneyAndLeavesNoCopies()
         {
-            Component game=null;yield return LoadGameScene(v=>game=v);
+            Component game=null;yield return LoadGameScene(v=>game=v);ForcePortraitManagementCanvas(game);
             yield return new WaitForSecondsRealtime(.6f);ClickButton("ENTRAR");yield return new WaitForSecondsRealtime(.5f);
             ClickButton("NIVEL 1");yield return new WaitForSecondsRealtime(.5f);ClickButton("IR A LA PARRILLA");yield return null;ClickButton("CARNICERÍA");yield return null;
-            var view=UnityEngine.Object.FindAnyObjectByType<ManagementWorldView>();var service=(ManagementService)GetField(game,"management");
+            var view=UnityEngine.Object.FindAnyObjectByType<ManagementFoodView>();var service=(ManagementService)GetField(game,"management");
             var target=view.Targets.Find(t=>t.FoodId=="tira");var data=StartCartDrag(view,target,910);
-            data.position=RectTransformUtility.WorldToScreenPoint(null,FindButton("DETALLE").transform.position);ExecuteEvents.Execute(view.gameObject,data,ExecuteEvents.endDragHandler);yield return null;
+            data.position=UiScreenPoint(FindButton("DETALLE").transform.position);ExecuteEvents.Execute(view.gameObject,data,ExecuteEvents.endDragHandler);yield return null;
             Assert.IsNotNull(GameObject.Find("TOTAL $0"));service.State.Balance=0;string before=JsonUtility.ToJson(service.State);
-            data=StartCartDrag(view,target,911);data.position=RectTransformUtility.WorldToScreenPoint(null,view.CartDropZone.position);ExecuteEvents.Execute(view.gameObject,data,ExecuteEvents.endDragHandler);yield return null;
+            data=StartCartDrag(view,target,911);data.position=UiScreenPoint(view.CartDropZone.position);ExecuteEvents.Execute(view.gameObject,data,ExecuteEvents.endDragHandler);yield return null;
             Assert.IsNotNull(GameObject.Find("TOTAL $0"));Assert.AreEqual(before,JsonUtility.ToJson(service.State));Assert.IsFalse(GameObject.Find("PAGAR Y SALIR").GetComponent<Button>().interactable);
-            service.State.Balance=10000;for(int i=0;i<30;i++){TapModel(view,target);yield return null;}
-            yield return new WaitForSecondsRealtime(.4f);Assert.IsNull(GameObject.Find("Carne al carrito 3D"));Assert.IsNull(GameObject.Find("Dragged food preview"));Assert.AreEqual(48,view.Targets.Count);
+            service.State.Balance=10000;for(int i=0;i<30;i++){TapFood(view,target);yield return null;}
+            yield return new WaitForSecondsRealtime(.4f);Assert.IsNull(GameObject.Find("Dragged food preview"));Assert.AreEqual(48,view.Targets.Count);
             Assert.AreEqual(8,service.Config.FridgeCapacity);Assert.IsEmpty(service.State.Inventory);Assert.IsTrue(float.IsFinite(target.transform.localScale.x));
-            CaptureManagementFrame(game,"/tmp/asadito-hybrid-rapid-taps.png");
+            CaptureManagementFrame(game,"/tmp/asadito-2d-rapid-taps.png");
             data=StartCartDrag(view,target,912);ClickButton("Volver carnicería");yield return null;yield return null;
-            Assert.IsNull(GameObject.Find("Dragged food preview"));Assert.IsNull(UnityEngine.Object.FindAnyObjectByType<ManagementWorldView>());
+            Assert.IsNull(GameObject.Find("Dragged food preview"));Assert.IsNull(UnityEngine.Object.FindAnyObjectByType<ManagementFoodView>());
         }
-        private static Rect ProjectedFoodBounds(ManagementWorldView view,ManagementFoodTarget target)
+
+        [UnityTest]
+        public IEnumerator Management_2DDuplicateClicksDoNotRepeatSelection()
         {
-            var bounds=target.GetComponent<MeshFilter>().sharedMesh.bounds;
-            Vector2 min=Vector2.one*float.MaxValue,max=Vector2.one*float.MinValue;
-            foreach(int x in new[]{-1,1})foreach(int y in new[]{-1,1})foreach(int z in new[]{-1,1})
+            Component game=null;yield return LoadGameScene(v=>game=v);ForcePortraitManagementCanvas(game);
+            yield return new WaitForSecondsRealtime(.6f);ClickButton("ENTRAR");yield return new WaitForSecondsRealtime(.5f);
+            ClickButton("NIVEL 1");yield return new WaitForSecondsRealtime(.5f);ClickButton("IR A LA PARRILLA");yield return null;ClickButton("CARNICERÍA");yield return null;
+            var view=UnityEngine.Object.FindAnyObjectByType<ManagementFoodView>();var service=(ManagementService)GetField(game,"management");
+            string state=JsonUtility.ToJson(service.State);var target=view.Targets.Find(t=>t.FoodId=="chorizo");
+            var point=ExposedFoodPoint(view,target);var data=new PointerEventData(EventSystem.current){position=point,pressPosition=point,pointerId=920,button=PointerEventData.InputButton.Left};
+            ExecuteEvents.Execute(view.gameObject,data,ExecuteEvents.pointerDownHandler);
+            ExecuteEvents.Execute(view.gameObject,data,ExecuteEvents.pointerClickHandler);ExecuteEvents.Execute(view.gameObject,data,ExecuteEvents.pointerClickHandler);yield return null;
+            Assert.IsNotNull(GameObject.Find("TOTAL $100"),"One pointer press must produce only one purchase preview, even if click repeats");
+            ExecuteEvents.Execute(view.gameObject,data,ExecuteEvents.pointerDownHandler);ExecuteEvents.Execute(view.gameObject,data,ExecuteEvents.pointerClickHandler);yield return null;
+            Assert.IsNotNull(GameObject.Find("TOTAL $200"),"A fresh deliberate press may add another unit of the same SKU");
+            Assert.AreEqual(state,JsonUtility.ToJson(service.State),"Basket preview never spends or creates persistent inventory");
+        }
+
+        [UnityTest]
+        public IEnumerator Management_2DAlphaHitTestingUsesVisiblePixelsAndSiblingOrder()
+        {
+            Component game=null;yield return LoadGameScene(v=>game=v);ForcePortraitManagementCanvas(game);
+            yield return new WaitForSecondsRealtime(.6f);ClickButton("ENTRAR");yield return new WaitForSecondsRealtime(.5f);
+            ClickButton("NIVEL 1");yield return new WaitForSecondsRealtime(.5f);ClickButton("IR A LA PARRILLA");yield return null;
+            var service=(ManagementService)GetField(game,"management");service.State.ManagementTutorialCompleted=true;
+            service.State.Inventory.Add(new InventoryUnit{Id=service.State.NextUnitId++,FoodId="chorizo"});
+            service.State.Inventory.Add(new InventoryUnit{Id=service.State.NextUnitId++,FoodId="chorizo"});
+            // Planning was built before the fixture inserted inventory/tutorial state. Rebuild native
+            // navigation controls rather than bypassing a correctly disabled guided-debut button.
+            ClickButton("CARNICERÍA");yield return null;ClickButton("HELADERA");yield return new WaitForSecondsRealtime(.4f);
+            var view=UnityEngine.Object.FindAnyObjectByType<ManagementFoodView>();Assert.AreEqual(2,view.Targets.Count);
+            var lower=view.Targets[0];var upper=view.Targets[1];
+            lower.DisplayUV=upper.DisplayUV=new Vector2(.5f,.55f);view.RefreshLayout();
+            lower.Visual.rectTransform.localRotation=upper.Visual.rectTransform.localRotation=Quaternion.identity;
+            upper.transform.SetAsLastSibling();Canvas.ForceUpdateCanvases();
+            Vector2 opaque=FindRawSpritePixel(upper.Visual.sprite,true),transparent=FindRawSpritePixel(upper.Visual.sprite,false);
+            Vector2 opaquePoint=FoodPixelScreenPoint(upper,opaque),transparentPoint=FoodPixelScreenPoint(upper,transparent);
+            Assert.AreSame(upper,view.Raycast(opaquePoint),"Opaque upper artwork must prevent selecting the hidden inventory ID");
+            lower.transform.SetAsLastSibling();Canvas.ForceUpdateCanvases();
+            Assert.AreSame(lower,view.Raycast(opaquePoint),"Changing only the real Canvas sibling order must change the visible hit");
+            upper.transform.SetAsLastSibling();Canvas.ForceUpdateCanvases();
+            Assert.IsNull(view.Raycast(transparentPoint),"Genuine transparent sprite corners must not become rectangular invisible selection targets");
+            string state=JsonUtility.ToJson(service.State);
+            var emptyTap=new PointerEventData(EventSystem.current){position=transparentPoint,pressPosition=transparentPoint,pointerId=930,button=PointerEventData.InputButton.Left};
+            ExecuteEvents.Execute(view.gameObject,emptyTap,ExecuteEvents.pointerDownHandler);ExecuteEvents.Execute(view.gameObject,emptyTap,ExecuteEvents.pointerClickHandler);yield return null;
+            Assert.IsFalse(lower.Selected);Assert.IsFalse(upper.Selected);Assert.AreEqual(state,JsonUtility.ToJson(service.State));
+            // A lower opaque pixel revealed through the upper transparent corner is genuinely visible.
+            Vector3 exposedWorld=upper.Visual.rectTransform.TransformPoint(FoodPixelLocalPoint(upper.Visual.rectTransform,transparent));
+            Vector3 lowerOpaqueWorld=lower.Visual.rectTransform.TransformPoint(FoodPixelLocalPoint(lower.Visual.rectTransform,opaque));
+            lower.Visual.rectTransform.position+=exposedWorld-lowerOpaqueWorld;Canvas.ForceUpdateCanvases();
+            Assert.AreSame(lower,view.Raycast(transparentPoint),"Transparent upper pixels must reveal the exact lower visible unit, not choose the upper rectangle");
+            // UI card/control occlusion is tested separately by the shop/sign and cart-detail regressions.
+            Assert.AreEqual(2,service.State.Inventory.Count);
+        }
+
+        private static void ForcePortraitManagementCanvas(Component game)
+        {
+            // Device UI is portrait-only. Editor Game View may be landscape; use its height for the
+            // logical Canvas while real QA captures still render at 1080x1920 and 720x1600.
+            ((Canvas)GetField(game,"canvas")).GetComponent<CanvasScaler>().matchWidthOrHeight=1;
+            Canvas.ForceUpdateCanvases();
+        }
+        private static bool TryFindExposedFoodPoint(ManagementFoodView view,ManagementFoodTarget target,out Vector2 point)
+        {
+            foreach(float y in new[]{.5f,.3f,.7f,.15f,.85f,.05f,.95f})
+                foreach(float x in new[]{.5f,.3f,.7f,.15f,.85f,.05f,.95f})
+                {
+                    var uv=new Vector2(x,y);
+                    if(!FoodSilhouette.Contains(target.FoodId,uv))continue; // Do not manufacture hits in transparent corners.
+                    var candidate=FoodPixelScreenPoint(target,uv);
+                    if(view.Raycast(candidate)==target){point=candidate;return true;}
+                }
+            point=Vector2.zero;return false;
+        }
+        private static Vector2 ExposedFoodPoint(ManagementFoodView view,ManagementFoodTarget target)
+        {
+            Assert.IsNotNull(target);
+            if(TryFindExposedFoodPoint(view,target,out var point))return point;
+            // Shop pieces sell a SKU, not an inventory ID: a completely covered stock unit may be
+            // represented by another genuinely exposed piece of that SKU. Fridge IDs never fall back.
+            if(!view.IsFridge)
+                foreach(var other in view.Targets)
+                    if(other.FoodId==target.FoodId&&TryFindExposedFoodPoint(view,other,out point))return point;
+            Assert.Fail("No genuinely exposed selectable surface for "+target.FoodId+" inventory ID "+target.UnitId);
+            return Vector2.zero;
+        }
+        private static void Assert2DManagementPresentation(ManagementFoodView view)
+        {
+            Assert.IsNotNull(view.Viewport);Assert.IsTrue(view.Viewport.raycastTarget);Assert.AreEqual(0f,view.Viewport.color.a);
+            Assert.IsEmpty(view.GetComponentsInChildren<MeshRenderer>(true));Assert.IsEmpty(view.GetComponentsInChildren<MeshFilter>(true));
+            Assert.IsEmpty(view.GetComponentsInChildren<Collider>(true));Assert.IsEmpty(view.GetComponentsInChildren<Camera>(true));
+            Assert.IsNull(GameObject.Find("Management isolated camera"));Assert.IsNull(GameObject.Find("Physical butcher world"));Assert.IsNull(GameObject.Find("Physical fridge world"));
+            foreach(var food in view.Targets)
             {
-                var uv=view.WorldCamera.WorldToViewportPoint(target.transform.TransformPoint(bounds.center+Vector3.Scale(bounds.extents,new Vector3(x,y,z))));
-                min=Vector2.Min(min,new Vector2(uv.x,uv.y));max=Vector2.Max(max,new Vector2(uv.x,uv.y));
+                Assert.IsNotNull(food.Visual);Assert.IsFalse(food.Visual.raycastTarget,"The viewport resolves alpha and draw order without rectangle child blockers");
+                Assert.AreSame(view.GetComponentInParent<Canvas>(),food.Visual.GetComponentInParent<Canvas>());
+            }
+        }
+        private static void AssertOriginalRawFoodSprite(Component game,ManagementFoodTarget target)
+        {
+            Assert.IsNotNull(target.Visual);Assert.IsNotNull(target.Visual.sprite);Assert.AreEqual(target.FoodId+"_raw",target.Visual.sprite.name);
+            var original=(Sprite)game.GetType().GetMethod("ManagementFoodSprite",BindingFlags.Instance|BindingFlags.NonPublic|BindingFlags.Public).Invoke(game,new object[]{target.FoodId});
+            Assert.AreSame(original,target.Visual.sprite,"Management must reuse the original raw grill/catalog sprite, not a regenerated relief or miniature");
+            Assert.IsFalse(target.Visual.raycastTarget);Assert.IsNull(target.GetComponent<MeshCollider>());
+        }
+        private static void AssertFoodFootprint(Component game,ManagementFoodTarget target)
+        {
+            var expected=GrillFoodSize(game,target.FoodId);var actual=target.Visual.rectTransform.rect.size;
+            Assert.That(actual.x,Is.EqualTo(expected.x).Within(.01f),"Food width must retain the exact grill footprint: "+target.FoodId);
+            Assert.That(actual.y,Is.EqualTo(expected.y).Within(.01f),"Food height must retain the exact grill footprint: "+target.FoodId);
+            Assert.AreEqual(Vector3.one,target.HomeScale,"Canvas artwork must not shrink according to stock or inventory capacity");
+        }
+        private static Rect ProjectedFoodBounds(ManagementFoodView view,ManagementFoodTarget target)
+        {
+            var viewport=view.Viewport.rectTransform;var corners=new Vector3[4];target.Visual.rectTransform.GetWorldCorners(corners);
+            Vector2 min=Vector2.one*float.MaxValue,max=Vector2.one*float.MinValue;
+            foreach(var corner in corners)
+            {
+                Vector3 local=viewport.InverseTransformPoint(corner);
+                var uv=new Vector2((local.x-viewport.rect.xMin)/viewport.rect.width,(local.y-viewport.rect.yMin)/viewport.rect.height);
+                min=Vector2.Min(min,uv);max=Vector2.Max(max,uv);
             }
             return Rect.MinMaxRect(min.x,min.y,max.x,max.y);
         }
         private static Text SignStock(string id)=>GameObject.Find("Precio "+id).transform.Find("Stock and cart").GetComponent<Text>();
         private static Vector2 GrillFoodSize(Component game,string id)=>(Vector2)game.GetType()
             .GetMethod("ManagementFoodSize",BindingFlags.Instance|BindingFlags.NonPublic).Invoke(game,new object[]{id});
-        private static Vector2 ShopWorldScreenPoint(ManagementWorldView view,Vector3 worldPoint)
+        private static Vector2 UiScreenPoint(Vector3 worldPoint)
         {
-            var uv=view.WorldCamera.WorldToViewportPoint(worldPoint);var r=view.Viewport.rectTransform;
-            return RectTransformUtility.WorldToScreenPoint(null,r.TransformPoint(new Vector3(
-                r.rect.xMin+uv.x*r.rect.width,r.rect.yMin+uv.y*r.rect.height,0)));
+            var canvas=UnityEngine.Object.FindAnyObjectByType<ManagementFoodView>()?.GetComponentInParent<Canvas>();
+            return RectTransformUtility.WorldToScreenPoint(canvas!=null&&canvas.renderMode!=RenderMode.ScreenSpaceOverlay?canvas.worldCamera:null,worldPoint);
         }
-        private static void AssertShopGrillSize(ManagementWorldView view,Component game)
+        private static void AssertShopGrillSize(ManagementFoodView view,Component game)
         {
-            var camera=view.WorldCamera;var world=camera.transform.parent;
-            var ray=camera.ViewportPointToRay(new Vector3(.5f,.46f,0));
-            Assert.IsTrue(new Plane(world.up,world.position).Raycast(ray,out float distance));
-            foreach(var id in new[]{"chorizo","tira"})
-            {
-                var target=view.Targets.Find(t=>t.FoodId==id);
-                var position=target.transform.position;var rotation=target.transform.localRotation;
-                target.transform.position=ray.GetPoint(distance);target.transform.localRotation=Quaternion.identity;
-                float projectedWidth=ProjectedFoodBounds(view,target).width*view.Viewport.rectTransform.rect.width;
-                var expected=GrillFoodSize(game,id);
-                Assert.That(projectedWidth,Is.EqualTo(expected.x).Within(expected.x*.01f),"Real food must match the grill at the reference depth, not fit into tiny stock tiles");
-                Debug.Log("Grill/shop size "+id+": "+expected+" / projected "+projectedWidth);
-                target.transform.position=position;target.transform.localRotation=rotation;
-            }
-            Physics.SyncTransforms();
+            foreach(var target in view.Targets)AssertFoodFootprint(game,target);
         }
-        private static void AssertRetailSigns(ManagementWorldView view)
+        private static void AssertRetailSigns(ManagementFoodView view)
         {
             foreach(var id in new[]{"chorizo","tira"})
             {
                 var sign=GameObject.Find("Precio "+id).transform;
+                Assert.IsNotNull(sign.GetComponent<Image>());Assert.IsTrue(sign.GetComponent<Image>().raycastTarget,"Price cards use native UI occlusion");
                 Assert.IsNotNull(sign.Find("Metal stem"));Assert.IsNotNull(sign.Find("Metal foot"));Assert.IsNotNull(sign.Find("Metal card clip"));
-                var price=sign.Find("Large red price").GetComponent<Text>();
-                Assert.AreEqual(id=="chorizo"?"$100":"$180",price.text);
+                var price=sign.Find("Large red price").GetComponent<Text>();Assert.AreEqual(id=="chorizo"?"$100":"$180",price.text);
                 Assert.Greater(price.fontSize,SignStock(id).fontSize*3);Assert.IsNotNull(price.GetComponent<Outline>());
-                Assert.IsNull(view.Raycast(ShopWorldScreenPoint(view,sign.position)),"Price cards must block hidden-food purchases");
+                Assert.IsNull(view.Raycast(UiScreenPoint(sign.position)),"Price cards must block hidden-food purchases");
                 foreach(var label in sign.GetComponentsInChildren<Text>())
                 {
                     Assert.LessOrEqual(label.preferredHeight,label.rectTransform.rect.height+1,"Price sign clipped vertically: "+label.text);
@@ -1149,53 +1266,76 @@ namespace Asadito.Tests.PlayMode
                 }
             }
         }
-        private static void AssertShopPerspectiveLayout(ManagementWorldView view)
+        private static void AssertShop2DOverlapLayout(ManagementFoodView view)
         {
-            Assert.IsFalse(view.WorldCamera.orthographic,"The shop needs real depth perspective");
             int overlaps=0;var exposed=new HashSet<ManagementFoodTarget>();
             foreach(var target in view.Targets)
             {
-                Assert.That(target.Home.y,Is.EqualTo(target.DisplayHeight*target.HomeScale.y).Within(.001f),"Upper cuts must rest on the lower layer, not float at arbitrary depth");
-                var hit=view.Raycast(view.ScreenPoint(target));Assert.IsNotNull(hit);Assert.AreEqual(target.FoodId,hit.FoodId);
-                exposed.Add(hit);
-                var rect=ProjectedFoodBounds(view,target);
-                Assert.That(rect.xMin,Is.GreaterThan(0f));Assert.That(rect.xMax,Is.LessThan(1f));
-                Assert.That(rect.yMin,Is.GreaterThan(.259f));Assert.That(rect.yMax,Is.LessThan(.651f));
-                foreach(var other in view.Targets)if(other!=target&&other.FoodId==target.FoodId&&rect.Overlaps(ProjectedFoodBounds(view,other)))overlaps++;
-                // In a pile a center may be hidden while an end is exposed: sample visible surfaces.
-                foreach(float x in new[]{.25f,.5f,.75f})foreach(float y in new[]{.3f,.5f,.7f})
+                if(TryFindExposedFoodPoint(view,target,out var visiblePoint))
                 {
-                    var ray=view.WorldCamera.ViewportPointToRay(new Vector3(Mathf.Lerp(rect.xMin,rect.xMax,x),Mathf.Lerp(rect.yMin,rect.yMax,y),0));
-                    if(Physics.Raycast(ray,out var surface,35,1<<30))
-                    {
-                        var touched=surface.collider.GetComponent<ManagementFoodTarget>();if(touched!=null)exposed.Add(touched);
-                    }
+                    Assert.AreSame(target,view.Raycast(visiblePoint),"A genuine exposed surface must select its visible Canvas piece");exposed.Add(target);
+                }
+                var rect=ProjectedFoodBounds(view,target);
+                Assert.That(rect.xMin,Is.GreaterThanOrEqualTo(-.001f));Assert.That(rect.xMax,Is.LessThanOrEqualTo(1.001f));
+                Assert.That(rect.yMin,Is.GreaterThanOrEqualTo(-.001f));Assert.That(rect.yMax,Is.LessThanOrEqualTo(1.001f));
+                foreach(var other in view.Targets)if(other!=target&&other.FoodId==target.FoodId&&rect.Overlaps(ProjectedFoodBounds(view,other)))overlaps++;
+                // Sample real alpha-resolved surfaces, not invisible rectangular hit targets or physics geometry.
+                foreach(float x in new[]{.1f,.3f,.5f,.7f,.9f})foreach(float y in new[]{.2f,.4f,.6f,.8f})
+                {
+                    var r=view.Viewport.rectTransform;var uv=new Vector2(Mathf.Lerp(rect.xMin,rect.xMax,x),Mathf.Lerp(rect.yMin,rect.yMax,y));
+                    var point=UiScreenPoint(r.TransformPoint(new Vector3(r.rect.xMin+uv.x*r.rect.width,r.rect.yMin+uv.y*r.rect.height,0)));
+                    var touched=view.Raycast(point);if(touched!=null)exposed.Add(touched);
                 }
             }
-            Assert.Greater(overlaps,0,"The user's full-size abundant display explicitly permits overlap");
-            Assert.GreaterOrEqual(exposed.Count,16,"Enough exposed cut surfaces must remain physically tappable");
-            Debug.Log("Exposed physical cuts: "+exposed.Count+" / "+view.Targets.Count);
-            foreach(var id in new[]{"chorizo","tira"})
-            {
-                var group=view.Targets.FindAll(t=>t.FoodId==id);
-                Assert.Greater(ProjectedFoodBounds(view,group[10]).width,ProjectedFoodBounds(view,group[0]).width*1.05f,"Front food must look larger than the back row");
-            }
+            Assert.Greater(overlaps,0,"The full-size abundant display must use natural 2D overlap rather than miniatures");
+            Assert.GreaterOrEqual(exposed.Count,8,"Both full-stock piles must retain multiple exposed selectable pieces");
+            Debug.Log("Exposed alpha-resolved 2D cuts: "+exposed.Count+" / "+view.Targets.Count+" (layout check, not device performance measurement)");
         }
-        private static PointerEventData StartCartDrag(ManagementWorldView view,ManagementFoodTarget target,int pointer)
+        private static PointerEventData StartCartDrag(ManagementFoodView view,ManagementFoodTarget target,int pointer)
         {
-            Canvas.ForceUpdateCanvases();var point=view.ScreenPoint(target);
+            Canvas.ForceUpdateCanvases();var point=ExposedFoodPoint(view,target);
             var data=new PointerEventData(EventSystem.current){position=point,pressPosition=point,pointerId=pointer,button=PointerEventData.InputButton.Left};
-            var hits=new List<RaycastResult>();EventSystem.current.RaycastAll(data,hits);Assert.AreSame(view.gameObject,hits[0].gameObject);
+            var hits=new List<RaycastResult>();EventSystem.current.RaycastAll(data,hits);Assert.IsNotEmpty(hits);Assert.AreSame(view.gameObject,hits[0].gameObject);
             ExecuteEvents.Execute(view.gameObject,data,ExecuteEvents.pointerDownHandler);Assert.IsTrue(ExecuteEvents.Execute(view.gameObject,data,ExecuteEvents.beginDragHandler));return data;
         }
-        private static void TapModel(ManagementWorldView view,ManagementFoodTarget target)
+        private static void TapFood(ManagementFoodView view,ManagementFoodTarget target)
         {
-            Assert.IsNotNull(target);Canvas.ForceUpdateCanvases();var point=view.ScreenPoint(target);
-            var data=new PointerEventData(EventSystem.current){position=point,button=PointerEventData.InputButton.Left};
+            Assert.IsNotNull(target);Canvas.ForceUpdateCanvases();var point=ExposedFoodPoint(view,target);
+            var data=new PointerEventData(EventSystem.current){position=point,pressPosition=point,pointerId=940,button=PointerEventData.InputButton.Left};
             var hits=new List<RaycastResult>();EventSystem.current.RaycastAll(data,hits);
-            Assert.IsNotEmpty(hits);Assert.AreSame(view.gameObject,hits[0].gameObject,"UI overlay blocks physical food "+target.UnitId);
+            Assert.IsNotEmpty(hits);Assert.AreSame(view.gameObject,hits[0].gameObject,"A UI overlay must not cover the intended food surface "+target.UnitId);
             ExecuteEvents.Execute(hits[0].gameObject,data,ExecuteEvents.pointerDownHandler);
             Assert.IsTrue(ExecuteEvents.Execute(hits[0].gameObject,data,ExecuteEvents.pointerClickHandler));
+        }
+        private static Vector3 FoodPixelLocalPoint(RectTransform rect,Vector2 uv)=>new Vector3(
+            Mathf.Lerp(rect.rect.xMin,rect.rect.xMax,uv.x),Mathf.Lerp(rect.rect.yMin,rect.rect.yMax,uv.y),0);
+        private static Vector2 FoodPixelScreenPoint(ManagementFoodTarget target,Vector2 uv)=>UiScreenPoint(
+            target.Visual.rectTransform.TransformPoint(FoodPixelLocalPoint(target.Visual.rectTransform,uv)));
+        private static Vector2 FindRawSpritePixel(Sprite sprite,bool opaque)
+        {
+            // Production atlases are intentionally non-readable. QA reads the original imported texture through
+            // a temporary GPU copy rather than changing import settings or fabricating a rectangular alpha mask.
+            var texture=sprite.texture;var target=RenderTexture.GetTemporary(texture.width,texture.height,0,RenderTextureFormat.ARGB32);
+            var previous=RenderTexture.active;Texture2D pixels=null;
+            try
+            {
+                Graphics.Blit(texture,target);RenderTexture.active=target;pixels=new Texture2D(texture.width,texture.height,TextureFormat.RGBA32,false);
+                pixels.ReadPixels(new Rect(0,0,texture.width,texture.height),0,0);pixels.Apply();
+                // Keep transparent samples near actual corners; opaque samples are well within the cut.
+                foreach(float y in opaque?new[]{.5f,.4f,.6f,.3f,.7f}:new[]{.015f,.985f,.04f,.96f,.08f,.92f})
+                    foreach(float x in opaque?new[]{.5f,.4f,.6f,.3f,.7f}:new[]{.015f,.985f,.04f,.96f,.08f,.92f})
+                    {
+                        var rect=sprite.textureRect;int px=Mathf.Clamp(Mathf.FloorToInt(rect.x+x*rect.width),0,texture.width-1);
+                        int py=Mathf.Clamp(Mathf.FloorToInt(rect.y+y*rect.height),0,texture.height-1);float alpha=pixels.GetPixel(px,py).a;
+                        if(opaque?alpha>.95f:alpha<.02f)return new Vector2(x,y);
+                    }
+                Assert.Fail("Original raw sprite needs a genuine "+(opaque?"opaque interior":"transparent corner")+" for the alpha regression: "+sprite.name);
+                return Vector2.zero;
+            }
+            finally
+            {
+                RenderTexture.active=previous;RenderTexture.ReleaseTemporary(target);if(pixels!=null)UnityEngine.Object.Destroy(pixels);
+            }
         }
         [UnityTest]
         public IEnumerator Management_CounterErrorsAreReadableAndNeverPartiallyCharge()
@@ -1232,7 +1372,7 @@ namespace Asadito.Tests.PlayMode
             yield return new WaitForSecondsRealtime(.6f);ClickButton("ENTRAR");yield return new WaitForSecondsRealtime(.5f);
             ClickButton("NIVEL 1");yield return new WaitForSecondsRealtime(.5f);ClickButton("IR A LA PARRILLA");yield return null;
             ClickButton("CARNICERÍA");yield return null;
-            Assert.IsNotNull(GameObject.Find("Vitrina de vidrio"));Assert.IsFalse(GameObject.Find("PAGAR Y SALIR").GetComponent<Button>().interactable);
+            Assert.IsNotNull(UnityEngine.Object.FindAnyObjectByType<ManagementFoodView>());Assert.IsFalse(GameObject.Find("PAGAR Y SALIR").GetComponent<Button>().interactable);
             CaptureManagementFrame(game,"/tmp/asadito-counter-empty.png");
             int balance=MvpSave.Load().Management.Balance;
             AddToBasket("chorizo");yield return null;AddToBasket("chorizo");yield return null;AddToBasket("tira");yield return null;
@@ -1270,7 +1410,7 @@ namespace Asadito.Tests.PlayMode
             ClickButton("CARNICERÍA"); yield return null;
             var library = Resources.Load<ScriptableObject>("ManagementArt");
             Assert.IsNotNull(library, "The selected prepared management sprites must load through the reference catalog.");
-            Assert.IsNotNull(UnityEngine.Object.FindAnyObjectByType<ManagementWorldView>());
+            Assert.IsNotNull(UnityEngine.Object.FindAnyObjectByType<ManagementFoodView>());
             CaptureManagementFrame(game, "/tmp/asadito-management-shop.png"); yield return new WaitForSecondsRealtime(.2f);
             AddToBasket("tira"); yield return null;
             AddToBasket("tira"); yield return null;
@@ -1367,29 +1507,33 @@ namespace Asadito.Tests.PlayMode
             CaptureManagementFrame(game,"/tmp/asadito-level1-shop.png");
         }
 
-        private static void CaptureManagementFrame(Component game, string path,Action afterLayout=null)
+        private static void CaptureManagementFrame(Component game,string path,Action afterLayout=null,int width=1080,int height=1920)
         {
-            var world=UnityEngine.Object.FindAnyObjectByType<ManagementWorldView>();if(world!=null)world.CaptureRender();
-            Canvas canvas = (Canvas)GetField(game, "canvas");
-            var cameraObject = new GameObject("Management QA camera");
-            var camera = cameraObject.AddComponent<Camera>();
-            camera.orthographic = true; camera.orthographicSize = 960; camera.enabled = false;
-            camera.clearFlags = CameraClearFlags.SolidColor; camera.backgroundColor = Color.black;
-            var target = new RenderTexture(1080, 1920, 24);
-            camera.targetTexture = target;
-            var previousMode = canvas.renderMode; var previousCamera = canvas.worldCamera;
-            canvas.renderMode = RenderMode.ScreenSpaceCamera; canvas.worldCamera = camera; canvas.planeDistance = 10;
-            Canvas.ForceUpdateCanvases();afterLayout?.Invoke(); if(world!=null)world.CaptureRender(); camera.Render();
-            // First offscreen render can rebuild the dynamic font atlas. Refresh before capturing pixels.
-            Canvas.ForceUpdateCanvases();afterLayout?.Invoke(); if(world!=null)world.CaptureRender(); camera.Render();
-            var previous = RenderTexture.active; RenderTexture.active = target;
-            var image = new Texture2D(1080,1920,TextureFormat.RGB24,false);
-            image.ReadPixels(new Rect(0,0,1080,1920),0,0); image.Apply();
-            System.IO.File.WriteAllBytes(path,image.EncodeToPNG());
-            RenderTexture.active = previous; canvas.renderMode = previousMode; canvas.worldCamera = previousCamera;
-            Canvas.ForceUpdateCanvases();afterLayout?.Invoke();if(world!=null)world.CaptureRender();
-            camera.targetTexture = null; target.Release();
-            UnityEngine.Object.Destroy(target); UnityEngine.Object.Destroy(image); UnityEngine.Object.Destroy(cameraObject);
+            Assert.Greater(width,0);Assert.Greater(height,0);
+            var foods=UnityEngine.Object.FindAnyObjectByType<ManagementFoodView>();
+            Canvas canvas=(Canvas)GetField(game,"canvas");
+            var cameraObject=new GameObject("Management QA camera");var camera=cameraObject.AddComponent<Camera>();
+            camera.orthographic=true;camera.orthographicSize=height*.5f;camera.enabled=false;
+            camera.clearFlags=CameraClearFlags.SolidColor;camera.backgroundColor=Color.black;
+            var target=new RenderTexture(width,height,24);camera.targetTexture=target;
+            var previousMode=canvas.renderMode;var previousCamera=canvas.worldCamera;var previousDistance=canvas.planeDistance;
+            var previous=RenderTexture.active;Texture2D image=null;
+            try
+            {
+                canvas.renderMode=RenderMode.ScreenSpaceCamera;canvas.worldCamera=camera;canvas.planeDistance=10;
+                Canvas.ForceUpdateCanvases();if(foods!=null)foods.RefreshLayout();afterLayout?.Invoke();camera.Render();
+                // The first real offscreen UI render may rebuild the font atlas; render again after layout.
+                Canvas.ForceUpdateCanvases();if(foods!=null)foods.RefreshLayout();afterLayout?.Invoke();camera.Render();
+                RenderTexture.active=target;image=new Texture2D(width,height,TextureFormat.RGB24,false);
+                image.ReadPixels(new Rect(0,0,width,height),0,0);image.Apply();System.IO.File.WriteAllBytes(path,image.EncodeToPNG());
+            }
+            finally
+            {
+                RenderTexture.active=previous;canvas.renderMode=previousMode;canvas.worldCamera=previousCamera;canvas.planeDistance=previousDistance;
+                Canvas.ForceUpdateCanvases();if(foods!=null)foods.RefreshLayout();afterLayout?.Invoke();
+                camera.targetTexture=null;target.Release();UnityEngine.Object.Destroy(target);
+                if(image!=null)UnityEngine.Object.Destroy(image);UnityEngine.Object.Destroy(cameraObject);
+            }
         }
 
         private static IEnumerator CookAndPlateOrder(Component game, float timeoutSeconds)
@@ -1738,9 +1882,9 @@ namespace Asadito.Tests.PlayMode
         {
             if(name.StartsWith("Comprar ")||name.StartsWith("Preparar "))
             {
-                var view=UnityEngine.Object.FindAnyObjectByType<ManagementWorldView>();Assert.IsNotNull(view);
+                var view=UnityEngine.Object.FindAnyObjectByType<ManagementFoodView>();Assert.IsNotNull(view);
                 string id=name.Substring(name.IndexOf(' ')+1);
-                var t=view.Targets.Find(x=>x.FoodId==id&&(!view.IsFridge||!x.Selected));TapModel(view,t);return;
+                var t=view.Targets.Find(x=>x.FoodId==id&&(!view.IsFridge||!x.Selected));TapFood(view,t);return;
             }
             ClickButton(FindButton(name));
         }

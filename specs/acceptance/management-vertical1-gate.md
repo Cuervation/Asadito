@@ -23,3 +23,14 @@
 - Checkout valida canasta completa por saldo, stock, capacidad, unlock y run activo antes de mutar. Revalida tras una previsualización.
 - Compra exitosa persiste unidades/costos y saldo; conduce a heladera y permite preparar. Recarga conserva unidades y no crea un ActiveRun vacío que bloquee operaciones.
 - Precio y total legibles en portrait, cortes tocables con feedback y botones arcade existentes.
+
+## Migración definitiva 100 % 2D (2026-10-02)
+- Pantallas activas de gestión en Canvas, sin modelos/MeshRenderer/MeshCollider/raycast físico ni cámaras, materiales o RenderTextures de mundos 3D. Recursos exclusivos 3D de Asadito sin referencias retirados; terceros/MCP y GUID reutilizados preservados.
+- Mostrador completo24+24, parcial y agotado refleja stock real; todos los cortes usan RAW/tamaño por alimento de parrilla, abundantes sin miniaturización por cantidad.
+- Picking por orden visual y silueta alfa: tocar superposición elige lo expuesto, transparente deja pasar y cartel/UI no compra alimento oculto.
+- Tap suma una unidad cotizada; drag al carrito suma exactamente una. Cancelación, fuera, botón, segundo dedo, cierre y disable no compran ni dejan previews. Release de drag no duplica tap.
+- Nombre/precio/stock/llevás/total dinámicos, contenido y detalle de carrito, cantidades/VACIAR/checkout único conservados; selección no debita y pago revalida/persiste atómicamente.
+- Heladera máxima8: una imagen por ID real, selección/devolución/cambio/cancelación reversible, `PrepareUnits` consume IDs exactos sin duplicar ni perder unidades al volver/reabrir/reanudar.
+- Compra → heladera → parrilla → tabla → servicio/persistencia conserva contratos. Frescura offline, freezer y nuevos controles de comida siguen deshabilitados.
+- Compile/import y tests focalizados por bloque; ampliar solo por evidencia. Capturas reales Unity 1080×1920 y portrait más estrecho revisadas: alimentos/carteles/buttons accesibles, sin recortes.
+- Registrar pruebas y límites reales; screenshots Unity no equivalen a FPS/touch/safe area medidos en teléfono. Sin APK por cada cambio.

@@ -1,0 +1,10 @@
+{
+  "name": "Asadito.Management2D",
+  "rootNamespace": "Asadito",
+  "references": [
+    "Asadito.Runtime",
+    "Unity.ugui",
+    "Unity.InputSystem"
+  ],
+  "autoReferenced": true
+}

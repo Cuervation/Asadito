@@ -2,9 +2,16 @@
 
 ## Norte de arte
 
-Asadito es un juego argentino de cocina casual premium: patio/quincho cálido, comida protagonista y lectura instantánea en móvil. Usar escenarios y comida 3D estilizados de formas suaves, materiales pintados/simplificados y luz de atardecer; no foto-realismo, ni caricatura infantil. Identidad propia: ritual compartido del asado, hierro y madera de patio, vocabulario rioplatense y pequeños acentos celeste/verde solo cuando ayuden a orientar.
+Asadito es un juego argentino de cocina casual premium: patio/quincho cálido, comida protagonista y lectura instantánea en móvil. Usar ilustraciones y sprites **100 % 2D** cartoon, colores cálidos, contornos limpios, formas reconocibles e iluminación pintada; no foto-realismo, ni caricatura infantil. Identidad propia: ritual compartido del asado, hierro y madera de patio, vocabulario rioplatense y pequeños acentos celeste/verde solo cuando ayuden a orientar.
 
-**Regla de producción:** la acción y el estado de cocción siempre ganan a la decoración. En toda parrilla de gameplay/key art, usar cámara cenital/top-down (recta u ortográfica levemente elevada, sin vista lateral/oblicua dominante), con rejilla de hierro grafito, superficie de madera y alimentos legibles desde arriba; sin celdas/grid térmico, masa naranja ni affordances de carbón. Cámara fija, composición vertical, siluetas limpias y contraste suficiente. Mantener Canvas UI mientras la transición visual sea incremental; no rehacer el gameplay ni el alcance del MVP para acomodar arte.
+**Regla de producción:** la acción y el estado de cocción siempre ganan a la decoración. En toda parrilla de gameplay/key art, usar composición ilustrada cenital/top-down (sin vista lateral/oblicua dominante), con rejilla de hierro grafito, superficie de madera y alimentos legibles desde arriba; sin celdas/grid térmico, masa naranja ni affordances de carbón. Composición fija vertical, siluetas limpias y contraste suficiente. Mantener Canvas UI como presentación definitiva 2D; no rehacer el gameplay ni el alcance del MVP para acomodar arte.
+
+## Decisión definitiva — 100 % 2D (2026-10-02)
+Todos los elementos de juego se representan con ilustraciones, sprites, capas/transparencias y motion 2D. Sombras pintadas, perspectiva ilustrada y animaciones que sugieren profundidad están permitidas; modelos, geometría/colliders 3D, cámaras/RenderTextures de mundos de gestión y efectos volumétricos no. La referencia Pocket Chef se limita al acabado casual premium, nunca a copiar identidad/recursos.
+
+Carnicería conserva CounterV2; heladera conserva `Fridge_Hybrid_OpenEmptyV2` abierta (el nombre histórico del PNG no define la técnica). Ambos usan el sprite RAW original y tamaño por corte de la parrilla. Orden visual y máscaras alfa seleccionan alimentos expuestos incluso apilados; carteles/UI bloquean lo que tapan. Fuentes, botones arcade, catálogo, retratos, escenarios y animaciones aprovechables se reutilizan, no se regeneran por lotes ni se reemplazan por placeholders.
+
+La arquitectura vigente se describe en [gestión 2D](../../docs/architecture/management-2d.md). Las secciones fechadas 3D/híbridas de esta página son solo historia, reemplazadas por esta decisión. Legibilidad/safe area y respuesta táctil Android prevalecen sobre decoración; QA física y aprobación artística no se presumen a partir de tests Unity.
 
 ## Paleta de trabajo
 
@@ -40,7 +47,7 @@ Usar colores cálidos con saturación moderada; fondo más oscuro y suave que la
 
 ## Style, color y formas
 
-- Casual premium con mundo 3D estilizado/semi-cartoon, materiales pintados simples, siluetas claras y luz cálida; nunca hiperrealismo fotográfico ni infantilización.
+- Casual premium con ilustraciones 2D cartoon, siluetas claras, contornos limpios, sombras y luz cálida pintadas; nunca hiperrealismo fotográfico ni infantilización.
 - Paleta: tinta carbón `#25221C`, crema `#FFF0D1`, brasa `#E95B32`, dorado `#F3AE48`, madera `#8A5234`, salvia `#66815D` y carne cruda `#B94F46`. Escenario menos contrastado que comida/UI.
 - Botones, bandejas, platos y tarjetas usan radios amplios, volumen/sombra suave y contraste alto; evitar detalles muy finos, exceso de brillo y saturación.
 
@@ -48,14 +55,14 @@ Usar colores cálidos con saturación moderada; fondo más oscuro y suave que la
 
 - Patio/quincho: señales argentinas sutiles y cálidas (hierbas, madera, faroles, hierro); fondo en profundidad con detalle limitado. La parrilla debe contrastar del patio y conservar lectura en pantallas pequeñas.
 - Parrilla: fondo de juego top-down con rejilla oscura, hierro/grafito y quincho de madera cálida pero poco saturada. El heat model es uniforme e invisible. El alimento conserva prioridad visual; el humo de cocción es escaso y ligero. La pinza de metal/madera se comunica con sprites PNG originales abiertos/cerrados; la tabla es una superficie de madera ilustrada y el drop target, invisible, coincide con su área visual.
-- **Food:** silueta reconocible primero; jugosidad, brillo y textura pintada simplificada. Tira, chorizo, vacío y provoleta se distinguen por forma, no solo color. El catálogo integra 18 atlas individuales (uno por alimento), seis etapas térmicas cada uno (RAW, WARMING, BROWNING, IDEAL, OVERCOOKED, BURNT; 108 sprites dinámicos). Cada cara conserva etapa propia y el flip restaura el estado de la cara expuesta. El cambio visual es discreto por sprite, no blend de material.
-- **Guests:** caricatura suave casual premium, identidad y expresión legibles; texto/ícono acompaña la reacción. `GuestPortraitAtlas.png` ahora aporta 24 retratos 3D semi-cartoon (seis perfiles × cuatro expresiones); el runtime cambia retrato individual en reacción/resultados y pasa PlayMode. Recorte/escala inspeccionados en GameView portrait; falta validación de device.
+- **Food:** silueta reconocible primero; jugosidad, brillo y textura pintada simplificada. Tira, chorizo, vacío y provoleta se distinguen por forma, no solo color. El catálogo integra 18 atlas individuales (uno por alimento), seis etapas térmicas cada uno (RAW, WARMING, BROWNING, IDEAL, OVERCOOKED, BURNT; 108 sprites dinámicos). Conservar los estados y animaciones existentes de cocción; no añadir controles de dar vuelta, bandeja o servir. El cambio visual es discreto por sprite, no blend de material.
+- **Guests:** caricatura suave casual premium, identidad y expresión legibles; texto/ícono acompaña la reacción. `GuestPortraitAtlas.png` ahora aporta 24 retratos raster ilustrados semi-cartoon (seis perfiles × cuatro expresiones); el runtime cambia retrato individual en reacción/resultados y pasa PlayMode. Recorte/escala inspeccionados en GameView portrait; falta validación de device.
 - **VFX:** humo ligero de círculos Canvas por cocción y glow de portada. No hay VFX/animación de encendido, carbón o distribución de calor. Son recursos baratos/provisionales, no humo volumétrico ni sistema final de partículas; evaluar legibilidad/rendimiento móvil antes de sumar efectos.
 - Bandeja, pinza y superficies: madera/metal coherentes con parrilla; utilería mínima y funcional. Feedback `PERFECTO`, advertencia, estrellas y puntaje con animación breve, sin cubrir alimento/órdenes.
 
 ## Motion, sonido y rendimiento
 
-Animar únicamente para confirmar entrada, volteo, retiro, servicio, cambio térmico y reacción: movimiento corto, asentamiento elástico moderado, brillo pulsado suave; respetar pausa/legibilidad. No usar cámara movediza, partículas densas ni efectos que oculten el estado. Mantener URP móvil, luz controlada, transparencias reducidas y texturas comprimibles; probar vertical y safe areas.
+Animar para confirmar entrada, selección, arrastre, incorporación al carrito, traslado/devolución de heladera, retiro, servicio, cambio térmico y reacción: movimiento corto, asentamiento elástico moderado, brillo pulsado suave; respetar pausa/legibilidad. No usar cámara movediza, partículas densas ni efectos que oculten el estado. Conservar el pipeline actual, animaciones Canvas livianas, transparencias contenidas y texturas comprimibles; sin iluminación/efectos volumétricos, modelos ni cámaras/RenderTextures de mundos 3D; probar vertical y safe areas.
 
 ## Portabilidad de la inspiración
 
@@ -71,7 +78,7 @@ La biblioteca de progresión debe sentirse del mismo mundo, con cartoon estiliza
 - **Moneda:** símbolo Asadito único y reconocible en tamaño HUD; reutilizar la misma moneda individual para HUD y precios, con grupos/pilas y cuatro frames discretos para feedback.
 - **Personaje de tienda:** seis poses iniciales del mismo atlas cubren neutral, saludo, compra, oferta, agotado y felicitación. Una ilustración complementaria de sorpresa/evento está preparada, pero su identidad visual debe armonizarse antes de conectarla a la misma persona. Las poses son frames estáticos, no un rig.
 - **Estaciones futuras:** parrillas tier 1–3, asador/cruz, disco y horno en top-down; estados separados para composición/animación. El horno abierto con bandeja es la vista activa con comida. No sumar carbón interactivo, ignición ni apagar la parrilla caliente actual.
-- **Importación y alcance:** PNG nuevos como sprites individuales, centro/100 PPU, filtro bilinear, clamp, sin mipmaps y compresión ETC2 HQ; fondos limitados a 2048 y sprites a 512. Mantenerlos fuera de `Resources` hasta que una pantalla/sistema los consuma para no inflar la build presente. La biblioteca actual está preparada, no conectada; ver [manifest completo](../../docs/art/management-asset-manifest.md).
+- **Importación y alcance:** PNG nuevos como sprites individuales, centro/100 PPU, filtro bilinear, clamp, sin mipmaps y compresión ETC2 HQ; fondos limitados a 2048 y sprites a 512. Mantenerlos fuera de `Resources` hasta que una pantalla/sistema los consuma para no inflar la build presente. Cuatro sprites de gestión están conectados (patio, moneda, CounterV2 y FridgeV2); el resto de la biblioteca permanece preparado; ver [manifest completo](../../docs/art/management-asset-manifest.md).
 
 ### Auditoría de conservación
 
@@ -86,8 +93,8 @@ EditMode valida 18/18 perfiles y seis sprites, PlayMode recorre L1–L12; APK An
 ## Gestión 3D — primera implementación (2026-10-01, histórica)
 Carnicería y heladera usan geometría tridimensional real, cámara fija elevada y UI superpuesta segura. Chorizo curvo con nudos de tripa; tira irregular con grasa, vetas y cuatro huesos. Mesh assets nativos de Unity, colores de vértice y microtextura procedural en shader móvil compartido. Vidrio de una pasada, sombras de contacto geométricas, props fijos combinados; built-in renderer actual (no migración a URP). Modelos de producción inicial, no primitivas visibles/billboards como alimento; aprobación estética humana y medición de teléfono siguen siendo gates independientes. Biblioteca 2D original preservada para cocina, menú y futuras referencias.
 
-## Carnicería híbrida — decisión vigente (2026-10-01)
+## Carnicería híbrida — decisión histórica reemplazada (2026-10-01)
 Por feedback del usuario, escenario/mostrador ilustrado2D vacío con comida3D volumétrica usando exactamente el raw atlas de parrilla. Misma silueta/color/textura reconocible en cocina, tienda e inventario; no comida geométrica genérica. Changuito vectorial visible y arrastre táctil para agregar antes de pagar. Sin vuelos repetidos ni texturas duplicadas; UI mantiene botones actuales. Heladera pasa también a escenario2D abierto vacío con los mismos modelos/texturas y medidas de comida; la puerta3D anterior queda histórica. Ver decisión siguiente.
 
-## Heladera híbrida — decisión vigente (2026-10-02)
+## Heladera híbrida — decisión histórica reemplazada (2026-10-02)
 Fondo ilustrado vacío de heladera abierta con interior amplio y tabla frontal, transparente/versionado y sin alimentos/texto horneados. Solo las unidades reales del inventario son3D, usando atlas raw/mallas de carnicería/parrilla y su tamaño por corte. Al superponerse, los colliders de silueta y profundidad seleccionan la pieza expuesta. Fondo y overlay comparten un frame de aspecto nativo contenido en el panel central, sin estirar o invadir footer. Botones arcade existentes intactos; descarte fuera del área de alimentos. Arte PROVISIONAL hasta aprobación humana/dispositivo.

@@ -693,7 +693,7 @@ namespace Asadito
             CanvasGroup exitEntrance = exitButton.gameObject.AddComponent<CanvasGroup>();
             enterEntrance.interactable = enterEntrance.blocksRaycasts = false;
             exitEntrance.interactable = exitEntrance.blocksRaycasts = false;
-            MakeText("Versión visible", menuRoot.transform, "v" + Application.version + " · Gestión 3D", 24, Cream, TextAnchor.MiddleCenter, .5f, .025f, 920, 64, true);
+            MakeText("Versión visible", menuRoot.transform, "v" + Application.version + " · Cocina 2D", 24, Cream, TextAnchor.MiddleCenter, .5f, .025f, 920, 64, true);
             StartCoroutine(AnimateMenuEntrance(brandRect, brandEntrance, .0f, .34f, 18f));
             StartCoroutine(AnimateMenuEntrance(subtitle.rectTransform, subtitleEntrance, .08f, .34f, 14f));
             StartCoroutine(AnimateMenuEntrance(enterButton.GetComponent<RectTransform>(), enterEntrance, .14f, .34f, 22f));
@@ -1759,6 +1759,7 @@ namespace Asadito
 
         public bool IsFoodTargetClosest(int index, Vector2 screenPoint, Camera eventCamera)
         {
+            if (managementScreen != null && managementScreen.IsOpen) return false;
             if (portionHitTargets == null || index < 0 || index >= portionHitTargets.Length ||
                 portionHitTargets[index] == null || portions[index].OnTray)
                 return false;

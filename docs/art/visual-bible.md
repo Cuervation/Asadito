@@ -1,8 +1,10 @@
 # Visual Bible de Asadito
 
-La dirección canónica, paleta, UI, comida, mundo y rendimiento están en [`specs/visual/art-direction.md`](../../specs/visual/art-direction.md). El inventario de gestión/progresión listo para una fase futura está en [management-asset-manifest.md](management-asset-manifest.md); está preparado, **no conectado**. La biblioteca se ve en la [hoja de contacto](management-library-preview.png). El plan incremental auditable está en [plan.md](plan.md). Consultar también [estados de alimentos](../../specs/visual/food-states.md), [estados de fuego](../../specs/visual/fire-states.md), [animación](../../specs/visual/animation.md) y los manifests de [assets runtime](asset-manifest.md) y [animaciones](animation-manifest.md).
+Asadito es **100 % 2D**; arquitectura de gestión vigente en [management-2d.md](../architecture/management-2d.md). La sección fechada siguiente conserva el alcance de su momento, no afirma que hoy falten economía/inventario.
 
-## Extensión visual de gestión (2026-10-01)
+La dirección canónica, paleta, UI, comida, mundo y rendimiento están en [`specs/visual/art-direction.md`](../../specs/visual/art-direction.md). El inventario de gestión/progresión listo para una fase futura está en [management-asset-manifest.md](management-asset-manifest.md); cuatro recursos están conectados y los restantes preparados. La biblioteca se ve en la [hoja de contacto](management-library-preview.png). El plan incremental auditable está en [plan.md](plan.md). Consultar también [estados de alimentos](../../specs/visual/food-states.md), [estados de fuego](../../specs/visual/fire-states.md), [animación](../../specs/visual/animation.md) y los manifests de [assets runtime](asset-manifest.md) y [animaciones](animation-manifest.md).
+
+## Extensión visual de gestión (histórica, 2026-10-01)
 
 - La nueva biblioteca conserva el estilo cálido, cartoon estilizado y casual-premium; no reutiliza logos, personajes ni UI identificable de otros juegos.
 - Carnicería en portrait; puestos, heladeras y estaciones utilizables en vista top-down donde comparten espacio con gameplay. Los textos, precios, cantidades y porcentajes son dinámicos, nunca baked en el PNG.

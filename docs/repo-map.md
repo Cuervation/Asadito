@@ -28,7 +28,10 @@ In the table, `Runtime/...` expands to `Assets/Asado/Scripts/Runtime/...`; `Reso
 
 - Config económica: `Resources/Definitions/ManagementConfig.json`; pedidos: `ChapterOneLevels.json`.
 - `Runtime/ManagementConfig.cs`, `ManagementState.cs`, `ManagementService.cs`: reglas/save/transacciones.
-- `Assets/Asado/Scripts/ManagementScreen.cs`: vistas; `Resources/ManagementArt.asset`: solo referencias explícitas al arte implementado.
+- `Assets/Asado/Scripts/ManagementScreen.cs`: navegación, carrito temporal y selección de IDs; `Assets/Asado/Scripts/Management2D/ManagementFoodView.cs`: presentación/animación/picking Canvas por orden visual y máscaras alfa precomputadas (`Asadito.Management2D`).
+- `Resources/ManagementArt.asset`: cuatro referencias explícitas reutilizadas (patio, moneda, CounterV2, FridgeV2); alimentos RAW por `FoodSpriteLibrary`/atlas existentes.
+- Siluetas 2D: `Assets/Asado/Scripts/Management2D/FoodSilhouette.cs`, `Resources/Definitions/FoodHitMasks.json`; generación de metadatos desde RAW: `Tools/generate_food_hit_masks.py` (no cambia PNG/import settings).
+- Arquitectura/auditoría vigente: `docs/architecture/management-2d.md`; historial 3D retirado: `docs/art/management-3d-assets.md`.
 - Specs: `specs/product/full-game.md` y dominios enlazados ahí.
 
 ## Large-file symbol index

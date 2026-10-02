@@ -9,9 +9,11 @@ Fresh al adquirir, OK intermedio, ConsumeSoon al último ciclo utilizable, Spoil
 ## Vertical 5
 Refrigerated → Frozen → Thawing → Ready; Spoiled como terminal descartable. Descongelar demora una jornada; nunca instantáneo ni tiempo real. Capacidad y mayor conservación se tunean al implementar, con pruebas propias; el save reserva nivel de freezer pero no implementa falsas operaciones ahora.
 
-## Vista híbrida vigente (2026-10-02)
-Heladera2D abierta/vacía con estantes y tabla de preparación ilustrados; solo la comida tiene geometría3D. Usa los mismos raw atlas, mallas y medidas canónicas por alimento de la carnicería/parrilla, sin achicar por cantidad ni al seleccionar. Cámara transparente en viewport con aspecto nativo; UI/botones no tapan los estantes.
+## Vista 100 % 2D vigente (2026-10-02)
+`Fridge_Hybrid_OpenEmptyV2` conserva su nombre/ruta/GUID, pero es una ilustración 2D de heladera abierta vacía, no una arquitectura híbrida. Estantes y tabla se mantienen dentro de un frame de aspecto nativo; botones de navegación/descarte no tapan alimentos.
 
-Una pieza por InventoryUnit.Id real, hasta la capacidad8 actual, en tres superficies de almacenamiento. MeshCollider respeta la silueta y el raycast elige la superficie visible más cercana cuando hay superposición, no una caja invisible de otra unidad. Toque selecciona/deposita en la tabla, devolución/cancelación son reversibles; PrepareUnits consume exactamente los IDs elegidos. Sin simulación Rigidbody ni catálogo paralelo. Stock de carnicería24 por alimento no aumenta capacidad de heladera.
+Cada `Image` RAW corresponde a una unidad real con su `InventoryUnit.Id`, hasta capacidad 8, repartida entre tres superficies. Comparte sprite y tamaño canónico con carnicería/parrilla, sin miniaturizar por cantidad ni al seleccionar. Orden de dibujo y máscaras alfa precomputadas seleccionan la pieza visible al superponerse; no hay collider, raycast físico, mesh, material o cámara/RenderTexture de gestión.
 
-Originales de arte conservados; Fridge_Hybrid_OpenEmptyV2 es el escenario versionado activo. Frescura, economía, recovery, inventario y save no cambian. Aprobación artística y QA táctil/performance Android pendientes.
+Toque traslada el mismo ID visualmente a la tabla mediante movimiento/escala 2D breve; otro toque, cambio de selección o CANCELAR lo devuelve al estante. La selección no consume ni reserva inventario; `PrepareUnits` valida y consume exactamente los IDs elegidos en una transacción. Cerrar/volver/reanudar no duplica ni pierde unidades. Animaciones interrumpibles se limpian con la pantalla.
+
+Frescura, descarte confirmado, tutorial, Caja del Asador, economía, capacidad y save siguen intactos. `EnableFreshness=false`; sin reloj real/offline, freezer ni upgrades nuevos. Originales de arte y GUID de recursos reutilizados preservados. Compilación/tests/capturas de esta migración se registran por separado; aprobación artística y QA táctil/performance Android siguen pendientes.

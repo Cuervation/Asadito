@@ -1,6 +1,6 @@
 # Manifest de assets de runtime — ASADITO
 
-> **Gestión híbrida vigente (2026-10-02):** mostrador y heladera ilustrados2D vacíos, comida volumétrica3D con raw atlas/tamaño de parrilla. Ver [recursos](management-3d-assets.md) y [QA heladera](../ai/hybrid-fridge-qa.md). Las secciones fechadas anteriores registran historia; la lista de runtime vigente está al inicio.
+> **Presentación 100 % 2D vigente (2026-10-02):** mostrador/heladera ilustrados existentes y comida RAW de parrilla como Images Canvas; tamaños por corte, capas y máscaras alfa precomputadas. Sin modelos/cámara/RenderTexture/materiales 3D de gestión. Ver [arquitectura](../architecture/management-2d.md); [recursos 3D](management-3d-assets.md) y QA híbrida son históricos. Pruebas/capturas nuevas se registran en el estado operativo, no se presumen aprobadas.
 
 Inventario de contenido fuente en `Resources`; las rutas Unity omiten extensión donde corresponda. `PROVISIONAL` = integrado y validable pero sin aprobación artística/física final. Assets raster originales o generados para este proyecto; las fuentes tienen licencia OFL adjunta. No se reclama producción comercial para audio/VFX. La biblioteca de gestión/progresión vive fuera de `Resources`; cuatro sprites están referenciados actualmente por `ManagementArt.asset` (patio, moneda, CounterV2 y FridgeV2), el resto sigue preparado: ver [management-asset-manifest.md](management-asset-manifest.md).
 
@@ -23,11 +23,13 @@ Inventario de contenido fuente en `Resources`; las rutas Unity omiten extensión
 | VFX visuales | Procedural Canvas | `AsaditoGame`: humo/fade de cocción y glow de portada | No VFX de carbón/calor; sin shader/pipeline dedicado | PROVISIONAL |
 | SFX one-shot | 7 clips mono sintetizados en memoria | `Assets/Asado/Scripts/Runtime/ProceduralSfx.cs` | UI, FoodDrop, Flip, Plate, Serve, Result, Star; se eliminó Ignite | PROVISIONAL |
 | Sizzle / haptics | loop sintetizado y vibración de plataforma condicional | `AsaditoGame` | Activa durante cocción y cuando soportado/permitido | PROVISIONAL |
+| Selección 2D | 18 máscaras alfa binarias 128×64 | `Resources/Definitions/FoodHitMasks.json`; `FoodSilhouette`; `Tools/generate_food_hit_masks.py` | Metadata del RAW existente, no nuevos PNG ni atlas readable; selección por silueta/orden visual | Metadata técnica |
+| Gestión 2D | CounterV2/FridgeV2/patio/moneda + RAW del catálogo, sin duplicar PNG | `ManagementArt.asset`, `ManagementFoodView` | Canvas con orden visual y máscaras alfa precomputadas; QA de migración registrada aparte; sin recursos 3D de gestión | PROVISIONAL |
 | UI | canvas y componentes creados en runtime | `AsaditoGame` | Main, selección, intro, HUD, resultados/save/Retry/Next; referencias usan `Resources` | PROVISIONAL |
 
 ## Biblioteca futura fuera de runtime
 
-Hay90 sprites originales más CounterV2 y Fridge_Hybrid_OpenEmptyV2 (92PNG) fuera de `Resources`; cuatro referencias explícitas están conectadas en ManagementArt: patio, moneda y ambos escenarios híbridos vacíos. No incluir el resto hasta implementar sus sistemas. El detalle por archivo, estado, alfa, resolución, destino, animabilidad y pendientes está en [management-asset-manifest.md](management-asset-manifest.md).
+Hay90 sprites originales más CounterV2 y Fridge_Hybrid_OpenEmptyV2 (92PNG) fuera de `Resources`; cuatro referencias explícitas están conectadas en ManagementArt: patio, moneda y ambos escenarios ilustrados 2D vacíos. No incluir el resto hasta implementar sus sistemas. El detalle por archivo, estado, alfa, resolución, destino, animabilidad y pendientes está en [management-asset-manifest.md](management-asset-manifest.md).
 
 ## Auditoría de inventario visual conectado
 

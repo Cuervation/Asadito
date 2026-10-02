@@ -26,7 +26,7 @@ namespace Asadito
         private Text cartTotal,shopNotice,cartHeading,fridgeNotice;
         readonly Dictionary<string,Image> cartIcons=new Dictionary<string,Image>();
         private Button checkoutButton,emptyCartButton,prepareButton,discardButton;
-        private ManagementWorldView worldView;
+        private ManagementFoodView foodView;
         private GameObject cartDetails;
         private bool cartExpanded;
         private bool showLearningTip;
@@ -34,6 +34,10 @@ namespace Asadito
         private int Required(string id) => Array.FindAll(order.FoodIds, food => food == id).Length;
         private int Missing(string id) => Math.Max(0, Required(id) - service.Available(id));
         private readonly List<int> selection = new List<int>();
+        private float ContentWidth => ((RectTransform)root.transform).rect.width;
+        private float FitWidth(float width) => Mathf.Min(width, Mathf.Max(1,ContentWidth - 32));
+        private void Fit(RectTransform rect,float width,float margin=32,float x=-1,RectTransform bounds=null,float fraction=1)
+            => rect.gameObject.AddComponent<ManagementWidthFit>().Configure(bounds ?? (RectTransform)root.transform,width,margin,x,fraction);
         private static readonly Color Ink = new Color32(34, 61, 45, 255);
         private static readonly Color Cream = new Color32(255, 244, 219, 255);
         public ManagementScreen(AsaditoGame game, Transform parent, ManagementService service)
@@ -44,7 +48,7 @@ namespace Asadito
         public void Close()
         {
             if (root != null) { root.SetActive(false); UnityEngine.Object.Destroy(root); }
-            root = null; worldView = null;
+            root = null; foodView = null;
         }
         private void Page(string title, string backdrop, bool scene = false)
         {
@@ -63,14 +67,15 @@ namespace Asadito
         private Text Label(string text, float y, int size = 32, Color? color = null, float x = .5f, float width = 880, float height = 64)
         {
             var label = game.MakeText(text, root.transform, text, size, color ?? Ink, TextAnchor.MiddleCenter,
-                x, y, width, Mathf.Max(height, size * 2.5f), (color ?? Ink) != Ink);
+                x, y, FitWidth(width), Mathf.Max(height, size * 2.5f), (color ?? Ink) != Ink);
             if ((color ?? Ink) == Ink && game.ManagementBodyFont != null) label.font = game.ManagementBodyFont;
             // Dynamic font ascenders can extend beyond preferredHeight on mobile/camera render.
             label.verticalOverflow = VerticalWrapMode.Overflow;
+            Fit(label.rectTransform,width);
             return label;
         }
         private void Panel(string name, float y, float h)
-            => game.MakePanel(name, root.transform, new Color32(255, 245, 224, 246), .5f, y, 940, h);
+        { var panel=game.MakePanel(name, root.transform, new Color32(255, 245, 224, 246), .5f, y, FitWidth(940), h); Fit(panel.rectTransform,940); }
         private void Icon(string name, float x, float y, float w, float h)
         {
             if (art == null || art.Get(name) == null) return;
@@ -78,7 +83,20 @@ namespace Asadito
             image.preserveAspect = true; image.raycastTarget = false;
         }
         private Button Button(string label, float x, float y, Action action, float width = 400, Transform destination = null, float height = 88)
-            => game.MakeButton(label, destination ?? root.transform, x,y,width,height, new Color32(199,139,54,255), () => action());
+        {
+            var button=game.MakeButton(label,destination ?? root.transform,x,y,width,height,new Color32(199,139,54,255),()=>action());
+            // The existing arcade face/border/extrusion had fixed widths. Stretch only these
+            // painted layers with the responsive button; retain their caps, heights and fonts.
+            foreach(Transform child in button.transform)
+            {
+                if(!child.name.StartsWith("Cara boton ")&&!child.name.StartsWith("Borde boton ")&&!child.name.StartsWith("Relieve inferior "))continue;
+                var layer=(RectTransform)child;float extra=layer.sizeDelta.x-width;
+                layer.anchorMin=new Vector2(0,layer.anchorMin.y);layer.anchorMax=new Vector2(1,layer.anchorMax.y);
+                layer.sizeDelta=new Vector2(extra,layer.sizeDelta.y);
+            }
+            if(destination==null)Fit(button.GetComponent<RectTransform>(),width,24,x);
+            return button;
+        }
         private void Save() { game.PersistManagement(); game.ManagementFeedback(); }
         public void Open(MvpLevelDefinition order, GuestProfile[] guests, Action<string[]> begin, Action back)
         {
@@ -131,41 +149,43 @@ namespace Asadito
             backdropRect.anchorMin=new Vector2(.015f,.32f);backdropRect.anchorMax=new Vector2(.985f,.815f);backdropRect.offsetMin=backdropRect.offsetMax=Vector2.zero;
             var backdropImage=backdrop.GetComponent<RawImage>();backdropImage.raycastTarget=false;
             var counter=art.Get("ButcherShop_CounterV2");backdropImage.texture=counter.texture;backdropImage.uvRect=new Rect(0,.22f,1,.64f);
-            worldView=ManagementWorldView.Create(root.transform,new Vector2(.015f,.32f),new Vector2(.985f,.815f),game.ManagementBodyFont,service,false,
+            foodView=ManagementFoodView.Create(root.transform,new Vector2(.015f,.32f),new Vector2(.985f,.815f),game.ManagementBodyFont,service,false,
                 target=>AddToCart(target.FoodId,target),game.ManagementFoodSprite,game.ManagementFoodSize);
-            worldView.ConfigureShop(order.Number);
+            foodView.ConfigureShop(order.Number);
             cartRows.Clear();cartRemoves.Clear();cartExpanded=false;
             var products=Array.FindAll(service.Config.Products,p=>p.UnlockLevel<=order.Number);
             cartDetails=new GameObject("Detalle carrito",typeof(RectTransform));cartDetails.transform.SetParent(root.transform,false);
-            var details=cartDetails.GetComponent<RectTransform>();details.anchorMin=details.anchorMax=new Vector2(.5f,.410f);details.sizeDelta=new Vector2(960,354);
-            game.MakePanel("Carrito de compra",details,Cream,.5f,.5f,960,354).raycastTarget=true;
+            float cartWidth=FitWidth(960), rowsWidth=cartWidth-30;
+            var details=cartDetails.GetComponent<RectTransform>();details.anchorMin=details.anchorMax=new Vector2(.5f,.410f);details.sizeDelta=new Vector2(cartWidth,354);Fit(details,960);
+            var detailsPanel=game.MakePanel("Carrito de compra",details,Cream,.5f,.5f,cartWidth,354);detailsPanel.raycastTarget=true;Fit(detailsPanel.rectTransform,960,0,bounds:details);
             var viewport=new GameObject("Resumen carrito",typeof(RectTransform),typeof(RectMask2D),typeof(Image),typeof(ScrollRect)).GetComponent<RectTransform>();
-            viewport.SetParent(details,false);viewport.anchorMin=viewport.anchorMax=new Vector2(.5f,.5f);viewport.sizeDelta=new Vector2(930,320);
+            viewport.SetParent(details,false);viewport.anchorMin=viewport.anchorMax=new Vector2(.5f,.5f);viewport.sizeDelta=new Vector2(rowsWidth,320);Fit(viewport,930,30,bounds:details);
             viewport.GetComponent<Image>().color=Color.clear;viewport.GetComponent<Image>().raycastTarget=true;
             var content=new GameObject("Filas carrito",typeof(RectTransform)).GetComponent<RectTransform>();content.SetParent(viewport,false);
-            content.anchorMin=content.anchorMax=content.pivot=new Vector2(0,1);content.sizeDelta=new Vector2(930,Math.Max(320,products.Length*132));
+            content.anchorMin=content.anchorMax=content.pivot=new Vector2(0,1);content.sizeDelta=new Vector2(rowsWidth,Math.Max(320,products.Length*132));Fit(content,930,0,bounds:viewport);
             var scroll=viewport.GetComponent<ScrollRect>();scroll.viewport=viewport;scroll.content=content;scroll.horizontal=false;scroll.vertical=true;scroll.movementType=ScrollRect.MovementType.Clamped;
             for(int i=0;i<products.Length;i++)
             {
                 var p=products[i];var row=new GameObject("Fila carrito "+p.FoodId,typeof(RectTransform)).GetComponent<RectTransform>();row.SetParent(content,false);
-                row.anchorMin=row.anchorMax=row.pivot=new Vector2(0,1);row.sizeDelta=new Vector2(930,132);row.anchoredPosition=new Vector2(0,-i*132);
-                cartRows[p.FoodId]=DisplayLabel("Resumen "+p.FoodId,"",row,new Vector2(281,-66),29,545,76,true);
+                row.anchorMin=row.anchorMax=row.pivot=new Vector2(0,1);row.sizeDelta=new Vector2(rowsWidth,132);Fit(row,930,0,bounds:content);row.anchoredPosition=new Vector2(0,-i*132);
+                cartRows[p.FoodId]=DisplayLabel("Resumen "+p.FoodId,"",row,new Vector2(0,-66),29,rowsWidth*.586f,76,true);
+                var rowLabel=cartRows[p.FoodId].rectTransform;rowLabel.anchorMin=rowLabel.anchorMax=new Vector2(.302f,1);Fit(rowLabel,545,0,bounds:row,fraction:.586f);
                 var remove=Button("−",.70f,.5f,()=>RemoveFromCart(p.FoodId),100,row,height:132);remove.name="Restar carrito "+p.FoodId;cartRemoves[p.FoodId]=remove;
                 Button("+",.85f,.5f,()=>AddToCart(p.FoodId),100,row,height:132).name="Sumar carrito "+p.FoodId;
             }
             cartDetails.SetActive(false);
-            var drop=game.MakePanel("Changuito de compras",root.transform,Cream,.5f,.269f,960,174);drop.raycastTarget=true;
-            worldView.CartDropZone=drop.rectTransform;DrawCart(drop.rectTransform);
+            var drop=game.MakePanel("Changuito de compras",root.transform,Cream,.5f,.269f,FitWidth(960),174);drop.raycastTarget=true;Fit(drop.rectTransform,960);
+            foodView.CartDropZone=drop.rectTransform;DrawCart(drop.rectTransform);
             cartHeading=Label("",.269f,30,Ink,x:.48f,width:430,height:130);
             Button("DETALLE",.84f,.269f,()=>ToggleCartDetails(!cartExpanded),256,height:132);
             cartTotal=Label("",.193f,36,Cream,x:.30f,width:520,height:90);
             emptyCartButton=Button("VACIAR",.80f,.193f,()=>{cart.Clear();ToggleCartDetails(false);RefreshCart("Carrito vacío. No se gastaron monedas.");},268,height:132);
-            game.MakePanel("Aviso de vitrina",root.transform,new Color32(24,43,33,230),.5f,.339f,970,82).raycastTarget=false;
+            var noticeBand=game.MakePanel("Aviso de vitrina",root.transform,new Color32(24,43,33,230),.5f,.339f,FitWidth(970),82);noticeBand.raycastTarget=false;Fit(noticeBand.rectTransform,970);
             shopNotice=Label("",.339f,27,Cream,height:90);
             checkoutButton=Button("PAGAR Y SALIR",.5f,.119f,Checkout,740,height:132);
             Button("VOLVER",.26f,.043f,()=>{cart.Clear();Planning();},440,height:132).name="Volver carnicería";
             Button("HELADERA",.74f,.043f,()=>{cart.Clear();Fridge();},440,height:132).interactable=!Guided||service.CanPrepare(order.FoodIds)||service.CanRecover(order.FoodIds);
-            if(products.Length>2)Button("OTROS CORTES",.5f,.755f,()=>{worldView.ChangePage();RefreshCart();},440);
+            if(products.Length>2)Button("OTROS CORTES",.5f,.755f,()=>{foodView.ChangePage();RefreshCart();},440);
             RefreshCart(notice);
         }
         private void ToggleCartDetails(bool expanded)
@@ -204,7 +224,7 @@ namespace Asadito
             {
                 var p=service.Config.Product(pair.Key);int count=InCart(pair.Key);
                 pair.Value.text=FoodCatalog.Get(pair.Key).DisplayName+" ×"+count+" · $"+p.Price*count;
-                cartRemoves[pair.Key].interactable=count>0;worldView.UpdateTicket(pair.Key,count);
+                cartRemoves[pair.Key].interactable=count>0;foodView.UpdateTicket(pair.Key,count);
             }
             cartHeading.text="TU CHANGUITO\n"+(quote.Quantity==0?"Arrastrá la carne acá":quote.Quantity+" piezas · mirá DETALLE");
             foreach(var pair in cartIcons){pair.Value.gameObject.SetActive(InCart(pair.Key)>0);}
@@ -218,7 +238,7 @@ namespace Asadito
             var proposed=new Dictionary<string,int>(cart){[id]=InCart(id)+1};var quote=service.QuoteCart(proposed,order.Number);
             if(!quote.CanBuy){RefreshCart(quote.Error);return;}
             cart[id]=InCart(id)+1;game.ManagementFeedback();RefreshCart("+1 "+FoodCatalog.Get(id).DisplayName+" al carrito");
-            if(target!=null)worldView.Feedback(target);
+            if(target!=null)foodView.Feedback(target);
         }
         private void RemoveFromCart(string id)
         {
@@ -233,7 +253,7 @@ namespace Asadito
         {
             selection.Clear();pendingDiscard=null;Page("HELADERA",null,true);
             Label(service.State.Inventory.Count+" / "+service.Config.FridgeCapacity+" ESPACIOS · "+OrderSummary(),.835f,28,Cream,height:90);
-            var scene=new GameObject("Hybrid fridge scene",typeof(RectTransform));
+            var scene=new GameObject("Fridge scene 2D",typeof(RectTransform));
             var sceneRect=scene.GetComponent<RectTransform>();sceneRect.SetParent(root.transform,false);
             sceneRect.anchorMin=new Vector2(.015f,.295f);sceneRect.anchorMax=new Vector2(.985f,.805f);sceneRect.offsetMin=sceneRect.offsetMax=Vector2.zero;
             var fridgeArt=art.Get("Fridge_Hybrid_OpenEmptyV2");
@@ -246,9 +266,9 @@ namespace Asadito
             backdropRect.anchorMin=Vector2.zero;backdropRect.anchorMax=Vector2.one;backdropRect.offsetMin=backdropRect.offsetMax=Vector2.zero;
             var image=backdrop.GetComponent<RawImage>();image.texture=fridgeArt.texture;image.raycastTarget=false;
             Canvas.ForceUpdateCanvases();
-            worldView=ManagementWorldView.Create(frameRect,Vector2.zero,Vector2.one,game.ManagementBodyFont,service,true,SelectUnit,game.ManagementFoodSprite,game.ManagementFoodSize);
+            foodView=ManagementFoodView.Create(frameRect,Vector2.zero,Vector2.one,game.ManagementBodyFont,service,true,SelectUnit,game.ManagementFoodSprite,game.ManagementFoodSize);
             fridgeNotice=Label("",.262f,28,Cream,height:105);
-            game.MakePanel("Fridge selection band",root.transform,new Color32(24,43,33,230),.5f,.262f,990,106).transform.SetSiblingIndex(fridgeNotice.transform.GetSiblingIndex());
+            var selectionBand=game.MakePanel("Fridge selection band",root.transform,new Color32(24,43,33,230),.5f,.262f,FitWidth(990),106);selectionBand.transform.SetSiblingIndex(fridgeNotice.transform.GetSiblingIndex());Fit(selectionBand.rectTransform,990);
             prepareButton=Button("PREPARAR",.5f,.193f,ConfirmPreparation,650,height:132);
             if(service.CanRecover(order.FoodIds))Button("CAJA DEL ASADOR",Guided?.5f:.26f,.119f,()=>{
                 if(!service.Recover(order.FoodIds))return;service.State.ActiveRun.Level=order.Number;Save();Close();begin(order.FoodIds);
@@ -263,16 +283,16 @@ namespace Asadito
         }
         private void SelectUnit(ManagementFoodTarget target)
         {
-            if(selection.Contains(target.UnitId)){selection.Remove(target.UnitId);worldView.MoveSelection(target,false,0);RepositionSelection();RefreshPreparation();return;}
+            if(selection.Contains(target.UnitId)){selection.Remove(target.UnitId);foodView.MoveSelection(target,false,0);RepositionSelection();RefreshPreparation();return;}
             if(target.Freshness==Freshness.Spoiled){RefreshPreparation("Esta pieza está podrida: no se puede cocinar");return;}
             int chosen=0;foreach(int id in selection)if(service.State.Inventory.Find(u=>u.Id==id)?.FoodId==target.FoodId)chosen++;
             if(selection.Count>=order.FoodIds.Length||(Guided&&chosen>=Required(target.FoodId))){RefreshPreparation("La bandeja está completa. Tocá una pieza para devolverla");return;}
-            selection.Add(target.UnitId);game.ManagementFeedback();worldView.MoveSelection(target,true,selection.Count-1);pendingDiscard=null;RefreshPreparation();
+            selection.Add(target.UnitId);game.ManagementFeedback();foodView.MoveSelection(target,true,selection.Count-1);pendingDiscard=null;RefreshPreparation();
         }
-        private void RepositionSelection(){for(int i=0;i<selection.Count;i++){var t=worldView.Targets.Find(x=>x.UnitId==selection[i]);if(t!=null)worldView.MoveSelection(t,true,i);}}
+        private void RepositionSelection(){for(int i=0;i<selection.Count;i++){var t=foodView.Targets.Find(x=>x.UnitId==selection[i]);if(t!=null)foodView.MoveSelection(t,true,i);}}
         private void CancelSelection()
         {
-            foreach(int id in selection){var t=worldView.Targets.Find(x=>x.UnitId==id);if(t!=null)worldView.MoveSelection(t,false,0);}
+            foreach(int id in selection){var t=foodView.Targets.Find(x=>x.UnitId==id);if(t!=null)foodView.MoveSelection(t,false,0);}
             selection.Clear();pendingDiscard=null;RefreshPreparation("Selección cancelada: la carne sigue guardada");
         }
         private void RefreshPreparation(string notice="")

@@ -1,16 +1,16 @@
 # Manifest de arte visual para gestión y progresión — ASADITO
 
-> **Gestión híbrida vigente (2026-10-02):** mostrador y heladera ilustrados2D vacíos, comida volumétrica3D con raw atlas/tamaño de parrilla. Ver [recursos](management-3d-assets.md) y [QA heladera](../ai/hybrid-fridge-qa.md). Las secciones fechadas anteriores registran historia; la lista de runtime vigente está al inicio.
+> **Gestión 100 % 2D vigente (2026-10-02):** mostrador y heladera ilustrados vacíos existentes, comida RAW de parrilla como sprites Canvas con tamaño canónico y máscaras alfa precomputadas. Ver [arquitectura/auditoría](../architecture/management-2d.md). [Recursos 3D](management-3d-assets.md) y [QA híbrida](../ai/hybrid-fridge-qa.md) conservan historia, no la implementación actual.
 
-## Runtime vigente: heladera y carnicería híbridas (2026-10-02)
+## Runtime vigente: heladera y carnicería 100 % 2D (2026-10-02)
 Biblioteca92PNG:90 originales preservados + CounterV2 + FridgeV2. ManagementArt.asset referencia exactamente4: patio, moneda, CounterV2 y FridgeV2; los88 restantes no están conectados por esa biblioteca. Las cantidades de las secciones históricas siguientes no describen runtime actual.
 
 | Recurso | Fuente | Resolución/alfa | Estado | Uso vigente |
 |---|---|---|---|---|
-| Fridge_Hybrid_OpenEmptyV2 | Assets/Asado/Art/Management/Fridge/Fridge_Hybrid_OpenEmptyV2.png |1254×1254 RGBA|PROVISIONAL|Heladera vacía abierta, estantes y tabla; food3D real encima, sin comida/UI horneada.|
+| Fridge_Hybrid_OpenEmptyV2 | Assets/Asado/Art/Management/Fridge/Fridge_Hybrid_OpenEmptyV2.png |1254×1254 RGBA|PROVISIONAL|Heladera vacía abierta, estantes y tabla; sprites RAW2D reales encima, sin comida/UI horneada.|
 | ButcherShop_CounterV2 | Assets/Asado/Art/Management/ButcherShop/ButcherShop_CounterV2.png |Ilustración previa preservada|PROVISIONAL|Mostrador vacío con hasta48 piezas reales según stock24/SKU y carteles dinámicos.|
 
-FridgeV2 generado con ImageGen incorporado en modo edición de Tier1 existente; original/GUID retenidos. Import de fondo2048, FullRect/bilinear/clamp/sin mipmaps/no readable/ETC2_RGBA8 Android. Prompt final, ruta y capturas reales en [QA heladera](../ai/hybrid-fridge-qa.md). No3D de gabinete/puerta ni clones; full-size food y MeshColliders compartidos con tienda. QA humana/touch/FPS pendientes.
+FridgeV2 generado con ImageGen incorporado en modo edición de Tier1 existente; original/GUID retenidos. Import de fondo2048, FullRect/bilinear/clamp/sin mipmaps/no readable/ETC2_RGBA8 Android. Prompt final, ruta y capturas reales en [QA heladera](../ai/hybrid-fridge-qa.md). Recurso/GUID intactos en la migración2D; alimentos RAW del catálogo, tamaños canónicos y selección por sibling order/máscaras alfa. Sin gabinete/puerta/food3D, clones, cámara o RT de gestión. La QA citada es del híbrido anterior; compilación/tests/capturas2D se registran aparte. QA humana/touch/FPS pendientes.
 
 ## Vitrina abundante (histórico, 2026-10-01)
 Nuevo `ButcherShop_CounterV2.png` PROVISIONAL, generado por ImageGen en dos ediciones de la ilustración previa. Conserva estética argentina cálida y aporta una única superficie de exhibición amplia/profunda, sin carne/precios horneados. Original intacto. Se conecta mediante referencia explícita en ManagementArt.asset; import como fondo2048/bilinear/clamp/sin mipmaps/ETC2 HQ. Inventario total91 PNG (90 originales +1),6 referencias y85 restantes preparados. Prompts/ruta en [QA](../ai/abundant-counter-qa.md).
@@ -163,7 +163,7 @@ Vista general: [hoja de contacto de los 90 sprites](management-library-preview.p
 ## Pendientes visuales para una integración futura
 
 - Revisar en pantalla móvil escala de los paneles, sus márgenes/nine-slice y legibilidad antes de conectar UI.
-- Heladera híbrida ya integrada; revisar tacto, tamaño y performance en Android. Upgrades de tiers siguen pendientes.
+- Heladera2D integrada con la ilustración existente; revisar tacto, tamaño y performance en Android. Upgrades de tiers siguen pendientes.
 - Armonizar la identidad facial/pañuelo del arte de sorpresa con el atlas de seis poses antes de usarla como una misma persona; no conectar mientras tanto.
 - Montar componentes de asador, disco y horno en el mismo patio y validar footprint/colisiones visuales antes de diseñar mecánicas.
-- Mantener la biblioteca fuera de `Resources`; cuando exista economía/inventario, definir referencias explícitas o Addressables de forma deliberada.
+- Mantener la biblioteca fuera de `Resources`; conservar las cuatro referencias explícitas actuales y conectar otros recursos solo al implementar su sistema. No introducir Addressables para esta migración.

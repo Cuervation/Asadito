@@ -1,6 +1,0 @@
-{
-  "name": "Asadito.Management3D",
-  "rootNamespace": "Asadito",
-  "references": ["Asadito.Runtime", "Unity.ugui"],
-  "autoReferenced": true
-}

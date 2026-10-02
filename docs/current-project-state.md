@@ -1,6 +1,6 @@
 # ASADITO — estado operativo actual
 
-**2026-10-02.** Dirección canónica: [full-game](../specs/product/full-game.md). No usar informes históricos como instrucciones actuales. Baseline previo conservado en [historia 2026-09-30](ai/operational-state-20260930-history.md).
+**2026-10-02. Asadito es 100 % 2D.** Dirección canónica: [full-game](../specs/product/full-game.md). No usar informes históricos como instrucciones actuales. Baseline previo conservado en [historia 2026-09-30](ai/operational-state-20260930-history.md).
 
 ## Jugable
 - Primer capítulo de 12 asados; **L1–6** disponibles secuencialmente según estrellas. Partida nueva empieza solo con L1; cards restantes Disabled/candado. L7–12 siguen bloqueados hasta implementar sus verticales. Se conservan unlock/stars/scores antiguos.
@@ -17,7 +17,7 @@
 
 ## Arquitectura/datos
 - `ManagementConfig.json`: economía, capacidad, precios, stock, porciones, rewards, pesos y gates; `ChapterOneLevels.json`: pedidos. Catálogo de alimentos sigue siendo fuente de identidad/perfiles/arte.
-- `ManagementState`/`ManagementService`/`Wallet`: reglas y transacciones independientes; `ManagementScreen`: mostrador con vitrina/bandejas tocables y carrito temporal (+/−/vaciar/total), checkout único PAGAR Y SALIR hacia heladera; vistas event-driven; AsaditoGame adapta preparación/resultados sin reescribir térmica.
+- `ManagementState`/`ManagementService`/`Wallet`: reglas y transacciones independientes; `ManagementScreen`: navegación, carrito temporal (+/−/vaciar/total), selección por IDs y checkout único PAGAR Y SALIR hacia heladera; `ManagementFoodView`/`Asadito.Management2D`: imágenes Canvas, picking por sibling order/máscaras alfa precomputadas y animaciones breves. Sin estado de negocio duplicado ni mundo/cámara/RenderTexture/material/mesh/collider 3D de gestión. AsaditoGame adapta preparación/resultados sin reescribir térmica. [Arquitectura y auditoría](architecture/management-2d.md).
 - Save v5, migración aditiva desde v1–4; normaliza ActiveRun fantasma vacío materializado por JsonUtility sin eliminar runs preparados reales. Balance/inventario/run/equipamiento/ciclos persistidos; progreso/settings retenidos.
 - Cuatro sprites de gestión conectados por referencias en `Resources/ManagementArt.asset`: patio, moneda, CounterV2 y FridgeV2;88 restantes de la biblioteca fuera del runtime. Botones arcade existentes intactos.
 
@@ -26,7 +26,19 @@
 - Cotización de promos probada, sin ofertas activas aún. Freezer/upgrades/estaciones/eventos solo diseño y campos mínimos de save; no acciones falsas.
 - Roadmap Verticales2–6 en [roadmap](roadmap.md); reglas por dominio enlazadas desde full-game.
 
-## QA de esta entrega
+## Migración definitiva 2D — vigente (2026-10-02)
+- CounterV2 y Fridge_Hybrid_OpenEmptyV2 existentes se reutilizan; comida RAW exacta de parrilla mediante Images Canvas y tamaño canónico por corte, sin PNG duplicados ni regeneración masiva. El nombre Hybrid del PNG se conserva por estabilidad de recurso, no describe arquitectura.
+- Mostrador: hasta 24 unidades reales por producto, capas/superposición abundantes y carteles comerciales dinámicos que bloquean alimentos ocultos; changuito, resumen expandible, +/−/vaciar/pago único intactos. Selección solo cotiza.
+- Heladera: hasta8 imágenes por InventoryUnit.Id real, estantes/tabla ilustrados; selección/devolución breve y reversible, preparación exacta por IDs. Recuperación/descarte/tutorial/save y frescura deshabilitada intactos.
+- Picking por orden de hermanos y alfa precomputada, no física3D. Puntero dueño único; cancelar/drop fuera/UI/otro dedo/cierre no añade unidades. Preview temporal y corutinas se limpian sin consumir inventario.
+- Retirados meshes 3D exclusivos de gestión, generadores, shaders y bake de Asadito; se preservan terceros, Unity MCP, herramientas generales y metadata/GUID de arte reutilizado.
+- **Unity6000.6.3f1: compile/import PASS; ManagementTests41/41 EditMode PASS; nueve PlayMode focales9/9 PASS (69.116s) y cierre visual/drag/capacidad3/3 PASS (16.974s); validator contenido PASS.** Capturas reales1080×1920/720×1600 revisadas; [evidencia y fallos corregidos](ai/management-2d-qa.md). No suite completa, APK/instalación ni FPS/touch/performance físico medidos.
+- Teléfono: última evidencia disponible corresponde a1.4.0/code6 anterior a híbrido/2D; push Git no actualiza la APK. Aprobación artística y QA Android física pendientes.
+
+## Historia de implementación y QA
+Las secciones siguientes conservan resultados de sus respectivas versiones; ninguna afirmación 3D/híbrida describe la arquitectura vigente.
+
+## Evidencia histórica — gestión desde L1 (2026-10-01)
 - Unity6000.6.3f1 real en checkoutQA ya importado; **EditMode53/53 PASS**, focal gestión **3/3 PASS** y recorrido pagado de los seis niveles **1/1 PASS** (153.12s). Validator contenido PASS. Broad12/13 inicial encontró truncadoL6; corregido y probado en cierre del recorrido. Evidencia exacta: [QA gestión desdeL1](ai/management-level1-qa.md).
 - Renders1080×1920 de guíaL1/compra/heladera/resultados revisados. Font ascenders con espacio2.5x y overflow, detalle260px sin reducir fuente; test comprueba geometría/texto.
 - Se conserva aislamiento del Editor principal; no se modifica Library del usuario.
@@ -57,7 +69,7 @@ El release público requiere playtesting humano y QA táctil/performance ARM64. 
 ### Instalación Gestión 3D en celular (2026-10-01)
 - APK1.4.0/code6 actualizada con install -r en Motorola ZY22MBNWRB, sin borrar datos, y abierta en primer plano. Menú real confirma v1.4.0 Gestión3D. Ver [evidencia Android](android-release.md); gameplay/touch3D/performance físico siguen pendientes. Sin commit/push nuevo en este pedido.
 
-## Carnicería híbrida/changuito — implementación vigente (2026-10-01)
+## Carnicería híbrida/changuito — implementación histórica (2026-10-01)
 - Mostrador ilustrado vacío CounterV2 y comida3D con textura raw exacta de parrilla (relieve nativo2656v/2920v); heladera comparte esas piezas, resto de escenario/puerta y economía/cocción intactos.
 - Changuito visible, drag al canasto agrega una unidad validada; cancelar/otro dedo/botón/fuera no agrega, pagar persiste transacción conjunta. Preview UI temporal único; retirados clones de vuelo. UV layout recalculado al cambiar viewport, VACIAR colapsa detalle.
 - **7/7 PlayMode focales PASS** y capturas Unity reales revisadas;22,304foodtriangles/16MeshRenderers. [QA](ai/hybrid-cart-qa.md). No FPS físico medido.
@@ -74,14 +86,14 @@ El release público requiere playtesting humano y QA táctil/performance ARM64. 
 - **3 casos únicosPlayMode+3EditMode focales PASS**:48centros físicos/UV/geometría/márgenes/viewport780×1100, pulso/drag/pago/reload, stock5+3 y0, economíaStock24/23 y atomicidad. Renders realesportrait inspeccionados;66,912foodtriangles/48renderers compartidos, sin FPS físico medido. [QA](ai/counter-triple-quantity-qa.md).
 - No APK/install/commit/push nuevos; celular sigue1.4.0 anterior sin híbrido ni cantidad triplicada.
 
-### Tamaño de parrilla y carteles comerciales — corrección vigente (2026-10-01)
+### Tamaño de parrilla y carteles comerciales — corrección histórica (2026-10-01)
 - Reemplaza la miniaturización/separación estricta anterior:48 instancias según stock24 por SKU, comida con footprints reales de parrilla (L1 chorizo185.71×71.71/tira265.20×100.43), dos capas apoyadas con superposición permitida y perspectiva natural. Bordes se desplazan al interior, no se achican.
 - Carteles nativos blancos con banda verde, precio rojo grande/contorno y pinza/poste/base metálicos; $100/$180 intactos. Texto sin truncar, stock/llevás visibles y cartel bloquea compra oculta.
 - MeshColliders de silueta solo en mostrador; heladera conserva cajas/IDs exactos. Drag preview comparte medida de parrilla; pulso y compra/pago/guardado intactos.
 - **3/3 PlayMode focales PASS** (cierre13.052s, ancho al1%): tamaño/paridad de controles preparados,48 modelos/stock parcial/agotado, safe area780×1100, texto/raycast/pulso/drag/pago/reload/preparación. Renders reales inspeccionados;66,912 triángulos/48 renderers, sin FPS físico. [QA](ai/counter-grill-size-signs-qa.md).
 - Sin APK/install/commit/push nuevos; celular sigue1.4.0 anterior. Falta build/instalación si se solicita y QA táctil/performance humano.
 
-## Heladera híbrida — implementación vigente (2026-10-02)
+## Heladera híbrida — implementación histórica reemplazada (2026-10-02)
 - Escenario ilustrado2D vacío Fridge_Hybrid_OpenEmptyV2 (1254RGBA, originalTier1 preservado) con comida volumétrica3D compartida con tienda/parrilla. No gabinete/puertas opacos3D que oculten alimentos ni arte duplicado de comida.
 - Hasta8 unidades reales por ID en tres superficies; ancho proyectado canónico por corte en estantes y tabla, sin miniaturizar selección. MeshCollider/silueta y raycast de profundidad seleccionan el corte expuesto cuando hay superposición. Cancelar/volver/preparar preservan economía e identidad exacta; freshness desactivada sigue igual.
 - Frame de aspecto nativo dentro de host central; footer no tapa la tabla. DESCARTAR se mueve afuera del escenario, al lado de COMPRAR o CAJA DEL ASADOR cuando corresponde; mismos botones arcade. ManagementArt tiene4 referencias activas: patio, moneda, CounterV2 y FridgeV2.

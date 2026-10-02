@@ -2,6 +2,9 @@
 
 ASADITO es un juego móvil de gestión de asados argentinos donde planificás la juntada, comprás y administrás la carne, mejorás tu patio y demostrás tu habilidad cocinando para que todos se vayan contentos.
 
+## Presentación definitiva — 100 % 2D (2026-10-02)
+Ilustraciones cartoon cálidas, sprites y animaciones 2D coherentes en carnicería, heladera, parrilla y tabla. Sombras/perspectiva pintadas están permitidas; modelos, colliders físicos 3D, cámaras/RenderTextures de mundos de gestión y efectos volumétricos no. Reutilizar el catálogo y sus atlas, fuentes, botones y escenarios aprovechables sin regeneración masiva. Esta decisión reemplaza las variantes 3D e híbridas anteriores; no modifica economía, progresión ni save.
+
 ## Loop
 Próximo asado → invitados/necesidades → heladera → carnicería → compra → inventario → preparación → bandeja → estación → tabla → servicio → satisfacción → economía → monedas → mejoras → próximo asado.
 Este ciclo de compras pagadas y recompensas existe desde el nivel1, sin regalar mercadería inicial. La gestión determina lo que llega al fuego; cocinar sigue siendo habilidad táctil. No se reemplaza el motor térmico.
@@ -28,7 +31,7 @@ Cada vertical necesita flujo completo, pruebas de reglas, integración y evidenc
 Datos de tuning numérico: `ManagementConfig.json`; pedidos del capítulo: `ChapterOneLevels.json`.
 
 ## Límites absolutos
-Sin carbón, encendido/apagado, brasas manipulables, energía, vidas, timers reales/offline, multiplayer, NPCs caminando, anuncios, monetización ni compras reales.
+Sin carbón, encendido/apagado, brasas manipulables, energía, vidas, timers reales/offline, multiplayer, NPCs caminando, anuncios, monetización ni compras reales. No reincorporar botones de dar vuelta, bandeja o servir: la interacción táctil existente de parrilla/tabla permanece.
 Mobile-first: objetos, cards, iconos y acciones breves; no un panel administrativo. Mantener botones arcade actuales y arte de patio. No nuevos frameworks, microservicios ni event bus genérico. No Update por unidad de inventario.
 
 ## Historia

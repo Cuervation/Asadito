@@ -1,5 +1,7 @@
 # Configuración y build Android
 
+> **Fuente vigente 100 % 2D (2026-10-02); evidencia Android histórica.** Ninguna APK/captura/install listada abajo demuestra la migración 2D nueva. La última instalación documentada sigue1.4.0/code6 de Gestión3D; push Git no actualiza el teléfono. No se presume build/install/touch/performance físico nuevo. Estado de fuente y QA 2D: [estado operativo](current-project-state.md).
+
 `Assets/Asado/Scripts/Editor/AndroidReleaseBuild.cs` contiene un ajuste y build repetibles. El método de configuración establece:
 
 | Campo | Valor validado |
@@ -17,7 +19,7 @@ Unity API: ejecutar desde CLI `-executeMethod Asadito.Editor.AndroidReleaseBuild
 
 Build de validación del baseline anterior (2026-09-29): `/tmp/Asadito-mvp-1.2.0-arm64-final.apk` mostraba carbón y **no valida este refactor**. Sus capturas de gameplay/swipe y el ANR de input son evidencia histórica; no deben atribuirse ni extrapolarse a la build siguiente.
 
-Build actual del refactor (2026-09-30): Unity 6000.6.3f1 `Succeeded` en el segundo intento; el primero se canceló durante IL2CPP postprocess tras ~239 s y el incremental terminó en 61.7 s. APK `/tmp/Asadito-always-hot-1.2.0-arm64.apk` (53 MiB); `aapt` verificó `com.cuervation.asadito`, versión 1.2.0/code 3, min API 26 y target/compile API 36; `unzip` confirmó solo `arm64-v8a`; `apksigner` verifica el scheme v2. Instalación con ADB: `Success` en el AVD `Asadito_Pixel_7a_API_36` (1080×2400, Android 16/API36).
+Build del refactor histórico (2026-09-30): Unity 6000.6.3f1 `Succeeded` en el segundo intento; el primero se canceló durante IL2CPP postprocess tras ~239 s y el incremental terminó en 61.7 s. APK `/tmp/Asadito-always-hot-1.2.0-arm64.apk` (53 MiB); `aapt` verificó `com.cuervation.asadito`, versión 1.2.0/code 3, min API 26 y target/compile API 36; `unzip` confirmó solo `arm64-v8a`; `apksigner` verifica el scheme v2. Instalación con ADB: `Success` en el AVD `Asadito_Pixel_7a_API_36` (1080×2400, Android 16/API36).
 
 Límite de smoke test: pese a instalar, el AVD es una imagen **x86_64**, no un teléfono Pixel ARM64. Al abrir el APK ARM64 mostró el aviso de incompatibilidad del emulador y Unity no pudo inicializar `Unity Engine Graphics API`; con SwiftShader la imagen solo anuncia OpenGL ES 3.1, mientras Unity intenta crear contextos ES 3.2/3.1. Por ello **no** se verificaron menú, gameplay, toque, drag, flip o servicio en esta build, y no existe una captura de gameplay Android nueva. La pantalla del bloqueo gráfico quedó en `/tmp/asadito-qa/02-after-hardware-warning.png` solo como evidencia diagnóstica. La build está compilada, firmada para validación e instalada, pero el smoke de runtime requiere teléfono ARM64 compatible; no se publicó ni se usaron claves productivas.
 
@@ -31,7 +33,7 @@ Build de los cambios pendientes de navegación/UI (2026-09-30): `python3 Tools/v
 
 Instalación de la APK `20979f4` (2026-09-30): `adb install -r --no-streaming` devolvió `Success` en Motorola Edge 60 Fusion `ZY22MBNWRB` (Android 16/API36), conservando datos. `UnityPlayerGameActivity` quedó en primer plano con el menú principal visible (PID 21581 al verificar). Captura `/tmp/asadito-motorola-20979f4.png` (1220×2712). El transporte ADB del teléfono desapareció al intentar continuar la navegación, después de confirmar instalación y arranque; no se verificó el selector ni gameplay en esta pasada.
 
-## Gestión desde L1 (2026-10-01, actual)
+## Gestión desde L1 (2026-10-01, histórica)
 Unity6000.6.3f1, ARM64/IL2CPP Succeeded en una única compilación final. APK local65MiB `build/Asadito-1.3.0-management-level1-20261001.apk`, version1.3.0/code4,min26,target36; metadata/ABI/firma v2 debug verificadas. SHA256 `6876a9ab20d112c3b257654c540c588248afc5efc369ac04d1021e891604cc61`. Dominio53/53PASS, focalgestión3/3PASS y recorridoL1–6 1/1PASS; detalle/evidencia en [QA](ai/management-level1-qa.md). ADB no detecta dispositivos al cierre, por lo que esta build no se instaló ni se probó táctilmente en teléfono. Mantener datos con `adb install -r` cuando vuelva a estar conectado; no desinstalar ni limpiar PlayerPrefs. Sin publicación/firma productiva.
 
 ## Mostrador y carrito — build e instalación (2026-10-01)
@@ -51,4 +53,4 @@ APK final1.4.0/code6 instalada por `adb install -r --no-streaming`: Success en M
 Solo instalación/arranque verificados: no compras ni cambios de progreso, no navegación3D ni profiling/touch/notch completos. Log de inicio reporta ClassNotFoundException de AssetPackManager, sin impedir mostrar menú. Sin build nueva, suites adicionales, commit ni push en este pedido.
 
 ## Cambios híbridos posteriores (2026-10-02, sin nueva APK)
-Carnicería/heladera2D con food3D de tamaño de parrilla, changuito drag, stock24/SKU y carteles comerciales existen en fuente y se incluyen en el commit/push autorizado. Unity PlayMode focal5/5PASS y capturasportrait reales para cierre de heladera; [QA](ai/hybrid-fridge-qa.md). No se pidió ni generó build/install Android en este cierre. Motorola sigue1.4.0/code6 anterior; push Git no actualiza automáticamente la APK. QA táctil/performance física de las vistas híbridas pendiente.
+Carnicería/heladera2D con comida 3D de tamaño de parrilla, changuito drag, stock24/SKU y carteles comerciales existen en fuente y se incluyen en el commit/push autorizado. Unity PlayMode focal5/5PASS y capturasportrait reales para cierre de heladera; [QA](ai/hybrid-fridge-qa.md). No se pidió ni generó build/install Android en este cierre. Motorola sigue1.4.0/code6 anterior; push Git no actualiza automáticamente la APK. QA táctil/performance física de las vistas híbridas pendiente.

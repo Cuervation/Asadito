@@ -3,7 +3,7 @@
   "rootNamespace": "Asadito.Tests.PlayMode",
   "references": [
     "Asadito.Runtime",
-    "Asadito.Management3D"
+    "Asadito.Management2D"
   ],
   "includePlatforms": [],
   "excludePlatforms": [],
