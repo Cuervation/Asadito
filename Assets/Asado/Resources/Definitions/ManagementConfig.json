@@ -12,7 +12,7 @@
     {
       "FoodId": "chorizo",
       "Price": 100,
-      "Stock": 8,
+      "Stock": 24,
       "UnlockLevel": 1,
       "FreshCycles": 3,
       "PortionAmount": 0.1
@@ -20,7 +20,7 @@
     {
       "FoodId": "tira",
       "Price": 180,
-      "Stock": 8,
+      "Stock": 24,
       "UnlockLevel": 1,
       "FreshCycles": 4,
       "PortionAmount": 0.14

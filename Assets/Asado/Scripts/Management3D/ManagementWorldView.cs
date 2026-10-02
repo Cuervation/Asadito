@@ -14,15 +14,20 @@ namespace Asadito
         public int UnitId;
         public Freshness Freshness;
         public bool Selected;
+        public int SelectionSlot=-1;
         public Vector3 Home;
+        public Vector2 DisplayUV;
+        public float DisplayHeight;
+        public Vector3 HomeScale=Vector3.one*.86f;
         public MeshRenderer Visual;
     }
 
     /// <summary>Owned viewport: real meshes/colliders and fixed camera, no parallel business state.
     /// Pointer events only reach this RawImage when no overlay intercepted them.</summary>
-    public sealed class ManagementWorldView : MonoBehaviour, IPointerClickHandler
+    public sealed class ManagementWorldView : MonoBehaviour, IPointerClickHandler, IPointerDownHandler, IBeginDragHandler, IDragHandler, IEndDragHandler
     {
         const int WorldLayer=30;
+        public const int ShopDisplayLimit=24;
         static readonly Dictionary<string,Func<Mesh>> factories=new Dictionary<string,Func<Mesh>>{
             ["chorizo"]=ManagementMeshes.Chorizo,["tira"]=ManagementMeshes.Tira};
         public static void RegisterFoodModel(string foodId,Func<Mesh> factory){if(factory==null)throw new ArgumentNullException(nameof(factory));factories[foodId]=factory;}
@@ -33,24 +38,39 @@ namespace Asadito
         public readonly List<ManagementFoodTarget> Targets=new List<ManagementFoodTarget>();
         readonly List<UnityEngine.Object> owned=new List<UnityEngine.Object>();
         readonly Dictionary<string,Mesh> foods=new Dictionary<string,Mesh>();
-        readonly Dictionary<string,Text> tickets=new Dictionary<string,Text>();
+        sealed class PriceSign
+        {
+            public RectTransform Root;
+            public Text Product, Price, Stock;
+        }
+        readonly Dictionary<string,PriceSign> tickets=new Dictionary<string,PriceSign>();
+        readonly Dictionary<string,Vector2> ticketPositions=new Dictionary<string,Vector2>();
         readonly Dictionary<ManagementFoodTarget,Coroutine> motions=new Dictionary<ManagementFoodTarget,Coroutine>();
-        Transform world,door;
-        Material solid,glass;
+        Transform world;
+        Material solid;
+        readonly Dictionary<string,Material> foodMaterials=new Dictionary<string,Material>();
+        Func<string,Sprite> foodSprite;
+        Func<string,Vector2> foodSize;
+        public RectTransform CartDropZone { get; set; }
+        public bool IsDragging => dragTarget!=null;
+        ManagementFoodTarget dragTarget;
+        Image dragPreview;
+        int dragPointer;
+        bool suppressClick;
+        Vector3 dragHomeScale;
         RenderTexture texture;
         Font font;
         Action<ManagementFoodTarget> select;
-        Vector3 preparationSpot;
         int page, pageCount=1;
         ManagementService service;
-        readonly Color wood=new Color(.42f,.22f,.105f), cream=new Color(.92f,.87f,.70f), metal=new Color(.57f,.65f,.65f), green=new Color(.18f,.33f,.25f);
+        readonly Color metal=new Color(.57f,.65f,.65f);
 
-        public static ManagementWorldView Create(Transform parent,Vector2 min,Vector2 max,Font font,ManagementService service,bool fridge,Action<ManagementFoodTarget> select)
+        public static ManagementWorldView Create(Transform parent,Vector2 min,Vector2 max,Font font,ManagementService service,bool fridge,Action<ManagementFoodTarget> select,Func<string,Sprite> foodSprite=null,Func<string,Vector2> foodSize=null)
         {
             var go=new GameObject(fridge ? "Heladera 3D" : "Vitrina de vidrio",typeof(RectTransform),typeof(CanvasRenderer),typeof(RawImage),typeof(ManagementWorldView));
             var r=go.GetComponent<RectTransform>();r.SetParent(parent,false);r.anchorMin=min;r.anchorMax=max;r.offsetMin=r.offsetMax=Vector2.zero;
             var view=go.GetComponent<ManagementWorldView>();view.Viewport=go.GetComponent<RawImage>();view.Viewport.raycastTarget=true;
-            view.font=font;view.service=service;view.select=select;view.IsFridge=fridge;view.Build();return view;
+            view.foodSprite=foodSprite;view.foodSize=foodSize;view.font=font;view.service=service;view.select=select;view.IsFridge=fridge;view.Build();return view;
         }
         void Build()
         {
@@ -59,36 +79,27 @@ namespace Asadito
             owned.Add(world.gameObject);
             solid=new Material(Resources.Load<Shader>("ManagementSurface")){name="ASADITO shared painted mobile surface"};owned.Add(solid);
             solid.SetFloat("_Gloss",.17f);
-            glass=new Material(Resources.Load<Shader>("ManagementGlass")){name="ASADITO low cost glass"};owned.Add(glass);
             foreach(var pair in factories)
             {
-                var mesh=Resources.Load<Mesh>("Management3D/"+pair.Key);
+                var mesh=Resources.Load<Mesh>("Management3D/"+pair.Key+"-grill-relief") ?? Resources.Load<Mesh>("Management3D/"+pair.Key);
+                if(mesh!=null&&mesh.name.Contains("volumetric raw")&&foodSprite!=null)
+                {
+                    var sprite=foodSprite(pair.Key);
+                    if(sprite!=null){var mat=new Material(Resources.Load<Shader>("ManagementFoodTexture")){name="Original grill texture · "+pair.Key};mat.mainTexture=sprite.texture;foodMaterials[pair.Key]=mat;owned.Add(mat);}
+                }
                 if(mesh==null){mesh=pair.Value();owned.Add(mesh);}foods[pair.Key]=mesh;
             }
             var cam=new GameObject("Management isolated camera",typeof(Camera));cam.transform.SetParent(world,false);
             WorldCamera=cam.GetComponent<Camera>();WorldCamera.clearFlags=CameraClearFlags.SolidColor;
-            WorldCamera.backgroundColor=new Color(.14f,.22f,.19f);WorldCamera.cullingMask=1<<WorldLayer;
-            WorldCamera.orthographic=true;WorldCamera.orthographicSize=IsFridge ? 3.95f : 3.35f;
+            WorldCamera.backgroundColor=Color.clear;WorldCamera.cullingMask=1<<WorldLayer;
+            WorldCamera.orthographic=false;WorldCamera.fieldOfView=60;
             WorldCamera.nearClipPlane=.1f;WorldCamera.farClipPlane=35;WorldCamera.allowHDR=false;WorldCamera.allowMSAA=false;
-            cam.transform.localPosition=IsFridge ? new Vector3(3.0f,8.5f,12) : new Vector3(3.5f,8.8f,10.5f);
-            cam.transform.LookAt(world.position+(IsFridge ? new Vector3(-.45f,2.2f,0) : new Vector3(0,.9f,0)));
+            cam.transform.localPosition=new Vector3(0,9,-5.2f);cam.transform.LookAt(world.position);
+            if(!IsFridge)cam.transform.localRotation*=Quaternion.AngleAxis(5,Vector3.forward);
             // Capped render target, resized for actual safe-area viewport rather than assumed screen ratio.
             Canvas.ForceUpdateCanvases();ResizeTexture();
             if(IsFridge)BuildFridge();else BuildShop();
-            SetLayer(world);BatchStaticProps();Physics.SyncTransforms();
-        }
-        void BatchStaticProps()
-        {
-            var list=new List<CombineInstance>();
-            foreach(var renderer in world.GetComponentsInChildren<MeshRenderer>())
-            {
-                if(renderer.sharedMaterial!=solid||renderer.GetComponentInParent<ManagementFoodTarget>()!=null||
-                    (door!=null&&renderer.transform.IsChildOf(door)))continue;
-                list.Add(new CombineInstance{mesh=renderer.GetComponent<MeshFilter>().sharedMesh,
-                    transform=world.worldToLocalMatrix*renderer.transform.localToWorldMatrix});renderer.enabled=false;
-            }
-            if(list.Count==0)return;var mesh=new Mesh{name="Combined fixed shop/fridge props"};mesh.CombineMeshes(list.ToArray(),true,true);owned.Add(mesh);
-            Shape("Batched static scenery",mesh,Vector3.zero);
+            SetLayer(world);Physics.SyncTransforms();
         }
         void ResizeTexture(int captureHeight=0)
         {
@@ -96,15 +107,15 @@ namespace Asadito
             if(size.x<1||size.y<1)return; // Layout can briefly collapse a stretched rect; never create a NaN projection.
             float aspect=size.x/size.y;
             WorldCamera.aspect=aspect;
-            WorldCamera.orthographicSize=Mathf.Max(IsFridge ? 3.95f : 3.35f,(IsFridge ? 3.3f : 3.55f)/aspect);
+            if(world!=null){if(IsFridge)LayoutFridge();else LayoutShop();}
             int h=captureHeight>0 ? captureHeight : Mathf.Min(1200,Mathf.Max(640,Screen.height));int w=Mathf.Clamp(Mathf.RoundToInt(h*aspect),512,1200);
             if(texture!=null&&texture.width==w&&texture.height==h)return;
             if(texture!=null){texture.Release();Destroy(texture);}
-            texture=new RenderTexture(w,h,16,RenderTextureFormat.ARGB32){name="Management viewport (capped)",antiAliasing=2};texture.Create();
+            texture=new RenderTexture(w,h,16,RenderTextureFormat.ARGB32){name="Management viewport (capped)",antiAliasing=1};texture.Create();
             WorldCamera.targetTexture=texture;WorldCamera.aspect=aspect;Viewport.texture=texture;
         }
         void OnRectTransformDimensionsChange(){if(WorldCamera!=null&&Viewport!=null)ResizeTexture();}
-        void OnDisable(){if(WorldCamera!=null)WorldCamera.enabled=false;if(world!=null)world.gameObject.SetActive(false);}
+        void OnDisable(){CancelDrag();if(WorldCamera!=null)WorldCamera.enabled=false;if(world!=null)world.gameObject.SetActive(false);}
         void OnDestroy()
         {
             if(WorldCamera!=null)WorldCamera.targetTexture=null;
@@ -118,41 +129,81 @@ namespace Asadito
             var go=new GameObject(name,typeof(MeshFilter),typeof(MeshRenderer));go.layer=WorldLayer;go.transform.SetParent(parent ?? world,false);
             go.transform.localPosition=position;go.GetComponent<MeshFilter>().sharedMesh=mesh;go.GetComponent<MeshRenderer>().sharedMaterial=material ?? solid;return go;
         }
-        GameObject Box(string name,Vector3 size,Vector3 pos,Color color,float radius=.06f,Transform parent=null,Material material=null)
-        {
-            var mesh=ManagementMeshes.RoundedBox(size,radius,color);owned.Add(mesh);return Shape(name,mesh,pos,parent,material);
-        }
-        void Room()
-        {
-            Box("Terracotta floor",new Vector3(16,.14f,14),new Vector3(0,-.25f,0),new Color(.48f,.28f,.17f));
-            Box("Warm tiled wall",new Vector3(14,7,.18f),new Vector3(0,3,-3.2f),cream);
-            Box("Sage wall base",new Vector3(14,1.6f,.22f),new Vector3(0,.55f,-3.05f),green);
-            for(int i=0;i<9;i++)Box("Tile seam",new Vector3(.025f,4,.035f),new Vector3(-5+i*1.25f,3.5f,-3.04f),new Color(.70f,.67f,.53f),.005f);
-            for(int i=0;i<4;i++)Box("Tile grout",new Vector3(14,.022f,.035f),new Vector3(0,2+i*.9f,-3.04f),new Color(.70f,.67f,.53f),.005f);
-            Box("Timber wall trim",new Vector3(14,.17f,.23f),new Vector3(0,1.4f,-2.99f),wood);
-            Box("Pendant support",new Vector3(.045f,1.2f,.045f),new Vector3(-2,5,-2.2f),metal);
-            Box("Warm hanging lamp",new Vector3(1.0f,.25f,.70f),new Vector3(-2,3.9f,-2.2f),new Color(.83f,.59f,.23f),.11f);
-        }
         void BuildShop()
         {
-            Room();
-            Box("Counter timber base",new Vector3(6.2f,1.2f,3.3f),new Vector3(0,.45f,0),wood,.14f);
-            for(int i=0;i<8;i++)Box("Wooden front stave",new Vector3(.72f,1.02f,.10f),new Vector3(-2.65f+i*.76f,.47f,1.65f),new Color(.50f+(i%2)*.025f,.28f,.13f));
-            Box("Brushed metal counter",new Vector3(6.1f,.16f,3.15f),new Vector3(0,1.12f,0),metal,.07f);
-            Box("Front brass lip",new Vector3(6.3f,.10f,.14f),new Vector3(0,1.21f,1.65f),new Color(.84f,.61f,.29f));
-            for(int side=-1;side<=1;side+=2)
-            {
-                Box("Glass side",new Vector3(.035f,1.0f,3.0f),new Vector3(side*3.01f,1.72f,0),Color.white,.008f,null,glass);
-                Box("Window rail",new Vector3(.07f,.08f,3.25f),new Vector3(side*3.07f,2.2f,0),metal);
-            }
-            Box("Glass front",new Vector3(6,.67f,.035f),new Vector3(0,1.55f,1.60f),Color.white,.008f,null,glass);
-            Box("Back counter rail",new Vector3(6.3f,.10f,.12f),new Vector3(0,2.2f,-1.57f),metal);
-            Box("Scale foot",new Vector3(.74f,.13f,.7f),new Vector3(2.20f,2.05f,-2.0f),metal);
-            Box("Scale housing",new Vector3(.42f,.65f,.32f),new Vector3(2.20f,2.40f,-2.0f),cream);
-            Box("Scale face",new Vector3(.30f,.30f,.025f),new Vector3(2.20f,2.5f,-1.82f),green);
-            Box("Scale bowl",new Vector3(.85f,.13f,.68f),new Vector3(2.2f,2.80f,-2.0f),metal);
+            // The illustrated empty counter owns the environment. Only saleable food is rendered here.
             var products=Array.FindAll(service.Config.Products,p=>p.UnlockLevel<=CurrentLevel);
             pageCount=Math.Max(1,(products.Length+1)/2);ShopPage(products);
+        }
+        Vector3 ShopPoint(float u,float v,float height=0)
+        {
+            // Counter base plane; a second supported layer may rest on the cuts below.
+            var ray=WorldCamera.ViewportPointToRay(new Vector3(u,v,0));
+            var plane=new Plane(world.up,world.TransformPoint(Vector3.up*height));
+            return plane.Raycast(ray,out float distance) ? world.InverseTransformPoint(ray.GetPoint(distance)) : Vector3.zero;
+        }
+        Vector3 TicketPoint(Vector2 uv)=>world.InverseTransformPoint(WorldCamera.ViewportToWorldPoint(new Vector3(uv.x,uv.y,8)));
+        void LayoutShop()
+        {
+            var center=world.TransformPoint(ShopPoint(.5f,.46f));
+            var scales=new Dictionary<string,float>();
+            foreach(var target in Targets)if(target!=null&&target.UnitId==0)
+            {
+                if(!scales.TryGetValue(target.FoodId,out float scale))
+                {
+                    float width=foods[target.FoodId].bounds.size.x;
+                    float referenceWidth=Mathf.Abs(WorldCamera.WorldToViewportPoint(center+world.right*width*.5f).x-
+                        WorldCamera.WorldToViewportPoint(center-world.right*width*.5f).x);
+                    // Same UI-reference footprint as the grill. Perspective supplies natural depth,
+                    // but stock count and screen aspect must never miniaturize the food.
+                    Vector2 size=foodSize!=null ? foodSize(target.FoodId) : new Vector2(220,100);
+                    float desiredWidth=size.x/Viewport.rectTransform.rect.width;
+                    scale=desiredWidth/Mathf.Max(.001f,referenceWidth);
+                    // Account for the raised mesh, tray angle and camera roll, not just a flat X line.
+                    // Calibrate at the middle depth; back/front cuts retain natural perspective.
+                    for(int pass=0;pass<4;pass++)
+                        scale*=desiredWidth/Mathf.Max(.001f,ProjectedShopWidth(foods[target.FoodId],world.InverseTransformPoint(center),scale));
+                    scales[target.FoodId]=scale;
+                }
+                target.HomeScale=Vector3.one*scale;
+                target.Home=ShopPoint(target.DisplayUV.x,target.DisplayUV.y)+Vector3.up*(target.DisplayHeight*scale);
+                target.transform.localPosition=target.Home;target.transform.localScale=target.HomeScale;
+                KeepFoodInsideTray(target);
+            }
+            foreach(var pair in ticketPositions)if(tickets.TryGetValue(pair.Key,out var sign)&&sign.Root!=null)
+            {
+                sign.Root.localPosition=TicketPoint(pair.Value);
+                sign.Root.localScale=Vector3.one*(244f/Viewport.rectTransform.rect.width*
+                    16*Mathf.Tan(WorldCamera.fieldOfView*Mathf.Deg2Rad*.5f)*WorldCamera.aspect/360);
+            }
+            Physics.SyncTransforms();
+        }
+        float ProjectedShopWidth(Mesh mesh,Vector3 position,float scale)=>ShopProjectedBounds(mesh,
+            world.localToWorldMatrix*Matrix4x4.TRS(position,Quaternion.identity,Vector3.one*scale)).width;
+        Rect ShopProjectedBounds(Mesh mesh,Matrix4x4 matrix)
+        {
+            var bounds=mesh.bounds;Vector2 min=Vector2.one*float.MaxValue,max=Vector2.one*float.MinValue;
+            for(int x=-1;x<=1;x+=2)for(int y=-1;y<=1;y+=2)for(int z=-1;z<=1;z+=2)
+            {
+                var corner=bounds.center+Vector3.Scale(bounds.extents,new Vector3(x,y,z));
+                var uv=WorldCamera.WorldToViewportPoint(matrix.MultiplyPoint3x4(corner));
+                min=Vector2.Min(min,new Vector2(uv.x,uv.y));max=Vector2.Max(max,new Vector2(uv.x,uv.y));
+            }
+            return Rect.MinMaxRect(min.x,min.y,max.x,max.y);
+        }
+        void KeepFoodInsideTray(ManagementFoodTarget target)
+        {
+            // Move an edge cut inward on short/narrow safe areas. Never shrink it to fit.
+            for(int pass=0;pass<4;pass++)
+            {
+                var bounds=ShopProjectedBounds(foods[target.FoodId],target.transform.localToWorldMatrix);
+                float dx=bounds.xMin<.035f ? .035f-bounds.xMin : bounds.xMax>.965f ? .965f-bounds.xMax : 0;
+                float dy=bounds.yMin<.26f ? .26f-bounds.yMin : bounds.yMax>.65f ? .65f-bounds.yMax : 0;
+                if(Mathf.Abs(dx)+Mathf.Abs(dy)<.0001f)break;
+                var uv=WorldCamera.WorldToViewportPoint(target.transform.position);
+                target.Home=ShopPoint(uv.x+dx,uv.y+dy,target.Home.y);
+                target.transform.localPosition=target.Home;
+            }
         }
         public int CurrentLevel { get; set; }=1;
         // Configure level before rebuilding the groups; future catalog additions register a Mesh factory, not a new inventory.
@@ -160,7 +211,7 @@ namespace Asadito
         void ClearProducts()
         {
             foreach(var t in Targets)if(t!=null){t.gameObject.SetActive(false);Destroy(t.gameObject);}Targets.Clear();
-            foreach(var text in tickets.Values)if(text!=null){text.transform.parent.gameObject.SetActive(false);Destroy(text.transform.parent.gameObject);}tickets.Clear();
+            foreach(var sign in tickets.Values)if(sign.Root!=null){sign.Root.gameObject.SetActive(false);Destroy(sign.Root.gameObject);}tickets.Clear();ticketPositions.Clear();
             var group=world.Find("Display groups");if(group!=null){group.gameObject.SetActive(false);Destroy(group.gameObject);}
         }
         public void ChangePage(){page=(page+1)%pageCount;ClearProducts();ShopPage(Array.FindAll(service.Config.Products,p=>p.UnlockLevel<=CurrentLevel));}
@@ -169,83 +220,134 @@ namespace Asadito
             var groups=new GameObject("Display groups").transform;groups.SetParent(world,false);groups.gameObject.layer=WorldLayer;
             for(int local=0;local<2;local++)
             {
-                int index=page*2+local;if(index>=products.Length)break;var p=products[index];float x=local==0 ? -1.48f : 1.48f;
-                Box("Exhibition tray "+p.FoodId,new Vector3(2.78f,.075f,2.8f),new Vector3(x,1.23f,0),new Color(.77f,.81f,.77f),.035f,groups);
-                int count=Math.Min(8,service.Stock(p.FoodId));
-                if(!foods.ContainsKey(p.FoodId))continue; // Art not registered never masquerades as another cut.
+                int index=page*2+local;if(index>=products.Length)break;var p=products[index];
+                int count=Math.Min(ShopDisplayLimit,service.Stock(p.FoodId));
+                if(!foods.ContainsKey(p.FoodId))continue;
                 for(int i=0;i<count;i++)
                 {
-                    var pos=new Vector3(x+(i%2==0 ? -.67f : .67f),1.29f,-.97f+i/2*.61f);
-                    var item=Food(p.FoodId,0,pos,groups);item.transform.localScale=Vector3.one*.86f;
-                    item.transform.localRotation=Quaternion.Euler(0,(i%3-1)*7,0);
+                    // Two columns / six depth rows, plus a supported second layer.
+                    // Abundance comes from full-size overlapping cuts, not shrunken tiles.
+                    int layer=i/12,row=i%12/2,col=i%2;
+                    float u=(local==0?.205f:.615f)+col*(local==0?.168f:.197f)-row*.004f+
+                        (row%2)*.010f+layer*(col==0?-.018f:.018f);
+                    float v=.588f-row*.052f-(u-.5f)*(.055f+row*.009f)-layer*.013f;
+                    var item=Food(p.FoodId,0,ShopPoint(u,v),groups);item.DisplayUV=new Vector2(u,v);
+                    item.DisplayHeight=layer*.20f;
+                    item.transform.localRotation=Quaternion.Euler(0,(i%3-1)*4+(row%2)*2,0);
                 }
-                Box("Price sign stand",new Vector3(.045f,1.12f,.06f),new Vector3(x,1.82f,-1.32f),metal,.012f,groups);
-                Box("Price sign foot",new Vector3(.28f,.04f,.18f),new Vector3(x,1.29f,-1.32f),metal,.018f,groups);
-                var text=Ticket("Precio "+p.FoodId,new Vector3(x,2.72f,-1.32f),p.FoodId);tickets[p.FoodId]=text;
+                Vector2 ticketUV=new Vector2(local==0?.28f:.72f,.745f);
+                tickets[p.FoodId]=Ticket("Precio "+p.FoodId,TicketPoint(ticketUV));
+                ticketPositions[p.FoodId]=ticketUV;
                 UpdateTicket(p.FoodId,0);
             }
-            SetLayer(groups);Physics.SyncTransforms();
+            SetLayer(groups);LayoutShop();
         }
-        Text Ticket(string name,Vector3 position,string id)
+        PriceSign Ticket(string name,Vector3 position)
         {
-            var go=new GameObject(name,typeof(RectTransform),typeof(Canvas));go.transform.SetParent(world,false);go.transform.localPosition=position;
-            go.transform.rotation=WorldCamera.transform.rotation;go.transform.localScale=Vector3.one*.0047f;
-            go.GetComponent<Canvas>().renderMode=RenderMode.WorldSpace;go.GetComponent<RectTransform>().sizeDelta=new Vector2(510,148);
-            var bg=new GameObject("Ticket paper",typeof(RectTransform),typeof(Image));bg.transform.SetParent(go.transform,false);var rect=bg.GetComponent<RectTransform>();rect.anchorMin=Vector2.zero;rect.anchorMax=Vector2.one;rect.offsetMin=rect.offsetMax=Vector2.zero;
-            bg.GetComponent<Image>().color=new Color(1,.94f,.78f);bg.GetComponent<Image>().raycastTarget=false;
-            var label=new GameObject("Price and stock",typeof(RectTransform),typeof(Text));label.transform.SetParent(go.transform,false);var r=label.GetComponent<RectTransform>();r.anchorMin=Vector2.zero;r.anchorMax=Vector2.one;r.offsetMin=new Vector2(8,0);r.offsetMax=new Vector2(-8,0);
-            var text=label.GetComponent<Text>();text.font=font;text.fontSize=34;text.color=new Color(.12f,.22f,.16f);text.alignment=TextAnchor.MiddleCenter;text.raycastTarget=false;SetLayer(go.transform);return text;
+            var go=new GameObject(name,typeof(RectTransform),typeof(Canvas),typeof(BoxCollider));
+            go.transform.SetParent(world,false);go.transform.localPosition=position;
+            go.transform.rotation=WorldCamera.transform.rotation;
+            go.GetComponent<Canvas>().renderMode=RenderMode.WorldSpace;
+            var root=go.GetComponent<RectTransform>();root.sizeDelta=new Vector2(360,280);
+            // The price card owns this space: reading/tapping a sign must not buy hidden meat.
+            go.GetComponent<BoxCollider>().size=new Vector3(360,280,1);
+            SignPanel(root,"Metal stand shadow",new Vector2(7,-182),new Vector2(15,108),new Color(.08f,.14f,.12f,.35f));
+            SignPanel(root,"Metal stem",new Vector2(0,-182),new Vector2(12,108),metal);
+            SignPanel(root,"Stem highlight",new Vector2(-3,-182),new Vector2(3,108),new Color(.91f,.95f,.92f));
+            SignPanel(root,"Metal foot",new Vector2(0,-235),new Vector2(64,12),new Color(.35f,.44f,.43f));
+            SignPanel(root,"Foot highlight",new Vector2(0,-231),new Vector2(58,4),metal);
+            SignPanel(root,"Card shadow",new Vector2(5,-5),new Vector2(360,280),new Color(.05f,.10f,.08f,.32f));
+            SignPanel(root,"Dark green frame",Vector2.zero,new Vector2(360,280),new Color(.10f,.24f,.18f));
+            SignPanel(root,"White price card",Vector2.zero,new Vector2(350,270),new Color(.99f,.98f,.93f));
+            SignPanel(root,"Product band",new Vector2(0,103),new Vector2(330,48),new Color(.10f,.25f,.18f));
+            var sign=new PriceSign{Root=root};
+            sign.Product=SignText(root,"Product name",new Vector2(0,103),new Vector2(322,46),32,Color.white);
+            sign.Price=SignText(root,"Large red price",new Vector2(0,20),new Vector2(328,136),110,new Color(.70f,.10f,.075f));
+            sign.Price.fontStyle=FontStyle.Bold;
+            var outline=sign.Price.gameObject.AddComponent<Outline>();outline.effectColor=new Color(.12f,.055f,.025f);outline.effectDistance=new Vector2(1.3f,-1.3f);
+            SignText(root,"Price unit",new Vector2(0,-67),new Vector2(324,32),24,new Color(.12f,.22f,.16f)).text="POR PIEZA";
+            sign.Stock=SignText(root,"Stock and cart",new Vector2(0,-108),new Vector2(326,36),26,new Color(.12f,.22f,.16f));
+            SignPanel(root,"Metal card clip",new Vector2(0,-137),new Vector2(48,15),new Color(.45f,.53f,.51f));
+            SignPanel(root,"Clip highlight",new Vector2(0,-132),new Vector2(43,4),new Color(.86f,.91f,.88f));
+            SetLayer(root);return sign;
+        }
+        static RectTransform SignRect(Transform parent,GameObject go,Vector2 position,Vector2 size)
+        {
+            var rect=go.GetComponent<RectTransform>();rect.SetParent(parent,false);
+            rect.anchoredPosition=position;rect.sizeDelta=size;return rect;
+        }
+        static void SignPanel(Transform parent,string name,Vector2 position,Vector2 size,Color color)
+        {
+            var go=new GameObject(name,typeof(RectTransform),typeof(Image));SignRect(parent,go,position,size);
+            var image=go.GetComponent<Image>();image.color=color;image.raycastTarget=false;
+        }
+        Text SignText(Transform parent,string name,Vector2 position,Vector2 size,int fontSize,Color color)
+        {
+            var go=new GameObject(name,typeof(RectTransform),typeof(Text));
+            size.y=Mathf.Max(size.y,fontSize*2.5f);SignRect(parent,go,position,size);
+            var text=go.GetComponent<Text>();text.font=font;text.fontSize=fontSize;text.color=color;
+            text.alignment=TextAnchor.MiddleCenter;text.raycastTarget=false;text.verticalOverflow=VerticalWrapMode.Overflow;return text;
         }
         public void UpdateTicket(string id,int quantity)
         {
-            if(!tickets.TryGetValue(id,out var text))return;
-            var p=service.Config.Product(id);text.text=FoodCatalog.Get(id).DisplayName.ToUpper()+" · $"+p.Price+"\n"+(service.Stock(id)==0 ? "AGOTADO" : "Stock "+service.Stock(id)+" · llevás "+quantity);
+            if(!tickets.TryGetValue(id,out var sign))return;
+            sign.Product.text=FoodCatalog.Get(id).DisplayName.ToUpper();
+            sign.Price.text="$"+service.Config.Product(id).Price;
+            sign.Stock.text=service.Stock(id)==0 ? "AGOTADO" : "Stock "+service.Stock(id)+" · llevás "+quantity;
         }
         void BuildFridge()
         {
-            Room();int shelves=Math.Max(2,(service.Config.FridgeCapacity+3)/4);
-            float height=Mathf.Max(3.95f,1.9f+shelves*1.16f);
-            Box("Fridge sage cabinet",new Vector3(3.85f,height,.18f),new Vector3(0,height/2-.1f,-1.17f),green,.16f);
-            Box("Cream inner back",new Vector3(3.5f,height-.35f,.13f),new Vector3(0,height/2,-1.05f),new Color(.85f,.90f,.82f));
-            foreach(int side in new[]{-1,1})Box("Interior side wall",new Vector3(.16f,height-.36f,1.35f),new Vector3(side*1.72f,height/2,-.37f),cream);
-            Box("Fridge bottom liner",new Vector3(3.65f,.20f,1.45f),new Vector3(0,.48f,-.30f),cream,.05f);
-            Box("Fridge top arch",new Vector3(3.85f,.24f,1.7f),new Vector3(0,height-.07f,-.36f),cream,.10f);
-            for(int shelf=0;shelf<shelves;shelf++)
-            {
-                float y=.85f+shelf*1.16f;
-                Box("Shelf "+shelf,new Vector3(3.40f,.08f,1.35f),new Vector3(0,y,-.30f),new Color(.70f,.79f,.77f),.035f);
-                Box("Shelf front rail",new Vector3(3.50f,.09f,.10f),new Vector3(0,y,.40f),cream);
-            }
-            var hinge=new GameObject("Animated refrigerator hinge").transform;hinge.SetParent(world,false);hinge.localPosition=new Vector3(-1.90f,0,.52f);door=hinge;
-            Box("Rounded fridge door",new Vector3(3.80f,height-.1f,.22f),new Vector3(1.90f,height/2,.09f),new Color(.32f,.50f,.37f),.10f,door);
-            Box("Ivory door inset",new Vector3(3.30f,height-.55f,.065f),new Vector3(1.90f,height/2,-.04f),cream,.025f,door);
-            Box("Brass door handle",new Vector3(.11f,1.1f,.18f),new Vector3(3.5f,height*.58f,.30f),new Color(.86f,.64f,.32f),.04f,door);
-            Box("Preparation tray",new Vector3(3.6f,.14f,1.6f),new Vector3(.6f,.22f,1.58f),wood,.06f);
-            preparationSpot=new Vector3(.6f,.32f,1.58f);
+            // Empty illustrated cabinet is already open; only real inventory food exists in 3D.
+            DoorOpenFraction=1;
             int index=0;
             foreach(var unit in service.State.Inventory)
             {
-                int shelf=index/4,col=index%2,row=index/2%2;
-                var pos=new Vector3(col==0 ? -.85f : .85f,.91f+shelf*1.16f,row==0 ? -.63f : .04f);
-                var item=Food(unit.FoodId,unit.Id,pos);item.transform.localScale=Vector3.one*.86f;
+                int shelf=index/3,col=index%3;
+                var item=Food(unit.FoodId,unit.Id,Vector3.zero);
+                item.DisplayUV=new Vector2(.365f+col*.215f,.723f-shelf*.166f);
+                item.DisplayHeight=index/9*.20f;
+                item.transform.localRotation=Quaternion.Euler(0,(col-1)*2,0);
                 item.Freshness=unit.FreshnessAt(service.State.FreshnessCycle,service.Config.Product(unit.FoodId).FreshCycles);
-                if(item.Freshness==Freshness.Spoiled)Tint(item,new Color(.55f,.60f,.48f));index++;
+                Tint(item,RestingTint(item));index++;
             }
-            SetLayer(door);StartCoroutine(OpenDoor());
+            LayoutFridge();
         }
-        IEnumerator OpenDoor()
+        static Color RestingTint(ManagementFoodTarget item)=>item.Freshness==Freshness.Spoiled ? new Color(.55f,.60f,.48f) : Color.white;
+        Vector2 PrepUV(int slot)=>new Vector2(.32f+(slot%2)*.32f,.176f-(slot/2%2)*.061f);
+        void FridgePose(ManagementFoodTarget target,Vector2 uv,float layer,out Vector3 position,out Vector3 scale)
         {
-            float t=0;while(t<.55f&&door!=null){t+=Time.unscaledDeltaTime;DoorOpenFraction=Mathf.Clamp01(t/.55f);door.localRotation=Quaternion.Euler(0,-110*Mathf.SmoothStep(0,1,DoorOpenFraction),0);yield return null;}
+            var mesh=foods[target.FoodId];Vector2 size=foodSize!=null?foodSize(target.FoodId):new Vector2(220,100);
+            float desired=size.x/Viewport.rectTransform.rect.width;
+            float factor=1;position=ShopPoint(uv.x,uv.y);
+            for(int pass=0;pass<6;pass++)
+            {
+                position=ShopPoint(uv.x,uv.y,layer*factor);
+                float width=ShopProjectedBounds(mesh,world.localToWorldMatrix*Matrix4x4.TRS(position,target.transform.localRotation,Vector3.one*factor)).width;
+                factor*=desired/Mathf.Max(.001f,width);
+            }
+            scale=Vector3.one*factor;position=ShopPoint(uv.x,uv.y,layer*factor);
+        }
+        void LayoutFridge()
+        {
+            foreach(var target in Targets)if(target!=null)
+            {
+                if(motions.TryGetValue(target,out var motion)&&motion!=null){StopCoroutine(motion);motions.Remove(target);}
+                FridgePose(target,target.DisplayUV,target.DisplayHeight,out target.Home,out target.HomeScale);
+                if(target.Selected)
+                {
+                    FridgePose(target,PrepUV(target.SelectionSlot),target.SelectionSlot/4*.20f,out var pos,out var scale);
+                    target.transform.localPosition=pos;target.transform.localScale=scale;
+                }
+                else {target.transform.localPosition=target.Home;target.transform.localScale=target.HomeScale;}
+            }
             Physics.SyncTransforms();
         }
         ManagementFoodTarget Food(string id,int unitId,Vector3 position,Transform holder=null)
         {
             if(!foods.TryGetValue(id,out var mesh))throw new InvalidOperationException("No 3D model registered for "+id);
-            var go=Shape(unitId==0 ? "Comprar "+id+" modelo "+Targets.Count : "Inventory unit "+unitId,mesh,position,holder);
+            var go=Shape(unitId==0 ? "Comprar "+id+" modelo "+Targets.Count : "Inventory unit "+unitId,mesh,position,holder,foodMaterials.TryGetValue(id,out var mat)?mat:null);
             var t=go.AddComponent<ManagementFoodTarget>();t.FoodId=id;t.UnitId=unitId;t.Home=position;t.Visual=go.GetComponent<MeshRenderer>();
-            var collider=go.AddComponent<BoxCollider>();collider.center=mesh.bounds.center;collider.size=mesh.bounds.size+new Vector3(.02f,.05f,.03f);
-            if(!foods.TryGetValue("shadow",out var shadow)){shadow=ManagementMeshes.Disk(.63f,.29f,new Color(.31f,.32f,.29f));foods["shadow"]=shadow;owned.Add(shadow);}
-            Shape("Contact shadow",shadow,new Vector3(0,.002f,0),go.transform);
+            go.AddComponent<MeshCollider>().sharedMesh=mesh; // Silhouette collisions also respect overlapped inventory units.
             Targets.Add(t);return t;
         }
         public Vector2 ScreenPoint(ManagementFoodTarget target,Camera eventCamera=null)
@@ -272,7 +374,7 @@ namespace Asadito
         }
         public void OnPointerClick(PointerEventData data)
         {
-            if(IsFridge&&DoorOpenFraction<.9f)return;
+            if(suppressClick||IsDragging||(IsFridge&&DoorOpenFraction<.9f))return;
             var target=Raycast(data.position,data.pressEventCamera);if(target!=null)select?.Invoke(target);
         }
         static void Tint(ManagementFoodTarget t,Color color)
@@ -281,36 +383,72 @@ namespace Asadito
         }
         public void Feedback(ManagementFoodTarget target)
         {
+            // No shrinking world-space flight copies: only one bounded pulse on the original mesh.
             if(motions.TryGetValue(target,out var old)&&old!=null)StopCoroutine(old);
             motions[target]=StartCoroutine(Pulse(target));
-            var mesh=target.GetComponent<MeshFilter>().sharedMesh;
-            var ghost=Shape("Carne al carrito 3D",mesh,target.transform.localPosition);
-            ghost.transform.position=target.transform.position;ghost.transform.localScale=target.transform.localScale;ghost.transform.rotation=target.transform.rotation;
-            StartCoroutine(Flight(ghost));
         }
         IEnumerator Pulse(ManagementFoodTarget target)
         {
-            Tint(target,new Color(1.25f,1.1f,.80f));float t=0;
-            while(target!=null&&t<.22f){t+=Time.unscaledDeltaTime;target.transform.localScale=Vector3.one*.86f*(1+.10f*Mathf.Sin(t/.22f*Mathf.PI));yield return null;}
-            if(target!=null){target.transform.localScale=Vector3.one*.86f;Tint(target,Color.white);motions.Remove(target);}
+            Tint(target,new Color(1.08f,1.04f,.9f));float t=0;
+            while(target!=null&&t<.18f){t+=Time.unscaledDeltaTime;target.transform.localScale=target.HomeScale*(1+.06f*Mathf.Sin(t/.18f*Mathf.PI));yield return null;}
+            if(target!=null){target.transform.localScale=target.HomeScale;Tint(target,Color.white);motions.Remove(target);}
         }
-        IEnumerator Flight(GameObject ghost)
+        public void OnPointerDown(PointerEventData data){if(!IsDragging)suppressClick=false;}
+        public void OnBeginDrag(PointerEventData data)
         {
-            Vector3 start=ghost.transform.localPosition,end=new Vector3(0,.9f,2.9f);float t=0;
-            while(ghost!=null&&t<.32f){t+=Time.unscaledDeltaTime;float f=Mathf.Clamp01(t/.32f);ghost.transform.localPosition=Vector3.Lerp(start,end,1-Mathf.Pow(1-f,3))+Vector3.up*Mathf.Sin(f*Mathf.PI)*.6f;ghost.transform.localScale=Vector3.one*.86f*(1-f*.9f);yield return null;}
-            if(ghost!=null)Destroy(ghost);
+            if(IsFridge||IsDragging||CartDropZone==null)return;
+            var target=Raycast(data.pressPosition,data.pressEventCamera);if(target==null)return;
+            if(motions.TryGetValue(target,out var motion)&&motion!=null){StopCoroutine(motion);motions.Remove(target);}
+            target.transform.localScale=target.HomeScale;
+            dragTarget=target;dragPointer=data.pointerId;suppressClick=true;dragHomeScale=target.HomeScale;
+            Tint(target,new Color(1.10f,1.06f,.9f));
+            var go=new GameObject("Dragged food preview",typeof(RectTransform),typeof(Image));go.transform.SetParent(Viewport.transform.parent,false);
+            dragPreview=go.GetComponent<Image>();dragPreview.sprite=foodSprite?.Invoke(target.FoodId);dragPreview.preserveAspect=true;dragPreview.raycastTarget=false;
+            var rect=dragPreview.rectTransform;rect.sizeDelta=foodSize!=null?foodSize(target.FoodId):new Vector2(240,130);rect.SetAsLastSibling();OnDrag(data);
+        }
+        public void OnDrag(PointerEventData data)
+        {
+            if(dragTarget==null||data.pointerId!=dragPointer)return;
+            var parent=(RectTransform)dragPreview.transform.parent;
+            if(RectTransformUtility.ScreenPointToLocalPointInRectangle(parent,data.position,data.pressEventCamera,out var local))dragPreview.rectTransform.localPosition=new Vector3(local.x,local.y+35,0);
+            bool inside=RectTransformUtility.RectangleContainsScreenPoint(CartDropZone,data.position,data.pressEventCamera);
+            var image=CartDropZone.GetComponent<Image>();if(image!=null)image.color=inside?new Color32(255,225,154,255):new Color32(255,244,219,255);
+        }
+        public void OnEndDrag(PointerEventData data)
+        {
+            if(dragTarget==null||data.pointerId!=dragPointer)return;
+            var target=dragTarget;bool inside=RectTransformUtility.RectangleContainsScreenPoint(CartDropZone,data.position,data.pressEventCamera);
+            var hits=new List<RaycastResult>();EventSystem.current.RaycastAll(data,hits);
+            // Buttons/details own their taps; dropping on a button must never add a hidden unit.
+            if(hits.Count>0&&hits[0].gameObject.GetComponentInParent<Button>()!=null)inside=false;
+            CancelDrag();if(inside)select?.Invoke(target);
+        }
+        void CancelDrag()
+        {
+            if(dragTarget!=null){Tint(dragTarget,Color.white);dragTarget.transform.localScale=dragHomeScale;}
+            dragTarget=null;if(dragPreview!=null)Destroy(dragPreview.gameObject);dragPreview=null;
+            if(CartDropZone!=null){var image=CartDropZone.GetComponent<Image>();if(image!=null)image.color=new Color32(255,244,219,255);}
         }
         public void MoveSelection(ManagementFoodTarget target,bool chosen,int slot)
         {
-            target.Selected=chosen;if(motions.TryGetValue(target,out var old)&&old!=null)StopCoroutine(old);
-            var to=chosen ? preparationSpot+new Vector3((slot%4-1.5f)*.81f,.04f,-.31f+(slot/4)*.63f) : target.Home;
-            motions[target]=StartCoroutine(MoveUnit(target,to,chosen));
+            target.Selected=chosen;target.SelectionSlot=chosen?slot:-1;
+            if(motions.TryGetValue(target,out var old)&&old!=null)StopCoroutine(old);
+            var to=target.Home;var scale=target.HomeScale;
+            if(chosen)FridgePose(target,PrepUV(slot),slot/4*.20f,out to,out scale);
+            motions[target]=StartCoroutine(MoveUnit(target,to,scale,chosen));
         }
-        IEnumerator MoveUnit(ManagementFoodTarget target,Vector3 to,bool chosen)
+        IEnumerator MoveUnit(ManagementFoodTarget target,Vector3 to,Vector3 endScale,bool chosen)
         {
-            Tint(target,chosen ? new Color(1.12f,1.12f,.72f) : Color.white);var start=target.transform.localPosition;var scale=target.transform.localScale;float endScale=chosen ? .55f : .86f;float t=0;
-            while(target!=null&&t<.25f){t+=Time.unscaledDeltaTime;float f=Mathf.Clamp01(t/.25f);target.transform.localPosition=Vector3.Lerp(start,to,Mathf.SmoothStep(0,1,f))+Vector3.up*Mathf.Sin(f*Mathf.PI)*.3f;target.transform.localScale=Vector3.Lerp(scale,Vector3.one*endScale,f);yield return null;}
-            if(target!=null){target.transform.localPosition=to;target.transform.localScale=Vector3.one*endScale;motions.Remove(target);}Physics.SyncTransforms();
+            Tint(target,chosen ? new Color(1.10f,1.08f,.86f) : RestingTint(target));
+            var start=target.transform.localPosition;var scale=target.transform.localScale;float t=0;
+            while(target!=null&&t<.25f)
+            {
+                t+=Time.unscaledDeltaTime;float f=Mathf.SmoothStep(0,1,Mathf.Clamp01(t/.25f));
+                target.transform.localPosition=Vector3.Lerp(start,to,f);target.transform.localScale=Vector3.Lerp(scale,endScale,f);
+                yield return null;
+            }
+            if(target!=null){target.transform.localPosition=to;target.transform.localScale=endScale;motions.Remove(target);}
+            Physics.SyncTransforms();
         }
         public void CaptureRender(){if(WorldCamera!=null){ResizeTexture(1200);WorldCamera.Render();}}
     }

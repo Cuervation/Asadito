@@ -1,5 +1,7 @@
 #if UNITY_EDITOR
 using UnityEditor;
+using System.IO;
+using Asadito.Runtime;
 using UnityEngine;
 namespace Asadito.Editor
 {
@@ -12,6 +14,13 @@ namespace Asadito.Editor
             const string folder="Assets/Asado/Resources/Management3D";
             if(!AssetDatabase.IsValidFolder(folder))AssetDatabase.CreateFolder("Assets/Asado/Resources","Management3D");
             Write(folder+"/chorizo.asset",ManagementMeshes.Chorizo());Write(folder+"/tira.asset",ManagementMeshes.Tira());
+            foreach(string id in new[]{"chorizo","tira"})
+            {
+                var source=new Texture2D(2,2,TextureFormat.RGBA32,false);
+                source.LoadImage(File.ReadAllBytes("Assets/Asado/Resources/Art/Foods/States/"+id+".png"));
+                Write(folder+"/"+id+"-grill-relief.asset",ManagementFoodRelief.Bake(source,FoodCatalog.Get(id)));
+                Object.DestroyImmediate(source);
+            }
             AssetDatabase.SaveAssets();Debug.Log("Management 3D production meshes baked: chorizo/tira; original sprites untouched.");
         }
         static void Write(string path,Mesh mesh)

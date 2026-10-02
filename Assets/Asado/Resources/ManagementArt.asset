@@ -17,3 +17,7 @@ MonoBehaviour:
     Sprite: {fileID: 21300000, guid: 8e7c208ae4944ce69aa555929c47bf71, type: 3}
   - Name: AsaditoCoin_Hud
     Sprite: {fileID: 21300000, guid: 13155858961c47a5b939a80feff3576e, type: 3}
+  - Name: ButcherShop_CounterV2
+    Sprite: {fileID: 21300000, guid: a0920d03096743d983d17bbb92dfb065, type: 3}
+  - Name: Fridge_Hybrid_OpenEmptyV2
+    Sprite: {fileID: 21300000, guid: 33021edd81db4ae78a5a00ea75e28d0f, type: 3}

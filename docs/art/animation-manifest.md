@@ -25,7 +25,16 @@ Inventario de feedback de runtime existente, mayormente procedural y con corutin
 
 No se documentan gestos, expresiones o VFX que no sean código real. Todo gesto importante tiene feedback básico; requiere polish y validación visual/touch real.
 
-## Gestión 3D (2026-10-01)
+## Gestión 3D inicial (histórico, 2026-10-01)
 - Selección tienda: pulso/highlight 0.22s y mesh decorativo al carrito 0.32s, sonido existente. Coroutines locales reemplazables; no bloqueo de la transacción.
 - Heladera: apertura de bisagra 0.55s; selección/devolución a bandeja 0.25s. Identidad de unidad intacta hasta PrepareUnits. Movimiento reversible y recolocación de slots; sin clips/rig ni animación offline.
 - Cámara/meshes/materiales/RenderTexture se liberan al cerrar, sin Update de selección ni iluminación dinámica.
+
+### Carnicería híbrida — corrección de selección (2026-10-01)
+Retirado vuelo shrinking de clones de comida3D. Toque/drop válidos generan solo pulso0.18s del modelo original; arrastre usa un preview UI temporal único que sigue al dedo, no bloquea raycast y se destruye al soltar/abandonar. Drop inválido cancela sin alterar carrito/monedas. En ese paso se conservaba la puerta; la heladera híbrida siguiente la reemplaza por ilustración abierta.
+
+### Pulso/drag de mostrador perspectiva (2026-10-01)
+El pulso0.18s vuelve a HomeScale de cada pieza, no a una escala global; comenzar drag detiene el pulso y recupera esa escala. Cancelar/drop preservan tamaño/posición de fuente. Modelos posteriores no pierden perspectiva después de seleccionar. QA focal de layout/drag2/2PASS; Android pendiente.
+
+### Heladera híbrida vigente (2026-10-02)
+Gabinete/puerta2D estáticos abiertos, no bisagra3D ni animación de puertas repetidas. Selección/devolución de comida3D0.25s conserva ancho de parrilla en destino mediante compensación de perspectiva, sin reducir tamaño por número de seleccionadas. Cancelar devuelve cada ID al estante y recupera tint de frescura. Recursos/coroutines locales liberados al cerrar. QA PlayMode dirigida5/5PASS; ritmo/tacto humano Android pendientes.

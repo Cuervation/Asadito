@@ -1161,6 +1161,26 @@ namespace Asadito
         }
 
         internal Sprite ManagementFoodSprite(string id) => FoodStateSprite(id, 0);
+        internal Vector2 ManagementFoodSize(string id)
+        {
+            // Reuse the actual fitted grill footprint, never a shop/count-dependent scale.
+            if (portions != null && portionVisualSizes != null)
+                for (int i = 0; i < portions.Length && i < portionVisualSizes.Length; i++)
+                    if (portions[i].Profile.FoodId == id) return portionVisualSizes[i];
+
+            FoodVisualReference reference = FoodCatalog.GetVisualReference();
+            Sprite referenceSprite = ManagementFoodSprite(reference.FoodId), sprite = ManagementFoodSprite(id);
+            float referenceAspect = referenceSprite != null ? referenceSprite.rect.width / referenceSprite.rect.height : 1f;
+            float aspect = sprite != null ? sprite.rect.width / sprite.rect.height : referenceAspect;
+            Vector2 size = FoodFootprintLayout.CalculateVisualSize(reference, referenceAspect, aspect,
+                FoodCatalog.Get(id).FootprintAreaMultiplier);
+            float fit = 1f;
+            if (rawTrayRect != null) fit = Mathf.Min(fit, FoodFootprintLayout.GetMaxUniformFitScale(
+                RawTrayFoodAreaSize(), new[] { size }, RawTrayFoodGap));
+            if (trayRect != null) fit = Mathf.Min(fit, FoodFootprintLayout.GetMaxUniformFitScale(
+                ServingBoardFoodAreaSize(), new[] { size }, ServingBoardFoodGap));
+            return size * (fit > 0f ? fit : 1f);
+        }
         internal Sprite ManagementGuestSprite(string id) => GuestPortraitSprite(id, 0);
         internal Font ManagementBodyFont => semiBoldFont != null ? semiBoldFont : bodyFont;
         internal void ManagementFeedback() => PlaySfx(AsaditoSfxCue.Serve);

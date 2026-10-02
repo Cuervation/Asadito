@@ -20,7 +20,9 @@ namespace Asadito.Editor
             var importer = (TextureImporter)assetImporter;
             bool hasAlpha = PngHasAlphaChannel(assetPath);
             bool isBackground = assetPath.EndsWith("/Patio_Management_Base.png") ||
-                                assetPath.EndsWith("/ButcherShop_Background.png");
+                                assetPath.EndsWith("/ButcherShop_Background.png") ||
+                                assetPath.EndsWith("/ButcherShop_CounterV2.png") ||
+                                assetPath.EndsWith("/Fridge_Hybrid_OpenEmptyV2.png");
             int maxSize = isBackground ? 2048 : 512;
 
             importer.textureType = TextureImporterType.Sprite;

@@ -34,7 +34,21 @@ Instalación de la APK `20979f4` (2026-09-30): `adb install -r --no-streaming` d
 ## Gestión desde L1 (2026-10-01, actual)
 Unity6000.6.3f1, ARM64/IL2CPP Succeeded en una única compilación final. APK local65MiB `build/Asadito-1.3.0-management-level1-20261001.apk`, version1.3.0/code4,min26,target36; metadata/ABI/firma v2 debug verificadas. SHA256 `6876a9ab20d112c3b257654c540c588248afc5efc369ac04d1021e891604cc61`. Dominio53/53PASS, focalgestión3/3PASS y recorridoL1–6 1/1PASS; detalle/evidencia en [QA](ai/management-level1-qa.md). ADB no detecta dispositivos al cierre, por lo que esta build no se instaló ni se probó táctilmente en teléfono. Mantener datos con `adb install -r` cuando vuelva a estar conectado; no desinstalar ni limpiar PlayerPrefs. Sin publicación/firma productiva.
 
+## Mostrador y carrito — build e instalación (2026-10-01)
+APK `build/Asadito-1.3.1-counter-cart-20261001.apk` (~65MiB), package `com.cuervation.asadito`,1.3.1/code5, ARM64/IL2CPP, min26/target+compile36. Unity6000.6.3f1 Succeeded; metadata/ABI/firma v2 de validación verificadas. SHA256 `ca79679fe9b73a01491ae7dd765f49941b611417fe47119fccd9492401d89523`.
+
+Validator PASS, EditMode60/60PASS (`/tmp/asadito-counter-release-edit.xml`,3.296s), PlayMode17/17PASS (`/tmp/asadito-counter-release-play.xml`,362.535s); log build `/tmp/asadito-counter-release-android.log`. Source QA aislado sincronizado con mostrador0e65fa0 más identidad1.3.1; Editor principal intacto.
+
+`adb -s ZY22MBNWRB install -r` Success sobre1.3.0, sin desinstalar/limpiar datos. Force-stop y relanzamiento; dumpsys package confirma1.3.1/code5. Screenshot real `/tmp/asadito-counter-phone-menu.png` muestra `v1.3.1 · Mostrador y carrito`. No se hicieron compras con el saldo del usuario ni partida completa física. El snapshot posterior de topResumedActivity ya mostraba Facebook: no se interfirió con otras apps; screenshot confirma el arranque, no foreground continuo. Firma debug/local, no publicación Play Store.
+
 ## Gestión 3D — build1.4.0 (2026-10-01)
 Unity6000.6.3f1 Android ARM64/IL2CPP Succeeded en build inicial y cierre incremental final tras ajustar el encuadre móvil. APK `build/Asadito-1.4.0-management-3d-20261001.apk`,66,634,050 bytes (~63.55MiB), com.cuervation.asadito1.4.0/code6, min26/target+compile36. Aapt/ABI/firma v2 debug verificadas. SHA256 `02231b37289a072a8202e103b27c17da9ebcf9ce2569eb810b36ae070071e93c`. Menú identifica Gestión 3D mediante Application.version.
 
 EditMode66/66PASS, PlayMode20/20PASS y cierre de vistas3/3PASS; validator y diff check PASS. Log `/tmp/asadito-3d-android.log`; [QA/evidencia](ai/management-3d-qa.md). No instalada en teléfono en este pedido; touch/performance/notch físicos y aprobación estética humana pendientes. Sin firma productiva ni publicación.
+
+## Gestión 3D — instalación en Motorola (2026-10-01)
+APK final1.4.0/code6 instalada por `adb install -r --no-streaming`: Success en Motorola Edge60Fusion ZY22MBNWRB Android16/API36, sin desinstalar/limpiar datos. Antes1.3.1/code5, después dumpsys confirma1.4.0/code6. `am start -S -W` Status ok; UnityPlayerGameActivity en primer plano, PID10402 al comprobar. Captura real1220×2712 `build/qa-management-3d/asadito-motorola-1.4.0-management-3d.png` muestra menú v1.4.0 · Gestión3D.
+Solo instalación/arranque verificados: no compras ni cambios de progreso, no navegación3D ni profiling/touch/notch completos. Log de inicio reporta ClassNotFoundException de AssetPackManager, sin impedir mostrar menú. Sin build nueva, suites adicionales, commit ni push en este pedido.
+
+## Cambios híbridos posteriores (2026-10-02, sin nueva APK)
+Carnicería/heladera2D con food3D de tamaño de parrilla, changuito drag, stock24/SKU y carteles comerciales existen en fuente y se incluyen en el commit/push autorizado. Unity PlayMode focal5/5PASS y capturasportrait reales para cierre de heladera; [QA](ai/hybrid-fridge-qa.md). No se pidió ni generó build/install Android en este cierre. Motorola sigue1.4.0/code6 anterior; push Git no actualiza automáticamente la APK. QA táctil/performance física de las vistas híbridas pendiente.

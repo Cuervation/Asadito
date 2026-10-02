@@ -1,11 +1,26 @@
 # Manifest de arte visual para gestión y progresión — ASADITO
 
-> **Gestión 3D vigente:** ver [recursos nativos y límites](management-3d-assets.md). Carnicería/heladera ya no usan fondos o food sprites 2D; tablas anteriores registran la biblioteca/historia, no el escenario activo.
+> **Gestión híbrida vigente (2026-10-02):** mostrador y heladera ilustrados2D vacíos, comida volumétrica3D con raw atlas/tamaño de parrilla. Ver [recursos](management-3d-assets.md) y [QA heladera](../ai/hybrid-fridge-qa.md). Las secciones fechadas anteriores registran historia; la lista de runtime vigente está al inicio.
 
-## Mostrador runtime / carrito (2026-10-01)
+## Runtime vigente: heladera y carnicería híbridas (2026-10-02)
+Biblioteca92PNG:90 originales preservados + CounterV2 + FridgeV2. ManagementArt.asset referencia exactamente4: patio, moneda, CounterV2 y FridgeV2; los88 restantes no están conectados por esa biblioteca. Las cantidades de las secciones históricas siguientes no describen runtime actual.
+
+| Recurso | Fuente | Resolución/alfa | Estado | Uso vigente |
+|---|---|---|---|---|
+| Fridge_Hybrid_OpenEmptyV2 | Assets/Asado/Art/Management/Fridge/Fridge_Hybrid_OpenEmptyV2.png |1254×1254 RGBA|PROVISIONAL|Heladera vacía abierta, estantes y tabla; food3D real encima, sin comida/UI horneada.|
+| ButcherShop_CounterV2 | Assets/Asado/Art/Management/ButcherShop/ButcherShop_CounterV2.png |Ilustración previa preservada|PROVISIONAL|Mostrador vacío con hasta48 piezas reales según stock24/SKU y carteles dinámicos.|
+
+FridgeV2 generado con ImageGen incorporado en modo edición de Tier1 existente; original/GUID retenidos. Import de fondo2048, FullRect/bilinear/clamp/sin mipmaps/no readable/ETC2_RGBA8 Android. Prompt final, ruta y capturas reales en [QA heladera](../ai/hybrid-fridge-qa.md). No3D de gabinete/puerta ni clones; full-size food y MeshColliders compartidos con tienda. QA humana/touch/FPS pendientes.
+
+## Vitrina abundante (histórico, 2026-10-01)
+Nuevo `ButcherShop_CounterV2.png` PROVISIONAL, generado por ImageGen en dos ediciones de la ilustración previa. Conserva estética argentina cálida y aporta una única superficie de exhibición amplia/profunda, sin carne/precios horneados. Original intacto. Se conecta mediante referencia explícita en ManagementArt.asset; import como fondo2048/bilinear/clamp/sin mipmaps/ETC2 HQ. Inventario total91 PNG (90 originales +1),6 referencias y85 restantes preparados. Prompts/ruta en [QA](../ai/abundant-counter-qa.md).
+
+ManagementScreen superpone hasta16 piezas reales de FoodCatalog (hasta8/SKU), sombras y offsets suaves; cada pieza es tocable. Cartel/badge por grupo, rebote/vuelo al carrito procedurales. No hay cajas detrás de productos. Carrito256px reemplaza456px; texto y botones arcade conservados. PROVISIONAL hasta revisión humana en teléfono. Ningún cambio económico/persistente.
+
+## Mostrador inicial / carrito (histórico, 2026-10-01)
 El fondo ButcherShop_Background se reutiliza; vitrina, marcos, bandejas, reflejo, precios y cantidades se componen con UI nativa (PROVISIONAL) y sprites crudos de FoodCatalog. Bandeja seleccionada tiene highlight y pulso corto. No se agregaron PNG/dependencias ni se alteraron los originales; precios siguen siendo datos vivos. Los cinco sprites de gestión conectados permanecen iguales.
 
-## Alcance y estado
+## Alcance y estado de la biblioteca inicial (histórico)
 
 Biblioteca de 90 PNG en `Assets/Asado/Art/Management/` (fuera de Resources). Vertical 1 conecta **cinco** sprites mediante referencias explícitas en `Resources/ManagementArt.asset`: patio, fondo de carnicería, carnicera saludando, heladera básica y moneda HUD. Solo esas dependencias entran al runtime; las restantes 85 siguen PREPARADO. Import settings: 512 px sprites, 2048 px fondos, bilinear/clamp/sin mipmaps, ETC2 para Android. Importer validado mediante compilación Unity real (corrección de TextureImporterSettings incluida).
 
@@ -46,7 +61,7 @@ El fondo es un escenario de composición modular, no cinco ilustraciones diferen
 - **Retención legacy:** las pinzas abiertas/cerradas permanecen; el código actual no las referencia. No se borran assets legacy o de carbón sin demostrar antes que no tienen referencias serializadas.
 - **Arte:** ninguno de estos sprites tiene referencia desde código runtime, escena o prefab. El gameplay actual mantiene su parrilla siempre caliente.
 
-## Inventario individual
+## Inventario individual de la biblioteca original (histórico)
 
 Cada ID es una clave documental estable, no un ID de `FoodCatalog`. `Futuro = Sí` indica uso previsto cuando se implementen los sistemas; **Conectado = No** para todos.
 
@@ -148,7 +163,7 @@ Vista general: [hoja de contacto de los 90 sprites](management-library-preview.p
 ## Pendientes visuales para una integración futura
 
 - Revisar en pantalla móvil escala de los paneles, sus márgenes/nine-slice y legibilidad antes de conectar UI.
-- Integrar los interiores de heladera con stock/slots dinámicos de `FoodCatalog` y validar que los productos se lean en tamaño real.
+- Heladera híbrida ya integrada; revisar tacto, tamaño y performance en Android. Upgrades de tiers siguen pendientes.
 - Armonizar la identidad facial/pañuelo del arte de sorpresa con el atlas de seis poses antes de usarla como una misma persona; no conectar mientras tanto.
 - Montar componentes de asador, disco y horno en el mismo patio y validar footprint/colisiones visuales antes de diseñar mecánicas.
 - Mantener la biblioteca fuera de `Resources`; cuando exista economía/inventario, definir referencias explícitas o Addressables de forma deliberada.

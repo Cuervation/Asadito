@@ -15,6 +15,17 @@ namespace Asadito.Tests
             config = JsonUtility.FromJson<ManagementConfig>(JsonUtility.ToJson(ManagementConfig.Load()));
             state = ManagementState.New(config); service = new ManagementService(state, config);
         }
+        [Test] public void AbundantCounterStockKeepsPricesBalanceCapacityAndPurchasesExact()
+        {
+            Assert.AreEqual(24,service.Stock("chorizo"));Assert.AreEqual(24,service.Stock("tira"));
+            Assert.AreEqual(650,state.Balance);Assert.AreEqual(8,config.FridgeCapacity);
+            Assert.AreEqual(100,config.Product("chorizo").Price);Assert.AreEqual(180,config.Product("tira").Price);
+            Assert.IsNull(service.BuyCart(new Dictionary<string,int>{{"chorizo",1},{"tira",1}},1));
+            Assert.AreEqual(370,state.Balance);Assert.AreEqual(23,service.Stock("chorizo"));Assert.AreEqual(23,service.Stock("tira"));
+            Assert.AreEqual(2,state.Inventory.Count);
+            string before=JsonUtility.ToJson(state);
+            Assert.IsNotNull(service.BuyCart(new Dictionary<string,int>{{"chorizo",25}},1));Assert.AreEqual(before,JsonUtility.ToJson(state));
+        }
         [Test] public void PhysicalPreparationConsumesExactIdsNotFirstMatchingSku()
         {
             state.Balance=2000;Assert.IsNull(service.BuyCart(new System.Collections.Generic.Dictionary<string,int>{{"chorizo",3},{"tira",2}},1));
@@ -73,6 +84,7 @@ namespace Asadito.Tests
         {
             var cart=new Dictionary<string,int>{{"chorizo",1},{"tira",1}};
             Assert.IsTrue(service.QuoteCart(cart,1).CanBuy);
+            config.FridgeCapacity=Math.Max(config.FridgeCapacity,config.Product("tira").Stock);
             Assert.IsNull(service.Buy("tira",config.Product("tira").Stock,1,new Promotion{Kind=PromotionKind.Percentage,Percent=100}));
             string before=JsonUtility.ToJson(state);Assert.IsNotNull(service.BuyCart(cart,1));Assert.AreEqual(before,JsonUtility.ToJson(state));
             foreach(var invalid in new[]{new Dictionary<string,int>(),new Dictionary<string,int>{{"chorizo",0}},new Dictionary<string,int>{{"unknown",1}},new Dictionary<string,int>{{"tira",int.MaxValue}}})

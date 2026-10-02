@@ -1,8 +1,8 @@
 # Manifest de assets de runtime — ASADITO
 
-> **Gestión 3D vigente:** ver [recursos nativos y límites](management-3d-assets.md). Carnicería/heladera ya no usan fondos o food sprites 2D; tablas anteriores registran la biblioteca/historia, no el escenario activo.
+> **Gestión híbrida vigente (2026-10-02):** mostrador y heladera ilustrados2D vacíos, comida volumétrica3D con raw atlas/tamaño de parrilla. Ver [recursos](management-3d-assets.md) y [QA heladera](../ai/hybrid-fridge-qa.md). Las secciones fechadas anteriores registran historia; la lista de runtime vigente está al inicio.
 
-Inventario de contenido fuente en `Resources`; las rutas Unity omiten extensión donde corresponda. `PROVISIONAL` = integrado y validable pero sin aprobación artística/física final. Assets raster originales o generados para este proyecto; las fuentes tienen licencia OFL adjunta. No se reclama producción comercial para audio/VFX. La biblioteca de gestión/progresión vive fuera de `Resources`; cinco sprites se conectan en Vertical 1 mediante `ManagementArt.asset`, el resto sigue preparado: ver [management-asset-manifest.md](management-asset-manifest.md).
+Inventario de contenido fuente en `Resources`; las rutas Unity omiten extensión donde corresponda. `PROVISIONAL` = integrado y validable pero sin aprobación artística/física final. Assets raster originales o generados para este proyecto; las fuentes tienen licencia OFL adjunta. No se reclama producción comercial para audio/VFX. La biblioteca de gestión/progresión vive fuera de `Resources`; cuatro sprites están referenciados actualmente por `ManagementArt.asset` (patio, moneda, CounterV2 y FridgeV2), el resto sigue preparado: ver [management-asset-manifest.md](management-asset-manifest.md).
 
 | Familia | Cantidad | Fuentes/runtime | Integración y verificación | Estado |
 |---|---:|---|---|---|
@@ -27,7 +27,7 @@ Inventario de contenido fuente en `Resources`; las rutas Unity omiten extensión
 
 ## Biblioteca futura fuera de runtime
 
-Hay 90 sprites de gestión y progresión fuera de `Resources`; cinco referencias explícitas tienen consumidor en Vertical 1. No incluir el resto hasta implementar sus sistemas. El detalle por archivo, estado, alfa, resolución, destino, animabilidad y pendientes está en [management-asset-manifest.md](management-asset-manifest.md).
+Hay90 sprites originales más CounterV2 y Fridge_Hybrid_OpenEmptyV2 (92PNG) fuera de `Resources`; cuatro referencias explícitas están conectadas en ManagementArt: patio, moneda y ambos escenarios híbridos vacíos. No incluir el resto hasta implementar sus sistemas. El detalle por archivo, estado, alfa, resolución, destino, animabilidad y pendientes está en [management-asset-manifest.md](management-asset-manifest.md).
 
 ## Auditoría de inventario visual conectado
 

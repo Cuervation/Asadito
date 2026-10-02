@@ -2,7 +2,7 @@ Shader "Asadito/ManagementSurface"
 {
  Properties { _Tint("Tint",Color)=(1,1,1,1) _Gloss("Soft highlight",Range(0,1))=.15 }
  SubShader {
- Tags { "RenderType"="Opaque" } Cull Back
+ Tags { "RenderType"="Opaque" "DisableBatching"="True" } Cull Back
  Pass {
  CGPROGRAM
  #pragma vertex vert
