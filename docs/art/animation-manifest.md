@@ -24,3 +24,8 @@ Inventario de feedback de runtime existente, mayormente procedural y con corutin
 | `audio.sizzle` | Cocción | Sizzle sintético loop en runtime; haptics opcionales | `BuildSizzleAudio`, `VibrateFeedback` | No es asset grabado; haptics requieren hardware. |
 
 No se documentan gestos, expresiones o VFX que no sean código real. Todo gesto importante tiene feedback básico; requiere polish y validación visual/touch real.
+
+## Gestión 3D (2026-10-01)
+- Selección tienda: pulso/highlight 0.22s y mesh decorativo al carrito 0.32s, sonido existente. Coroutines locales reemplazables; no bloqueo de la transacción.
+- Heladera: apertura de bisagra 0.55s; selección/devolución a bandeja 0.25s. Identidad de unidad intacta hasta PrepareUnits. Movimiento reversible y recolocación de slots; sin clips/rig ni animación offline.
+- Cámara/meshes/materiales/RenderTexture se liberan al cerrar, sin Update de selección ni iluminación dinámica.

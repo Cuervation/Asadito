@@ -108,17 +108,43 @@ namespace Asadito.Runtime
             foreach (var pair in counts) if (Available(pair.Key) < pair.Value) return false;
             return foods.Length > 0 && State.ActiveRun == null;
         }
-        public bool Prepare(int level, string[] selected)
+        // Physical inventory selection validates stable IDs as one transaction; no reservation or new save field.
+        public bool CanPrepareUnits(int level,IReadOnlyList<int> ids)
         {
-            if (level < 1 || level > Config.PlayableLevels || !CanPrepare(selected)) return false;
-            foreach (var food in selected) if (Config.Product(food).UnlockLevel > level) return false;
-            var run = new AsadoRun { Level = level };
-            foreach (var food in selected)
+            if(level<1||level>Config.PlayableLevels||ids==null||ids.Count==0||State.ActiveRun!=null)return false;
+            var unique=new HashSet<int>();
+            foreach(int id in ids)
             {
-                var unit = State.Inventory.Find(x => x.FoodId == food && x.FreshnessAt(State.FreshnessCycle, Config.Product(food).FreshCycles) != Freshness.Spoiled);
-                State.Inventory.Remove(unit); run.Units.Add(unit); run.FoodCost += unit.Cost; run.Recovery |= unit.Recovery;
+                if(!unique.Add(id))return false;
+                var unit=State.Inventory.Find(x=>x.Id==id);
+                if(unit==null)return false;
+                var p=Array.Find(Config.Products,x=>x.FoodId==unit.FoodId);
+                if(p==null||p.UnlockLevel>level||unit.FreshnessAt(State.FreshnessCycle,p.FreshCycles)==Freshness.Spoiled)return false;
             }
-            State.ActiveRun = run; return true;
+            return true;
+        }
+        public bool PrepareUnits(int level,IReadOnlyList<int> ids)
+        {
+            if(!CanPrepareUnits(level,ids))return false;
+            var run=new AsadoRun{Level=level};
+            foreach(int id in ids)
+            {
+                var unit=State.Inventory.Find(x=>x.Id==id);
+                run.Units.Add(unit);run.FoodCost+=unit.Cost;run.Recovery|=unit.Recovery;
+            }
+            foreach(var unit in run.Units)State.Inventory.Remove(unit);
+            State.ActiveRun=run;return true;
+        }
+        public bool Prepare(int level,string[] selected)
+        {
+            if(!CanPrepare(selected))return false;
+            var ids=new List<int>();
+            foreach(var food in selected)
+            {
+                var unit=State.Inventory.Find(x=>x.FoodId==food&&!ids.Contains(x.Id)&&x.FreshnessAt(State.FreshnessCycle,Config.Product(food).FreshCycles)!=Freshness.Spoiled);
+                if(unit==null)return false;ids.Add(unit.Id);
+            }
+            return PrepareUnits(level,ids);
         }
         public bool CanRecover(string[] foods)
         {

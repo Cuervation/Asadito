@@ -7,7 +7,7 @@
 | Company | `Cuervation` |
 | Product | `Asadito` |
 | Application ID | `com.cuervation.asadito` |
-| Version / versionCode | `1.3.0` / `4` |
+| Version / versionCode | `1.4.0` / `6` |
 | Orientación | Portrait; manifiesto empaquetado anuncia `screenOrientation=portrait` |
 | SDK | min 26, target/compile 36 (Android 16) |
 | Arquitectura / backend | ARM64 / IL2CPP |
@@ -33,3 +33,8 @@ Instalación de la APK `20979f4` (2026-09-30): `adb install -r --no-streaming` d
 
 ## Gestión desde L1 (2026-10-01, actual)
 Unity6000.6.3f1, ARM64/IL2CPP Succeeded en una única compilación final. APK local65MiB `build/Asadito-1.3.0-management-level1-20261001.apk`, version1.3.0/code4,min26,target36; metadata/ABI/firma v2 debug verificadas. SHA256 `6876a9ab20d112c3b257654c540c588248afc5efc369ac04d1021e891604cc61`. Dominio53/53PASS, focalgestión3/3PASS y recorridoL1–6 1/1PASS; detalle/evidencia en [QA](ai/management-level1-qa.md). ADB no detecta dispositivos al cierre, por lo que esta build no se instaló ni se probó táctilmente en teléfono. Mantener datos con `adb install -r` cuando vuelva a estar conectado; no desinstalar ni limpiar PlayerPrefs. Sin publicación/firma productiva.
+
+## Gestión 3D — build1.4.0 (2026-10-01)
+Unity6000.6.3f1 Android ARM64/IL2CPP Succeeded en build inicial y cierre incremental final tras ajustar el encuadre móvil. APK `build/Asadito-1.4.0-management-3d-20261001.apk`,66,634,050 bytes (~63.55MiB), com.cuervation.asadito1.4.0/code6, min26/target+compile36. Aapt/ABI/firma v2 debug verificadas. SHA256 `02231b37289a072a8202e103b27c17da9ebcf9ce2569eb810b36ae070071e93c`. Menú identifica Gestión 3D mediante Application.version.
+
+EditMode66/66PASS, PlayMode20/20PASS y cierre de vistas3/3PASS; validator y diff check PASS. Log `/tmp/asadito-3d-android.log`; [QA/evidencia](ai/management-3d-qa.md). No instalada en teléfono en este pedido; touch/performance/notch físicos y aprobación estética humana pendientes. Sin firma productiva ni publicación.

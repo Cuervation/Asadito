@@ -1,19 +1,18 @@
 # Carnicería — fuente canónica
 
-Pantalla real de compra de chorizo y tira, FoodCatalog para identidad/arte. `ProductEconomy`: FoodId, precio base, stock controlado, nivel de unlock y duración. Precio actual usa contrato Promotion. Stock disponible = stock de configuración − compras de jornada, reproducible sin RNG. Cambia al completar asado, no al entrar/salir de la tienda.
-Antes de comprar se conoce pedido, invitados, hambre aproximada, puntos y favoritos desde planificación. Compra de una o más unidades valida desbloqueo, stock, capacidad, saldo y run inactivo antes de mutar. UI comunica error y mantiene saldo/inventario sin cambio; compra válida ofrece sonido/botón animado y saldo actualizado.
+## Entorno 3D (decisión vigente)
+Carnicería y heladera son escenarios tridimensionales reales con cámaras fijas elevadas y UI móvil superpuesta. La parrilla conserva su Canvas, input y motor térmico. No cards de productos ni sprites planos como mercadería final.
 
-## Promos preparadas, no activadas en V1
-Contrato de cotización cubre porcentaje, BuyNPayM (2x1/3x2 y restos), pack, oferta del día y liquidación como descuento, premium como producto sin descuento. No activar todas al comienzo. Origen/ventana/variantes premium se agregan con Vertical 3 y sus datos; no hay eventos aleatorios ahora.
-Una promoción NO ignora capacidad ni frescura. Comprar excedente ocupa slots e inmoviliza saldo; no debería ser siempre óptimo. Tutorial controla stock, never imposibilita continuar por un evento obligatorio.
+Mostrador de madera/metal con vidrio de bajo costo, bandejas y modelos independientes de chorizo/tira. Varias unidades según stock (hasta ocho por SKU visible); stock cero deja la bandeja vacía y cartel AGOTADO. Modelos comparten identidad FoodCatalog, geometría/materiales entre tienda e inventario, sin duplicar catálogo económico. Más cortes se registran por fábrica/modelo y se paginan, sin inventar variantes de venta.
 
-## Mostrador con carrito (desde nivel 1)
-Vitrina ilustrada con bandejas de cortes tocables, cartel de nombre/precio, stock y cantidad seleccionada. FoodCatalog provee sprites y ProductEconomy precios/unlocks/stock. No se duplican alimentos como productos independientes ni se hornean precios en el arte.
+Cartel físico dinámico: nombre, precio, stock y cantidad en carrito desde ManagementConfig/ManagementService, nunca horneados en modelos. Toque mediante raycast real desde viewport táctil; overlays interceptan su propia área. Pulso/highlight, vuelo decorativo breve y sonido existente; entrada no bloquea taps posteriores.
 
-- Tocar un corte suma una unidad; highlight, pulso breve, sonido y aviso +1. La selección es libre también en L1; el pedido orienta, no fuerza compras.
-- Carrito visible: cantidades, subtotales, total, +/− y VACIAR. Saldo visible en HUD. No debita ni reserva stock/inventario hasta pagar.
-- PAGAR Y SALIR es una confirmación única del carrito completo y conduce a HELADERA con aviso de éxito. QuoteCart valida sin mutar; BuyCart revalida todo antes del único débito, entrega todas las unidades y registra stock. UI guarda el agregado una vez tras éxito.
-- Carrito vacío o inválido deshabilita pago; mensaje explícito por saldo, stock, capacidad o run activo. Un callback de pago igualmente revalida: jamás entrega una parte del pedido si falla otra.
-- VOLVER/cancelar y navegación a heladera descartan solo el carrito sin pagar; reabrir empieza vacío. La mercadería previamente comprada sigue intacta. Carrito es efímero, no nuevo campo del save.
-- Inventario/prepare/recovery y economía permanecen; no promociones activadas. Heladera/Caja del Asador siguen accesibles si no se puede completar el pedido.
-- Descarte de inventario conserva confirmación y no se habilita en la guía inicial.
+## Compra y carrito
+- Pedido/invitados/puntos/favoritos se conocen desde planificación. Carrito compacto inferior expandible con cantidades, subtotales, total, +/− y VACIAR; saldo visible. Tocar añade una unidad solo si QuoteCart permite la canasta propuesta.
+- Cotización no debita ni reserva stock/inventario. PAGAR Y SALIR revalida saldo, stock, capacidad, desbloqueos y run inactivo mediante BuyCart antes de mutar; nunca cobra/entrega parcialmente. La UI persiste una vez tras éxito y abre heladera con puerta animada y aviso.
+- Volver o ir a heladera cancela solamente la canasta sin pagar. Las compras persistentes siguen intactas; carrito no es nuevo campo de save.
+- Stock = configuración menos compras de jornada; cambia al completar asado, no al entrar/salir. Precios de ProductEconomy, no precios propios de prefabs.
+- Tutorial orienta sin forzar compras; Caja del Asador evita bloqueo cuando no se puede completar pedido. Descarte confirmado sigue restringido en guía inicial.
+
+## Promos preparadas, no activadas
+Promotion mantiene porcentaje, BuyNPayM, pack, oferta diaria, liquidación y premium. Ninguna promoción activa en esta vertical; nunca ignora capacidad/frescura. No RNG ni eventos obligatorios nuevos.

@@ -14,8 +14,8 @@ namespace Asadito.Editor
         private const string Company = "Cuervation";
         private const string Product = "Asadito";
         private const string BundleId = "com.cuervation.asadito";
-        private const string BundleVersion = "1.3.0";
-        private const int VersionCode = 4;
+        private const string BundleVersion = "1.4.0";
+        private const int VersionCode = 6;
 
         [MenuItem("Asadito/Configure Android Release Settings")]
         public static void ConfigureAndroidSettings()

@@ -39,3 +39,10 @@ El release público requiere playtesting humano y QA táctil/performance ARM64. 
 - QuoteCart/BuyCart mantienen reglas en ManagementService: selección no debita, pago conjunto revalida y muta una sola vez. Éxito persiste y lleva a heladera; cancelar descarta únicamente el carrito.
 - Compilación Unity real y ManagementTests **34/34 PASS**. Cuatro casos PlayMode focalizados aprobados en corridas proporcionales: canasta/cancelación/persistencia/preparación, L5 compra/cocina/servicio/reload, recovery y errores/raycast real. Renders portrait revisados; detalle en [QA mostrador](ai/butcher-counter-cart-qa.md).
 - No se ejecutó suite completa ni nueva build Android por este rediseño. El celular conserva la APK1.3.0 anterior: build/instalación y revisión táctil humana del mostrador quedan pendientes.
+
+## Gestión 3D — implementación vigente (2026-10-01)
+- Carnicería: mostrador refrigerado3D, vidrio/bandejas, hasta16 modelos por stock, precios/stock/selección dinámicos; compra directa por physics raycast. Carrito compacto expandible, pago atómico existente.
+- Heladera: puerta animada, estantes y un modelo por InventoryUnit.Id real. Selección reversible a bandeja; PrepareUnits valida todos los IDs únicos y consume exactamente esos. Legacy Prepare/recovery/save y parrilla Canvas/térmica intactos.
+- Meshes nativos chorizo561v/tira975v y shaders compartidos de producción inicial. Sin sprites/primitivas de comida en gestión, sin nuevos paquetes. Static props combinados, RT cap1200×1200/depth16/MSAA2, lifetime local;18,912 food triangles/42 MeshRenderers activos en vitrina completa.
+- EditMode66/66PASS; PlayMode20/20PASS y cierre final3/3PASS; capturas realesportrait revisadas. [QA](ai/management-3d-qa.md), [recursos](art/management-3d-assets.md).
+- Identidad1.4.0/code6; Android ARM64/IL2CPP Succeeded, APK63.55MiB en build/Asadito-1.4.0-management-3d-20261001.apk, metadata/ABI/firma v2 debug verificadas. No instalación ni profiling/touch humano físico en este pedido. Aprobación estética humana pendiente, no interacciones simuladas ni inventario ficticio.

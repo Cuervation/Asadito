@@ -1,5 +1,7 @@
 # Manifest de arte visual para gestión y progresión — ASADITO
 
+> **Gestión 3D vigente:** ver [recursos nativos y límites](management-3d-assets.md). Carnicería/heladera ya no usan fondos o food sprites 2D; tablas anteriores registran la biblioteca/historia, no el escenario activo.
+
 ## Mostrador runtime / carrito (2026-10-01)
 El fondo ButcherShop_Background se reutiliza; vitrina, marcos, bandejas, reflejo, precios y cantidades se componen con UI nativa (PROVISIONAL) y sprites crudos de FoodCatalog. Bandeja seleccionada tiene highlight y pulso corto. No se agregaron PNG/dependencias ni se alteraron los originales; precios siguen siendo datos vivos. Los cinco sprites de gestión conectados permanecen iguales.
 

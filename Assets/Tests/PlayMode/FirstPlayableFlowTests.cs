@@ -841,20 +841,125 @@ namespace Asadito.Tests.PlayMode
         }
 
         [UnityTest]
+        public IEnumerator Management_3DModelsReceivePhysicsTapsWithoutCards()
+        {
+            Component game=null;yield return LoadGameScene(v=>game=v);
+            yield return new WaitForSecondsRealtime(.6f);ClickButton("ENTRAR");yield return new WaitForSecondsRealtime(.5f);
+            ClickButton("NIVEL 1");yield return new WaitForSecondsRealtime(.5f);ClickButton("IR A LA PARRILLA");yield return null;
+            ClickButton("CARNICERÍA");yield return null;var view=UnityEngine.Object.FindAnyObjectByType<ManagementWorldView>();
+            Assert.IsNotNull(view);Assert.IsFalse(view.IsFridge);Assert.AreEqual(16,view.Targets.Count);
+            Assert.IsNotNull(view.Viewport.texture);Assert.AreEqual(1<<30,view.WorldCamera.cullingMask);
+            Assert.IsNull(GameObject.Find("Shop food chorizo"));
+            var root=GameObject.Find("Management CARNICERÍA");
+            foreach(var target in view.Targets)
+            {
+                var mesh=target.GetComponent<MeshFilter>().sharedMesh;Assert.Greater(mesh.vertexCount,200);Assert.IsNotNull(Resources.Load<Mesh>("Management3D/"+target.FoodId));
+                Assert.Greater(mesh.bounds.size.z,.3f);Assert.Greater(mesh.bounds.size.y,.15f);
+                Assert.IsNull(target.GetComponent<SpriteRenderer>());
+                Assert.IsTrue(target.Visual.sharedMaterial.shader.isSupported);
+                var first=view.Raycast(view.ScreenPoint(target));Assert.IsNotNull(first,"Occluded physical cut "+target.name);Assert.AreEqual(target.FoodId,first.FoodId);
+            }
+            // Tall/narrow mobile safe area must not crop any piece; adapt camera framing, not food geometry.
+            var viewportRect=view.Viewport.rectTransform;var min=viewportRect.anchorMin;var max=viewportRect.anchorMax;
+            viewportRect.anchorMin=viewportRect.anchorMax=new Vector2(.5f,.55f);viewportRect.sizeDelta=new Vector2(780,1100);
+            Canvas.ForceUpdateCanvases();yield return null;
+            foreach(var t in view.Targets)
+            {
+                var bounds=t.GetComponent<MeshFilter>().sharedMesh.bounds;
+                foreach(int x in new[]{-1,1})foreach(int y in new[]{-1,1})foreach(int z in new[]{-1,1})
+                {
+                    var uv=view.WorldCamera.WorldToViewportPoint(t.transform.TransformPoint(bounds.center+Vector3.Scale(bounds.extents,new Vector3(x,y,z))));
+                    Assert.That(uv.x,Is.InRange(0f,1f),"Food cropped on narrow safe area");Assert.That(uv.y,Is.InRange(0f,1f));
+                }
+            }
+            viewportRect.anchorMin=min;viewportRect.anchorMax=max;viewportRect.offsetMin=viewportRect.offsetMax=Vector2.zero;Canvas.ForceUpdateCanvases();yield return null;
+            int triangles=0,renderers=0;foreach(var t in view.Targets)triangles+=t.GetComponent<MeshFilter>().sharedMesh.triangles.Length/3;
+            foreach(var renderer in view.WorldCamera.transform.parent.GetComponentsInChildren<MeshRenderer>())if(renderer.enabled)renderers++;
+            Assert.Less(triangles,25000);Assert.Less(renderers,60);Debug.Log("3D display budget: "+triangles+" food triangles, "+renderers+" active mesh renderers");
+            foreach(var button in root.GetComponentsInChildren<Button>())Assert.GreaterOrEqual(button.GetComponent<RectTransform>().rect.height,132,"44dp-equivalent reference target");
+            int balance=MvpSave.Load().Management.Balance;TapModel(view,view.Targets.Find(t=>t.FoodId=="chorizo"));yield return null;
+            TapModel(view,view.Targets.Find(t=>t.FoodId=="chorizo"));yield return null;
+            Assert.AreSame(root,GameObject.Find("Management CARNICERÍA"));Assert.IsNotNull(GameObject.Find("TOTAL $200"));
+            Assert.IsNotNull(GameObject.Find("Carne al carrito 3D"));Assert.AreEqual(balance,MvpSave.Load().Management.Balance);
+            AddToBasket("tira");yield return new WaitForSecondsRealtime(.45f);Assert.IsNull(GameObject.Find("Carne al carrito 3D"));
+            view.CaptureRender();
+            var rt=(RenderTexture)view.Viewport.texture;var prev=RenderTexture.active;RenderTexture.active=rt;
+            var pixels=new Texture2D(rt.width,rt.height,TextureFormat.RGB24,false);pixels.ReadPixels(new Rect(0,0,rt.width,rt.height),0,0);pixels.Apply();
+            System.IO.File.WriteAllBytes("/tmp/asadito-3d-world.png",pixels.EncodeToPNG());RenderTexture.active=prev;UnityEngine.Object.Destroy(pixels);
+            CaptureManagementFrame(game,"/tmp/asadito-3d-shop.png");
+            ClickButton("DETALLE");yield return null;AssertAllManagementTextFits();
+            var remove=FindButton("Restar carrito chorizo");var hits=new List<RaycastResult>();EventSystem.current.RaycastAll(MakePointer(remove.GetComponent<RectTransform>(),799),hits);
+            Assert.AreEqual(remove,hits[0].gameObject.GetComponentInParent<Button>(),"Expanded detail must own its touches");
+            CaptureManagementFrame(game,"/tmp/asadito-3d-cart-expanded.png");
+            ClickButton("Volver carnicería");yield return null;yield return null;
+            Assert.IsNull(UnityEngine.Object.FindAnyObjectByType<ManagementWorldView>());
+            Assert.AreEqual(balance,MvpSave.Load().Management.Balance);Assert.IsEmpty(MvpSave.Load().Management.Inventory);
+        }
+
+        [UnityTest]
+        public IEnumerator Management_PhysicalFridgeTracksExactUnitsCancelAndPrepare()
+        {
+            Component game=null;yield return LoadGameScene(v=>game=v);
+            yield return new WaitForSecondsRealtime(.6f);ClickButton("ENTRAR");yield return new WaitForSecondsRealtime(.5f);
+            ClickButton("NIVEL 1");yield return new WaitForSecondsRealtime(.5f);ClickButton("IR A LA PARRILLA");yield return null;
+            var service=(ManagementService)GetField(game,"management");service.State.Balance=2000;
+            ClickButton("CARNICERÍA");yield return null;
+            for(int i=0;i<3;i++){AddToBasket("chorizo");yield return null;}for(int i=0;i<2;i++){AddToBasket("tira");yield return null;}
+            ClickButton("PAGAR Y SALIR");yield return new WaitForSecondsRealtime(.7f);
+            var view=UnityEngine.Object.FindAnyObjectByType<ManagementWorldView>();Assert.IsTrue(view.IsFridge);Assert.AreEqual(1,view.DoorOpenFraction);
+            Assert.AreEqual(5,view.Targets.Count);Assert.AreEqual(5,service.State.Inventory.Count);Assert.AreEqual(1340,service.State.Balance);
+            foreach(var t in view.Targets){Assert.IsNotNull(service.State.Inventory.Find(u=>u.Id==t.UnitId));Assert.AreSame(t,view.Raycast(view.ScreenPoint(t)),"Inventory unit must be independently selectable: "+t.UnitId);}
+            int chorizo=service.State.Inventory[2].Id,tira=service.State.Inventory[4].Id;
+            var c=view.Targets.Find(t=>t.UnitId==chorizo);var r=view.Targets.Find(t=>t.UnitId==tira);
+            view.CaptureRender();CaptureManagementFrame(game,"/tmp/asadito-3d-fridge.png");
+            TapModel(view,c);yield return new WaitForSecondsRealtime(.3f);TapModel(view,r);yield return new WaitForSecondsRealtime(.3f);
+            Assert.IsTrue(c.Selected);Assert.IsTrue(r.Selected);Assert.AreEqual(5,service.State.Inventory.Count,"Selection previews do not consume inventory");
+            CaptureManagementFrame(game,"/tmp/asadito-3d-fridge-selected.png");
+            ClickButton("CANCELAR");yield return new WaitForSecondsRealtime(.3f);
+            Assert.IsFalse(c.Selected);Assert.Less(Vector3.Distance(c.Home,c.transform.localPosition),.01f);
+            Assert.IsFalse(GameObject.Find("PREPARAR").GetComponent<Button>().interactable);
+            // Returning/reopening cancels only the preview, with persistent paid inventory intact.
+            ClickButton("VOLVER");yield return null;ResetSaveCache();Assert.AreEqual(5,MvpSave.Load().Management.Inventory.Count);
+            ClickButton("HELADERA");yield return new WaitForSecondsRealtime(.7f);view=UnityEngine.Object.FindAnyObjectByType<ManagementWorldView>();
+            TapModel(view,view.Targets.Find(t=>t.UnitId==chorizo));yield return new WaitForSecondsRealtime(.3f);
+            TapModel(view,view.Targets.Find(t=>t.UnitId==tira));yield return new WaitForSecondsRealtime(.3f);
+            ClickButton("PREPARAR");yield return new WaitForSecondsRealtime(.5f);
+            Assert.AreEqual(chorizo,service.State.ActiveRun.Units[0].Id);Assert.AreEqual(tira,service.State.ActiveRun.Units[1].Id);Assert.AreEqual(3,service.State.Inventory.Count);
+            ResetSaveCache();Assert.AreEqual(chorizo,MvpSave.Load().Management.ActiveRun.Units[0].Id);
+            Assert.IsNull(UnityEngine.Object.FindAnyObjectByType<ManagementWorldView>());
+        }
+
+        [UnityTest]
+        public IEnumerator Management_3DZeroStockAndEmptyFridgeNeverInventUnits()
+        {
+            Component game=null;yield return LoadGameScene(v=>game=v);
+            yield return new WaitForSecondsRealtime(.6f);ClickButton("ENTRAR");yield return new WaitForSecondsRealtime(.5f);
+            ClickButton("NIVEL 1");yield return new WaitForSecondsRealtime(.5f);ClickButton("IR A LA PARRILLA");yield return null;
+            var service=(ManagementService)GetField(game,"management");service.State.ManagementTutorialCompleted=true;
+            foreach(var p in service.Config.Products)service.State.Purchases.Add(new PurchaseRecord{FoodId=p.FoodId,Quantity=p.Stock});
+            ClickButton("CARNICERÍA");yield return null;var view=UnityEngine.Object.FindAnyObjectByType<ManagementWorldView>();
+            Assert.IsEmpty(view.Targets);Assert.IsFalse(GameObject.Find("PAGAR Y SALIR").GetComponent<Button>().interactable);
+            Assert.That(GameObject.Find("Precio chorizo").GetComponentInChildren<Text>().text,Does.Contain("AGOTADO"));
+            view.CaptureRender();CaptureManagementFrame(game,"/tmp/asadito-3d-shop-empty-stock.png");
+            ClickButton("HELADERA");yield return new WaitForSecondsRealtime(.7f);view=UnityEngine.Object.FindAnyObjectByType<ManagementWorldView>();
+            Assert.IsEmpty(view.Targets);Assert.IsNotNull(GameObject.Find("Heladera vacía\nComprá carne para tu asado"));
+            view.CaptureRender();CaptureManagementFrame(game,"/tmp/asadito-3d-fridge-empty.png");
+        }
+        private static void TapModel(ManagementWorldView view,ManagementFoodTarget target)
+        {
+            Assert.IsNotNull(target);Canvas.ForceUpdateCanvases();var point=view.ScreenPoint(target);
+            var data=new PointerEventData(EventSystem.current){position=point,button=PointerEventData.InputButton.Left};
+            var hits=new List<RaycastResult>();EventSystem.current.RaycastAll(data,hits);
+            Assert.IsNotEmpty(hits);Assert.AreSame(view.gameObject,hits[0].gameObject,"UI overlay blocks physical food "+target.UnitId);
+            Assert.IsTrue(ExecuteEvents.Execute(hits[0].gameObject,data,ExecuteEvents.pointerClickHandler));
+        }
+        [UnityTest]
         public IEnumerator Management_CounterErrorsAreReadableAndNeverPartiallyCharge()
         {
             Component game=null;yield return LoadGameScene(value=>game=value);
             yield return new WaitForSecondsRealtime(.6f);ClickButton("ENTRAR");yield return new WaitForSecondsRealtime(.5f);
             ClickButton("NIVEL 1");yield return new WaitForSecondsRealtime(.5f);ClickButton("IR A LA PARRILLA");yield return null;
             ClickButton("CARNICERÍA");yield return null;
-            Canvas.ForceUpdateCanvases();
-            foreach(var id in new[]{"chorizo","tira"})
-            {
-                var food=GameObject.Find("Shop food "+id).GetComponent<RectTransform>();
-                var hits=new List<RaycastResult>();EventSystem.current.RaycastAll(MakePointer(food,700),hits);
-                Assert.IsNotEmpty(hits);Assert.IsNotNull(hits[0].gameObject.GetComponentInParent<Button>(),"Unexpected blocker: "+hits[0].gameObject.name);
-                Assert.AreEqual("Comprar "+id,hits[0].gameObject.GetComponentInParent<Button>().name,"Food overlay must not block its tray's touch target.");
-            }
             AddToBasket("tira");yield return null;AddToBasket("chorizo");yield return null;
             var service=(ManagementService)GetField(game,"management");
             service.State.Balance=0;AddToBasket("chorizo");yield return null;
@@ -888,14 +993,14 @@ namespace Asadito.Tests.PlayMode
             int balance=MvpSave.Load().Management.Balance;
             AddToBasket("chorizo");yield return null;AddToBasket("chorizo");yield return null;AddToBasket("tira");yield return null;
             AssertAllManagementTextFits();CaptureManagementFrame(game,"/tmp/asadito-counter-cart.png");
-            ClickButton("Restar carrito chorizo");yield return null;
+            ClickButton("DETALLE");yield return null;ClickButton("Restar carrito chorizo");yield return null;
             Assert.IsNotNull(GameObject.Find("TOTAL $280"));
             ClickButton("VACIAR");yield return null;Assert.IsFalse(GameObject.Find("PAGAR Y SALIR").GetComponent<Button>().interactable);
             AddToBasket("tira");yield return null;ClickButton("Volver carnicería");yield return null;
             Assert.AreEqual(balance,MvpSave.Load().Management.Balance);Assert.IsEmpty(MvpSave.Load().Management.Inventory);
             ClickButton("CARNICERÍA");yield return null;Assert.IsNotNull(GameObject.Find("TOTAL $0"));
             AddToBasket("tira");yield return null;AddToBasket("chorizo");yield return null;
-            ClickButton("PAGAR Y SALIR");yield return null;
+            ClickButton("PAGAR Y SALIR");yield return new WaitForSecondsRealtime(.7f);
             Assert.IsNotNull(GameObject.Find("Management HELADERA"));Assert.AreEqual(balance-280,MvpSave.Load().Management.Balance);Assert.AreEqual(2,MvpSave.Load().Management.Inventory.Count);
             AssertAllManagementTextFits();CaptureManagementFrame(game,"/tmp/asadito-counter-paid-fridge.png");
             ResetSaveCache();Assert.AreEqual(balance-280,MvpSave.Load().Management.Balance);Assert.AreEqual(2,MvpSave.Load().Management.Inventory.Count);
@@ -921,13 +1026,13 @@ namespace Asadito.Tests.PlayMode
             ClickButton("CARNICERÍA"); yield return null;
             var library = Resources.Load<ScriptableObject>("ManagementArt");
             Assert.IsNotNull(library, "The selected prepared management sprites must load through the reference catalog.");
-            Assert.IsNotNull(GameObject.Find("Butcher_Greeting").GetComponent<Image>().sprite);
+            Assert.IsNotNull(UnityEngine.Object.FindAnyObjectByType<ManagementWorldView>());
             CaptureManagementFrame(game, "/tmp/asadito-management-shop.png"); yield return new WaitForSecondsRealtime(.2f);
             AddToBasket("tira"); yield return null;
             AddToBasket("tira"); yield return null;
             AddToBasket("chorizo"); yield return null;
             AddToBasket("chorizo"); yield return null;
-            ClickButton("PAGAR Y SALIR"); yield return null;
+            ClickButton("PAGAR Y SALIR"); yield return new WaitForSecondsRealtime(.7f);
             Assert.AreEqual(4, MvpSave.Load().Management.Inventory.Count);
             int purchaseBalance = MvpSave.Load().Management.Balance;
             Assert.AreEqual(ManagementConfig.Load().InitialBalance - 560, purchaseBalance);
@@ -1020,6 +1125,7 @@ namespace Asadito.Tests.PlayMode
 
         private static void CaptureManagementFrame(Component game, string path)
         {
+            var world=UnityEngine.Object.FindAnyObjectByType<ManagementWorldView>();if(world!=null)world.CaptureRender();
             Canvas canvas = (Canvas)GetField(game, "canvas");
             var cameraObject = new GameObject("Management QA camera");
             var camera = cameraObject.AddComponent<Camera>();
@@ -1029,9 +1135,9 @@ namespace Asadito.Tests.PlayMode
             camera.targetTexture = target;
             var previousMode = canvas.renderMode; var previousCamera = canvas.worldCamera;
             canvas.renderMode = RenderMode.ScreenSpaceCamera; canvas.worldCamera = camera; canvas.planeDistance = 10;
-            Canvas.ForceUpdateCanvases(); camera.Render();
+            Canvas.ForceUpdateCanvases(); if(world!=null)world.CaptureRender(); camera.Render();
             // First offscreen render can rebuild the dynamic font atlas. Refresh before capturing pixels.
-            Canvas.ForceUpdateCanvases(); camera.Render();
+            Canvas.ForceUpdateCanvases(); if(world!=null)world.CaptureRender(); camera.Render();
             var previous = RenderTexture.active; RenderTexture.active = target;
             var image = new Texture2D(1080,1920,TextureFormat.RGB24,false);
             image.ReadPixels(new Rect(0,0,1080,1920),0,0); image.Apply();
@@ -1190,7 +1296,7 @@ namespace Asadito.Tests.PlayMode
             AssertAllManagementTextFits();
             if(GameObject.Find("PAGAR Y SALIR").GetComponent<Button>().interactable) ClickButton("PAGAR Y SALIR");
             else ClickButton("HELADERA");
-            yield return null;
+            yield return new WaitForSecondsRealtime(.7f);
             foreach(var id in order.FoodIds){ClickButton("Preparar "+id);yield return null;}
             AssertAllManagementTextFits();
             if(capture) CaptureManagementFrame(game,"/tmp/asadito-level1-fridge.png");
@@ -1346,7 +1452,10 @@ namespace Asadito.Tests.PlayMode
 
         private static Button FindButton(string name)
         {
-            GameObject go = GameObject.Find(name);
+            GameObject go = null;
+            foreach(var candidate in UnityEngine.Object.FindObjectsByType<Button>())
+                if(candidate.name==name&&candidate.transform.parent.name.StartsWith("Management ")){go=candidate.gameObject;break;}
+            if(go==null)go=GameObject.Find(name);
             Assert.NotNull(go, "Expected active UI button: " + name);
             Button button = go.GetComponent<Button>();
             Assert.NotNull(button, "Expected Button component: " + name);
@@ -1380,7 +1489,16 @@ namespace Asadito.Tests.PlayMode
             }
         }
 
-        private static void ClickButton(string name) { ClickButton(FindButton(name)); }
+        private static void ClickButton(string name)
+        {
+            if(name.StartsWith("Comprar ")||name.StartsWith("Preparar "))
+            {
+                var view=UnityEngine.Object.FindAnyObjectByType<ManagementWorldView>();Assert.IsNotNull(view);
+                string id=name.Substring(name.IndexOf(' ')+1);
+                var t=view.Targets.Find(x=>x.FoodId==id&&(!view.IsFridge||!x.Selected));TapModel(view,t);return;
+            }
+            ClickButton(FindButton(name));
+        }
 
         private static void ClickButton(Button button)
         {

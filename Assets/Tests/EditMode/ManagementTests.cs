@@ -15,6 +15,31 @@ namespace Asadito.Tests
             config = JsonUtility.FromJson<ManagementConfig>(JsonUtility.ToJson(ManagementConfig.Load()));
             state = ManagementState.New(config); service = new ManagementService(state, config);
         }
+        [Test] public void PhysicalPreparationConsumesExactIdsNotFirstMatchingSku()
+        {
+            state.Balance=2000;Assert.IsNull(service.BuyCart(new System.Collections.Generic.Dictionary<string,int>{{"chorizo",3},{"tira",2}},1));
+            int chosen=state.Inventory[2].Id,tira=state.Inventory[4].Id,kept=state.Inventory[0].Id;
+            Assert.IsTrue(service.PrepareUnits(1,new[]{chosen,tira}));
+            Assert.AreEqual(chosen,state.ActiveRun.Units[0].Id);Assert.AreEqual(tira,state.ActiveRun.Units[1].Id);
+            Assert.AreEqual(3,state.Inventory.Count);Assert.IsNotNull(state.Inventory.Find(u=>u.Id==kept));
+            Assert.AreEqual(280,state.ActiveRun.FoodCost);Assert.IsFalse(service.PrepareUnits(1,new[]{chosen,tira}));
+            var reloaded=JsonUtility.FromJson<ManagementState>(JsonUtility.ToJson(state));
+            Assert.AreEqual(chosen,reloaded.ActiveRun.Units[0].Id);Assert.AreEqual(3,reloaded.Inventory.Count);
+        }
+        [TestCase("duplicate")] [TestCase("missing")] [TestCase("locked")] [TestCase("spoiled")] [TestCase("active")]
+        public void PhysicalPreparationRejectsWholeSelectionAtomically(string reason)
+        {
+            Assert.IsNull(service.BuyCart(new System.Collections.Generic.Dictionary<string,int>{{"chorizo",1},{"tira",1}},1));
+            int a=state.Inventory[0].Id,b=state.Inventory[1].Id;
+            if(reason=="duplicate")b=a;
+            if(reason=="missing")b=99999;
+            if(reason=="locked")config.Product("tira").UnlockLevel=2;
+            if(reason=="spoiled")state.FreshnessCycle=10;
+            if(reason=="active")state.ActiveRun=new AsadoRun{Level=1};
+            string before=JsonUtility.ToJson(state);
+            Assert.IsFalse(service.CanPrepareUnits(1,new[]{a,b}));Assert.IsFalse(service.PrepareUnits(1,new[]{a,b}));
+            Assert.AreEqual(before,JsonUtility.ToJson(state));
+        }
         [Test] public void CartPreviewDoesNotMutateAndCheckoutTransfersWholeBasketPersistently()
         {
             var cart=new Dictionary<string,int>{{"tira",2},{"chorizo",2}};
