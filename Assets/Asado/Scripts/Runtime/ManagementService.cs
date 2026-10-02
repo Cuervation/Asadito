@@ -16,6 +16,7 @@ namespace Asadito.Runtime
         public bool Recovery, Passed;
         public float Cooking, Satiety;
         public string Advice;
+        public OrderFulfillmentResult Order;
     }
     /// <summary>Transactions operate on the save aggregate; UI persists only successful state changes.</summary>
     public sealed class ManagementService
@@ -178,6 +179,10 @@ namespace Asadito.Runtime
         {
             if (State.ActiveRun == null) throw new InvalidOperationException("No active order; reward already claimed");
             var run = State.ActiveRun;
+            var requested = run.Level >= 1 && run.Level <= MvpLevelCatalog.Count
+                ? MvpLevelCatalog.Get(run.Level).FoodIds : Array.Empty<string>();
+            var served = run.Units.ConvertAll(unit => unit.FoodId);
+            var order = OrderFulfillment.Evaluate(requested,served);
             cookingWaste = Mathf.Clamp(cookingWaste, 0, run.FoodCost);
             int waste = State.PendingWaste + cookingWaste;
             int retainedCost = 0;
@@ -189,7 +194,7 @@ namespace Asadito.Runtime
             float overall = (Mathf.Clamp(asador, 0, 100) * Config.FoodWeight + economy * Config.EconomyWeight + operations * Config.OperationsWeight) / sum;
             int reward = Mathf.RoundToInt((Config.BaseReward + Config.RewardPerGuest * guestCount) * Mathf.Lerp(Config.MinimumRewardRatio, 1f, Mathf.Min(overall, Mathf.Clamp(asador, 0, 100), Mathf.Clamp(cooking, 0, 100)) / 100f) * (run.Recovery ? Config.RecoveryRewardMultiplier : 1));
             // Excellent bookkeeping cannot compensate for raw/burnt food or hungry guests.
-            bool passed = asador >= Config.MinimumAsadorForStar && cooking >= Config.MinimumCookingForStar && satiety >= Config.MinimumSatietyForStar;
+            bool passed = order.IsComplete && asador >= Config.MinimumAsadorForStar && cooking >= Config.MinimumCookingForStar && satiety >= Config.MinimumSatietyForStar;
             int stars = passed ? thresholds.Evaluate(Mathf.RoundToInt(overall * 2)) : 0;
             if (asador < Config.TwoStarAsador) stars = Math.Min(stars, 1);
             else if (asador < Config.ThreeStarAsador) stars = Math.Min(stars, 2);
@@ -199,8 +204,9 @@ namespace Asadito.Runtime
             Wallet.Credit(reward); State.TotalRewards += reward; State.TotalWaste += cookingWaste;
             var result = new EconomicResult { Asador = asador, Economy = economy, Operations = operations, Overall = overall,
                 Spending = run.FoodCost, Waste = waste, Income = reward, Profit = reward - run.FoodCost - State.PendingWaste,
-                Balance = Wallet.Balance, Stars = stars, Recovery = run.Recovery, Passed = stars > 0, Cooking = cooking, Satiety = satiety,
-                Advice = cooking < Config.MinimumCookingForStar ? "Había carne cruda o quemada. Revisá cada pieza antes de servir." :
+                Balance = Wallet.Balance, Stars = stars, Recovery = run.Recovery, Passed = stars > 0, Cooking = cooking, Satiety = satiety, Order = order,
+                Advice = !order.IsComplete ? OrderMismatchAdvice(order) :
+                    cooking < Config.MinimumCookingForStar ? "Había carne cruda o quemada. Revisá cada pieza antes de servir." :
                     satiety < Config.MinimumSatietyForStar ? "Faltó comida: revisá cantidades y hambre de tus invitados." :
                     asador < Config.MinimumAsadorForStar ? "Mejorá la cocción y respetá los puntos pedidos." :
                     waste > 0 ? "Buen asado. Evitá desperdicios para mejorar tu ganancia." :
@@ -210,6 +216,20 @@ namespace Asadito.Runtime
             // Freshness is data/model-ready but does not advance until Vertical 2 is enabled.
             if (Config.EnableFreshness) State.FreshnessCycle++;
             return result;
+        }
+        private static string OrderMismatchAdvice(OrderFulfillmentResult order)
+        {
+            if (order.RequiredCount == 0) return "No se pudo verificar el pedido de este asado. Volvé a planificarlo.";
+            string missing = FoodCounts(order.MissingByFood), unexpected = FoodCounts(order.UnexpectedByFood);
+            return "Pedido incorrecto." + (missing.Length > 0 ? " Faltó: " + missing + "." : "") +
+                (unexpected.Length > 0 ? " No pedido: " + unexpected + "." : "") + " Serví lo que pidió cada comensal.";
+        }
+        private static string FoodCounts(Dictionary<string,int> counts)
+        {
+            var names = new List<string>();
+            foreach (var pair in counts)
+                names.Add((FoodCatalog.TryGet(pair.Key,out var food) ? food.DisplayName : pair.Key)+" ×"+pair.Value);
+            return string.Join(" · ",names);
         }
         public void Abandon()
         {

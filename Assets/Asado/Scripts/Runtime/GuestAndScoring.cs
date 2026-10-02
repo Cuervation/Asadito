@@ -15,6 +15,7 @@ namespace Asadito.Runtime
         [Min(0f)] public float Weight = 70f;
         [Min(0f)] public float Appetite = 1f;
         public Doneness PreferredDoneness = Doneness.A_Punto;
+        public string RequestedFoodId; // Actual order, not a favorite or a cooking preference.
         public List<string> FavoriteFoods = new List<string>();
         public List<string> LikedFoods = new List<string>();
         public List<string> DislikedFoods = new List<string>();

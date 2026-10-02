@@ -15,6 +15,43 @@ namespace Asadito.Tests
             config = JsonUtility.FromJson<ManagementConfig>(JsonUtility.ToJson(ManagementConfig.Load()));
             state = ManagementState.New(config); service = new ManagementService(state, config);
         }
+        [Test] public void FullCatalogueHasUniquePositivePricesAndUnlocksForStockingAtLevelOne()
+        {
+            var foods=FoodCatalog.GetAll();var ids=new HashSet<string>();
+            Assert.AreEqual(18,foods.Length);Assert.AreEqual(foods.Length,config.Products.Length);
+            foreach(var food in foods)
+            {
+                var product=config.Product(food.Id);Assert.IsNotNull(product,food.Id);Assert.IsTrue(ids.Add(product.FoodId));
+                Assert.Greater(product.Price,0);Assert.AreEqual(1,product.UnlockLevel);Assert.Greater(product.Stock,0);
+                Assert.That(product.PortionAmount,Is.GreaterThan(0).And.LessThanOrEqualTo(1));
+                Assert.IsTrue(service.QuoteCart(new Dictionary<string,int>{{food.Id,1}},1).CanBuy,food.Id+" may be stocked before appearing in an order");
+            }
+        }
+        [Test] public void StockingNonOrderFoodsDoesNotReserveTheCurrentAsadoBudget()
+        {
+            Assert.That(MvpLevelCatalog.Get(1).FoodIds,Does.Not.Contain("lomo"));
+            var cart=new Dictionary<string,int>{{"lomo",2}};Assert.IsTrue(service.QuoteCart(cart,1).CanBuy);
+            Assert.IsNull(service.BuyCart(cart,1));Assert.AreEqual(10,state.Balance);Assert.AreEqual(2,service.Available("lomo"));
+            var loaded=MvpSaveData.Migrate(JsonUtility.FromJson<MvpSaveData>(JsonUtility.ToJson(new MvpSaveData{Management=state}))).Management;
+            Assert.AreEqual(10,loaded.Balance);Assert.AreEqual(2,loaded.Inventory.Count);
+            Assert.AreEqual(state.Inventory[0].Id,loaded.Inventory[0].Id);Assert.AreEqual(state.Inventory[1].Id,loaded.Inventory[1].Id);
+            string before=JsonUtility.ToJson(state);
+            Assert.IsNotNull(service.BuyCart(new Dictionary<string,int>{{"chorizo",1},{"tira",1}},1));
+            Assert.AreEqual(before,JsonUtility.ToJson(state),"Insufficient order budget is the player's consequence, not a reserved balance or partial debit");
+        }
+        [Test] public void SaveConstructionDoesNotLoadTheResourceBackedLevelCatalogue()
+        {
+            var cache=typeof(MvpLevelCatalog).GetField("cached",System.Reflection.BindingFlags.Static|System.Reflection.BindingFlags.NonPublic);
+            var previous=cache.GetValue(null);cache.SetValue(null,null);
+            try
+            {
+                var save=new MvpSaveData();Assert.IsNull(cache.GetValue(null),"Serializable constructors must not invoke Unity Resources");
+                Assert.IsEmpty(save.StarsByLevel);Assert.IsEmpty(save.BestScoreByLevel);
+                MvpSaveData.Migrate(save);Assert.AreEqual(MvpLevelCatalog.Count,save.StarsByLevel.Length);
+                save.RecordLevelResult(1,130,2);Assert.AreEqual(2,save.StarsByLevel[0]);
+            }
+            finally{cache.SetValue(null,previous);}
+        }
         [Test] public void AbundantCounterStockKeepsPricesBalanceCapacityAndPurchasesExact()
         {
             Assert.AreEqual(24,service.Stock("chorizo"));Assert.AreEqual(24,service.Stock("tira"));
@@ -127,13 +164,83 @@ namespace Asadito.Tests
         }
         [Test] public void PreparationConsumesSelectedUnitsOnlyAndRewardIsClaimedOnce()
         {
-            service.Buy("chorizo",2,5);service.Buy("tira",1,5);
-            Assert.IsTrue(service.Prepare(5,new[]{"chorizo","tira"}));Assert.AreEqual(1,service.Available("chorizo"));
-            Assert.IsNotNull(service.Buy("chorizo",1,5));
+            service.Buy("chorizo",2,1);service.Buy("tira",1,1);
+            Assert.IsTrue(service.Prepare(1,new[]{"chorizo","tira"}));Assert.AreEqual(1,service.Available("chorizo"));
+            Assert.IsNotNull(service.Buy("chorizo",1,1));
             int balance=state.Balance;var result=service.Complete(90,2,new StarThresholds());
             Assert.Greater(result.Income,0);Assert.AreEqual(balance+result.Income,state.Balance);
+            Assert.IsTrue(result.Order.IsComplete);Assert.IsTrue(result.Passed);
             Assert.AreEqual(result.Income-result.Spending-result.Waste,result.Profit);
             Assert.Throws<InvalidOperationException>(()=>service.Complete(90,2,new StarThresholds()));
+        }
+        [TestCase(1,"morcilla,morcilla",0,2,2)]
+        [TestCase(1,"chorizo,chorizo",1,1,1)]
+        [TestCase(1,"tira",1,1,0)]
+        [TestCase(1,"tira,chorizo,morcilla",2,0,1)]
+        [TestCase(2,"tira,tira,chorizo",2,1,1)]
+        public void PerfectScoresCannotApproveWrongMissingOrExtraMenu(int level,string servedCsv,int matched,int missing,int unexpected)
+        {
+            string[] selected=servedCsv.Split(',');
+            foreach(string food in selected)Assert.IsNull(service.Buy(food,1,level));
+            int[] selectedIds=state.Inventory.ConvertAll(unit=>unit.Id).ToArray();
+            Assert.IsTrue(service.PrepareUnits(level,selectedIds),"Preparing paid alternative cuts remains free");
+            CollectionAssert.AreEqual(selectedIds,state.ActiveRun.Units.ConvertAll(unit=>unit.Id));
+            int balance=state.Balance,cost=state.ActiveRun.FoodCost;
+            var result=service.Complete(100,MvpLevelCatalog.Get(level).GuestCount,new StarThresholds(),100,100);
+            Assert.AreEqual(MvpLevelCatalog.Get(level).FoodIds.Length,result.Order.RequiredCount);
+            Assert.AreEqual(matched,result.Order.MatchedCount);
+            int missingCount=0,unexpectedCount=0;
+            foreach(int quantity in result.Order.MissingByFood.Values)missingCount+=quantity;
+            foreach(int quantity in result.Order.UnexpectedByFood.Values)unexpectedCount+=quantity;
+            Assert.AreEqual(missing,missingCount);Assert.AreEqual(unexpected,unexpectedCount);
+            Assert.IsFalse(result.Order.IsComplete);Assert.IsFalse(result.Passed);Assert.AreEqual(0,result.Stars);
+            Assert.That(result.Advice.ToLowerInvariant(),Does.Contain("pedido"));
+            Assert.AreEqual(100,result.Asador);Assert.AreEqual(100,result.Cooking);Assert.AreEqual(100,result.Satiety);
+            int expectedIncome=config.BaseReward+config.RewardPerGuest*MvpLevelCatalog.Get(level).GuestCount;
+            Assert.AreEqual(expectedIncome,result.Income,"A failed menu does not rewrite the existing paid reward formula");
+            Assert.AreEqual(balance+expectedIncome,state.Balance);Assert.AreEqual(cost,result.Spending);
+            Assert.IsEmpty(state.Inventory);Assert.IsNull(state.ActiveRun);Assert.AreEqual(1,state.Cycle);
+            string completed=JsonUtility.ToJson(state);
+            Assert.Throws<InvalidOperationException>(()=>service.Complete(100,2,new StarThresholds()));
+            Assert.AreEqual(completed,JsonUtility.ToJson(state),"Repeated completion must not credit or consume anything twice");
+        }
+        [TestCase(1,"chorizo,tira")]
+        [TestCase(2,"tira,chorizo,chorizo")]
+        public void CompleteCanonicalMenuPassesRegardlessOfPreparationOrder(int level,string selectedCsv)
+        {
+            string[] selected=selectedCsv.Split(',');
+            foreach(string food in selected)Assert.IsNull(service.Buy(food,1,level));
+            Assert.IsTrue(service.Prepare(level,selected));
+            var result=service.Complete(100,MvpLevelCatalog.Get(level).GuestCount,new StarThresholds());
+            Assert.IsTrue(result.Order.IsComplete);Assert.AreEqual(selected.Length,result.Order.RequiredCount);
+            Assert.AreEqual(selected.Length,result.Order.MatchedCount);Assert.IsEmpty(result.Order.MissingByFood);
+            Assert.IsEmpty(result.Order.UnexpectedByFood);Assert.IsTrue(result.Passed);Assert.AreEqual(3,result.Stars);
+            int balance=state.Balance,rewards=state.TotalRewards;
+            Assert.Throws<InvalidOperationException>(()=>service.Complete(100,MvpLevelCatalog.Get(level).GuestCount,new StarThresholds()));
+            Assert.AreEqual(balance,state.Balance);Assert.AreEqual(rewards,state.TotalRewards);
+        }
+        [Test] public void CorrectFoodKeptInFridgeCannotFulfillPreparedMorcillaOrder()
+        {
+            Assert.IsNull(service.BuyCart(new Dictionary<string,int>{{"tira",1},{"chorizo",1},{"morcilla",2}},1));
+            var kept=state.Inventory.FindAll(unit=>unit.FoodId!="morcilla").ConvertAll(unit=>unit.Id).ToArray();
+            var selected=state.Inventory.FindAll(unit=>unit.FoodId=="morcilla").ConvertAll(unit=>unit.Id).ToArray();
+            Assert.IsTrue(service.PrepareUnits(1,selected));Assert.AreEqual(180,state.ActiveRun.FoodCost);
+            var result=service.Complete(100,2,new StarThresholds());
+            Assert.IsFalse(result.Order.IsComplete);Assert.AreEqual(0,result.Order.MatchedCount);
+            Assert.AreEqual(1,result.Order.MissingByFood["tira"]);Assert.AreEqual(1,result.Order.MissingByFood["chorizo"]);
+            Assert.AreEqual(2,result.Order.UnexpectedByFood["morcilla"]);Assert.IsFalse(result.Passed);
+            CollectionAssert.AreEqual(kept,state.Inventory.ConvertAll(unit=>unit.Id));
+            var reloaded=MvpSaveData.Migrate(JsonUtility.FromJson<MvpSaveData>(JsonUtility.ToJson(new MvpSaveData{Management=state}))).Management;
+            Assert.AreEqual(state.Balance,reloaded.Balance);CollectionAssert.AreEqual(kept,reloaded.Inventory.ConvertAll(unit=>unit.Id));
+            Assert.IsNull(reloaded.ActiveRun);Assert.AreEqual(state.TotalRewards,reloaded.TotalRewards);
+        }
+        [Test] public void UnknownRunLevelCannotApproveOtherwiseCorrectMenu()
+        {
+            service.Buy("tira",1,1);service.Buy("chorizo",1,1);Assert.IsTrue(service.Prepare(1,new[]{"tira","chorizo"}));
+            state.ActiveRun.Level=0;
+            var result=service.Complete(100,2,new StarThresholds());
+            Assert.IsFalse(result.Order.IsComplete);Assert.AreEqual(0,result.Stars);Assert.IsFalse(result.Passed);
+            Assert.That(result.Advice.ToLowerInvariant(),Does.Contain("pedido"));
         }
         [Test] public void FreshnessUsesJourneysNotClockAndSpoiledCannotPrepare()
         {
@@ -146,15 +253,17 @@ namespace Asadito.Tests
         }
         [Test] public void JourneyAdvancesStockButFreshnessIsDeferredInVerticalOne()
         {
-            service.Buy("chorizo",2,5);service.Prepare(5,new[]{"chorizo"});service.Complete(80,1,new StarThresholds());
+            service.Buy("chorizo",2,1);service.Buy("tira",2,1);
+            service.Prepare(1,new[]{"chorizo","tira"});service.Complete(80,2,new StarThresholds());
             Assert.AreEqual(1,state.Cycle);Assert.AreEqual(0,state.FreshnessCycle);Assert.AreEqual(config.Product("chorizo").Stock,service.Stock("chorizo"));
-            config.EnableFreshness=true;service.Prepare(5,new[]{"chorizo"});service.Complete(80,1,new StarThresholds());Assert.AreEqual(1,state.FreshnessCycle);
+            config.EnableFreshness=true;service.Prepare(1,new[]{"chorizo","tira"});service.Complete(80,2,new StarThresholds());Assert.AreEqual(1,state.FreshnessCycle);
         }
         [Test] public void RecoveryWorksWithZeroCoinsAndFullFridgeWithoutGrantingSurplus()
         {
             state.Balance=0;Assert.IsTrue(service.CanRecover(new[]{"tira","chorizo"}));
             Assert.IsTrue(service.Recover(new[]{"tira","chorizo"}));Assert.IsEmpty(state.Inventory);
-            var result=service.Complete(100,2,new StarThresholds());Assert.AreEqual(config.RecoveryStarCap,result.Stars);
+            state.ActiveRun.Level=1;
+            var result=service.Complete(100,2,new StarThresholds());Assert.IsTrue(result.Order.IsComplete);Assert.AreEqual(config.RecoveryStarCap,result.Stars);
             Assert.Greater(state.Balance,0);Assert.IsFalse(service.Recover(Array.Empty<string>()));
         }
         [Test] public void FullFridgeRescueConsumesOwnedFoodAndOnlySuppliesMissingFood()
@@ -175,8 +284,9 @@ namespace Asadito.Tests
         }
         [Test] public void WasteAndUnnecessaryPurchasesHaveGentleConfigurableScoreEffect()
         {
-            service.Buy("chorizo",2,5);service.Discard(state.Inventory[0].Id);
-            service.Prepare(5,new[]{"chorizo"});var result=service.Complete(100,1,new StarThresholds());
+            service.Buy("chorizo",2,1);service.Buy("tira",1,1);service.Discard(state.Inventory[0].Id);
+            service.Prepare(1,new[]{"chorizo","tira"});var result=service.Complete(100,2,new StarThresholds());
+            Assert.IsTrue(result.Order.IsComplete);
             Assert.Less(result.Economy,100);Assert.Less(result.Operations,100);Assert.GreaterOrEqual(result.Overall,60);
             Assert.AreEqual(result.Asador*config.FoodWeight+result.Economy*config.EconomyWeight+result.Operations*config.OperationsWeight,result.Overall,.001);
         }
@@ -221,36 +331,42 @@ namespace Asadito.Tests
         [TestCase(20,100,100)] [TestCase(80,0,100)] [TestCase(80,100,20)]
         public void PerfectManagementCannotPassBadCookingOrHungryGuests(float asador,float cooking,float satiety)
         {
-            service.Buy("tira",1,1);service.Prepare(1,new[]{"tira"});
-            var result=service.Complete(asador,1,new StarThresholds(),cooking,satiety);
+            service.Buy("tira",1,1);service.Buy("chorizo",1,1);service.Prepare(1,new[]{"tira","chorizo"});
+            var result=service.Complete(asador,2,new StarThresholds(),cooking,satiety);
+            Assert.IsTrue(result.Order.IsComplete,"This regression must isolate culinary gates, not a missing menu item");
             Assert.AreEqual(0,result.Stars);Assert.IsFalse(result.Passed);Assert.IsNotEmpty(result.Advice);
         }
         [TestCase(55,1)] [TestCase(70,2)] [TestCase(85,3)]
         public void HigherStarsRequireGoodAsadorNotOnlyEconomicScore(float asador,int expected)
         {
-            service.Buy("chorizo",1,1);service.Prepare(1,new[]{"chorizo"});
-            Assert.AreEqual(expected,service.Complete(asador,1,new StarThresholds()).Stars);
+            service.Buy("chorizo",1,1);service.Buy("tira",1,1);service.Prepare(1,new[]{"chorizo","tira"});
+            var result=service.Complete(asador,2,new StarThresholds());
+            Assert.IsTrue(result.Order.IsComplete);Assert.AreEqual(expected,result.Stars);
         }
         [Test] public void FailedRecoveryCannotGenerateCoinsAndRemainsPlayable()
         {
-            state.Balance=0;service.Recover(new[]{"chorizo","tira"});
+            state.Balance=0;service.Recover(new[]{"chorizo","tira"});state.ActiveRun.Level=1;
             var result=service.Complete(30,2,new StarThresholds(),0,100);
+            Assert.IsTrue(result.Order.IsComplete);
             Assert.AreEqual(0,result.Income);Assert.AreEqual(0,state.Balance);
             Assert.IsTrue(service.CanRecover(new[]{"chorizo","tira"}));
         }
         [Test] public void CookingWasteIsRecordedButNeverDeductedTwice()
         {
-            service.Buy("tira",1,1);int cost=config.Product("tira").Price;
-            service.Prepare(1,new[]{"tira"});var result=service.Complete(20,1,new StarThresholds(),0,100,cost);
+            service.Buy("tira",1,1);service.Buy("chorizo",1,1);
+            service.Prepare(1,new[]{"tira","chorizo"});int cost=config.Product("tira").Price;
+            var result=service.Complete(20,2,new StarThresholds(),0,100,cost);
+            Assert.IsTrue(result.Order.IsComplete);
             Assert.AreEqual(cost,result.Waste);Assert.AreEqual(cost,state.TotalWaste);
-            Assert.AreEqual(result.Income-cost,result.Profit);
+            Assert.AreEqual(config.Product("tira").Price+config.Product("chorizo").Price,result.Spending);
+            Assert.AreEqual(result.Income-result.Spending,result.Profit,"Cooking waste was already paid in food cost, never subtract it twice");
             Assert.Less(result.Economy,100);Assert.Less(result.Operations,100);
         }
         [Test] public void V4MigrationPreservesBonusWalletInventoryRunAndProgressWithoutNewMoney()
         {
             service.Buy("chorizo",2,1);service.Prepare(1,new[]{"chorizo"});state.IntroRewardGranted=true;
             state.Cycle=2;
-            var old=new MvpSaveData{Version=4,MaxUnlockedLevel=8,Management=state};old.StarsByLevel[0]=3;
+            var old=new MvpSaveData{Version=4,MaxUnlockedLevel=8,Management=state,StarsByLevel=new[]{3}};
             int balance=state.Balance,id=state.ActiveRun.Units[0].Id;
             var migrated=MvpSaveData.Migrate(JsonUtility.FromJson<MvpSaveData>(JsonUtility.ToJson(old)));
             Assert.AreEqual(balance,migrated.Management.Balance);Assert.IsTrue(migrated.Management.IntroRewardGranted);

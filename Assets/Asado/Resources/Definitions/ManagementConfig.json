@@ -24,6 +24,134 @@
       "UnlockLevel": 1,
       "FreshCycles": 4,
       "PortionAmount": 0.14
+    },
+    {
+      "FoodId": "vacio",
+      "Price": 220,
+      "Stock": 24,
+      "UnlockLevel": 1,
+      "FreshCycles": 3,
+      "PortionAmount": 0.18
+    },
+    {
+      "FoodId": "provoleta",
+      "Price": 140,
+      "Stock": 24,
+      "UnlockLevel": 1,
+      "FreshCycles": 3,
+      "PortionAmount": 0.12
+    },
+    {
+      "FoodId": "entrana",
+      "Price": 240,
+      "Stock": 24,
+      "UnlockLevel": 1,
+      "FreshCycles": 3,
+      "PortionAmount": 0.16
+    },
+    {
+      "FoodId": "colita_cuadril",
+      "Price": 230,
+      "Stock": 24,
+      "UnlockLevel": 1,
+      "FreshCycles": 3,
+      "PortionAmount": 0.18
+    },
+    {
+      "FoodId": "lomo",
+      "Price": 320,
+      "Stock": 24,
+      "UnlockLevel": 1,
+      "FreshCycles": 3,
+      "PortionAmount": 0.16
+    },
+    {
+      "FoodId": "bife_ancho",
+      "Price": 270,
+      "Stock": 24,
+      "UnlockLevel": 1,
+      "FreshCycles": 3,
+      "PortionAmount": 0.18
+    },
+    {
+      "FoodId": "bife_angosto",
+      "Price": 260,
+      "Stock": 24,
+      "UnlockLevel": 1,
+      "FreshCycles": 3,
+      "PortionAmount": 0.18
+    },
+    {
+      "FoodId": "bife_chorizo",
+      "Price": 280,
+      "Stock": 24,
+      "UnlockLevel": 1,
+      "FreshCycles": 3,
+      "PortionAmount": 0.18
+    },
+    {
+      "FoodId": "ojo_bife",
+      "Price": 300,
+      "Stock": 24,
+      "UnlockLevel": 1,
+      "FreshCycles": 3,
+      "PortionAmount": 0.18
+    },
+    {
+      "FoodId": "chinchulines",
+      "Price": 110,
+      "Stock": 24,
+      "UnlockLevel": 1,
+      "FreshCycles": 3,
+      "PortionAmount": 0.1
+    },
+    {
+      "FoodId": "morcilla",
+      "Price": 90,
+      "Stock": 24,
+      "UnlockLevel": 1,
+      "FreshCycles": 3,
+      "PortionAmount": 0.1
+    },
+    {
+      "FoodId": "morcilla_vasca",
+      "Price": 120,
+      "Stock": 24,
+      "UnlockLevel": 1,
+      "FreshCycles": 3,
+      "PortionAmount": 0.1
+    },
+    {
+      "FoodId": "matambre_cerdo",
+      "Price": 190,
+      "Stock": 24,
+      "UnlockLevel": 1,
+      "FreshCycles": 3,
+      "PortionAmount": 0.16
+    },
+    {
+      "FoodId": "costillita_cerdo",
+      "Price": 160,
+      "Stock": 24,
+      "UnlockLevel": 1,
+      "FreshCycles": 3,
+      "PortionAmount": 0.14
+    },
+    {
+      "FoodId": "solomillo_cerdo",
+      "Price": 210,
+      "Stock": 24,
+      "UnlockLevel": 1,
+      "FreshCycles": 3,
+      "PortionAmount": 0.16
+    },
+    {
+      "FoodId": "pollo_deshuesado",
+      "Price": 170,
+      "Stock": 24,
+      "UnlockLevel": 1,
+      "FreshCycles": 3,
+      "PortionAmount": 0.18
     }
   ],
   "EnableFreshness": false,

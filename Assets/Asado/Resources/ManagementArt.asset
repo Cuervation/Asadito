@@ -21,3 +21,9 @@ MonoBehaviour:
     Sprite: {fileID: 21300000, guid: a0920d03096743d983d17bbb92dfb065, type: 3}
   - Name: Fridge_Hybrid_OpenEmptyV2
     Sprite: {fileID: 21300000, guid: 33021edd81db4ae78a5a00ea75e28d0f, type: 3}
+  - Name: Butcher_Neutral
+    Sprite: {fileID: 21300000, guid: a4be2cb04ac84b0395a23b4f7a02b24d, type: 3}
+  - Name: Frame_ResultPanel
+    Sprite: {fileID: 21300000, guid: 4e629b9af33d488b8ef32c6450d0aac6, type: 3}
+  - Name: Frame_ProductCard
+    Sprite: {fileID: 21300000, guid: c2423411307240ac90f7827afc015b29, type: 3}

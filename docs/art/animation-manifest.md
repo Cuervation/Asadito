@@ -18,8 +18,8 @@ Inventario de feedback de runtime existente, mayormente procedural y con corutin
 | `food.cook-visual` | Atlas/corte | Reemplazo de sprite por seis etapas térmicas por perfil | `RefreshFoodVisual` | EditMode carga seis estados de cada atlas; cambio discreto, no blend por material. |
 | `food.to-table` | Comida/tabla | Drag grill→tabla, arco breve, deposita en posiciones empaquetadas con escala común por nivel y aspecto individual; tabla completa acepta un solo tap para servir | `FoodPieceTouch`, `PlatePortion`, `ServeAnimation`, `ServingBoardPortionPosition`, `ServingBoardTouch` | PlayMode valida drag/tap en la suite actual; tacto real pendiente; el ajuste de proporciones más reciente está compilado pero aún no probado en Unity. |
 | `guests.reactions` | Retrato + evaluación | Retrato elegido y bounce secuencial por evaluación | `GuestReaction`, `ApplyGuestPortrait` | Perfiles/reacciones en resultados; QA de timing pendiente. |
-| `results.entrance-score` | Panel y score | Fade/scale + conteo ascendente | `AnimateResultsEntrance`, `AnimateResultScore` | Save/score/progression cubierto por PlayMode. |
-| `results.stars` | Tres estrellas | Pop escalonado/tint y cue por estrella ganada | `PopResultStar`, `PlaySfx(Star)` | Estrellas/progreso en ciclo; no prueba accesibilidad ni mezcla. |
+| `results.entrance-score` | Panel y score legacy | Fade/scale + conteo ascendente | `AnimateResultsEntrance`, `AnimateResultScore` | Save/score/progression cubierto por PlayMode. |
+| `results.stars` | Tres estrellas legacy | Pop escalonado/tint y cue por estrella ganada | `PopResultStar`, `PlaySfx(Star)` | Estrellas/progreso en ciclo; no prueba accesibilidad ni mezcla. |
 | `audio.ui-drop-flip-plate-serve-result-star` | Acciones | Siete AudioClips determinísticamente sintetizados en memoria y `PlayOneShot` | `ProceduralSfx` | Código activo, sin cue de encendido; mezcla y volumen físico pendientes. |
 | `audio.sizzle` | Cocción | Sizzle sintético loop en runtime; haptics opcionales | `BuildSizzleAudio`, `VibrateFeedback` | No es asset grabado; haptics requieren hardware. |
 
@@ -44,3 +44,9 @@ El pulso0.18s vuelve a HomeScale de cada pieza, no a una escala global; comenzar
 
 ### Heladera híbrida histórica reemplazada (2026-10-02)
 Gabinete/puerta2D estáticos abiertos, no bisagra3D ni animación de puertas repetidas. Selección/devolución de comida3D0.25s conserva ancho de parrilla en destino mediante compensación de perspectiva, sin reducir tamaño por número de seleccionadas. Cancelar devuelve cada ID al estante y recupera tint de frescura. Recursos/coroutines locales liberados al cerrar. QA PlayMode dirigida5/5PASS; ritmo/tacto humano Android pendientes.
+
+### Mini barras por comida (2026-10-02)
+Dos Images Canvas nativos por pieza (track8px/fill6px), stretch al ancho real del arte, sin assets nuevos ni Animator. Llenado/color rojo-amarillo-verde-amarillo-rojo desde estado térmico por perfil, un tramo verde sostenido y señales de overshoot. Hijo del alimento sigue posición/escala de interacción, sin raycast; oculto al emplatar/reset y pausa sin avance. Unity2EditMode+3PlayMode focalesPASS; renders realesportrait inspeccionados. Touch/performance Android pendientes, no APK nueva.
+
+### Resultado de gestión ilustrado (2026-10-02)
+`ManagementResultLayout` aplica fit uniforme dentro del Canvas/safe area y entrada0.20s unscaled: fade0→1, escala0.985→1, interacción habilitada al terminar. Suscripción `Canvas.willRenderCanvases` se libera en OnDisable; no altera economía/save. Las estrellas earned/unearned se muestran inmediatamente, sin el conteo/pop de la ruta legacy. Overlay de detalle bloquea input posterior y permite scroll nativo; cierre desactiva antes de Destroy. Test focal verifica tres estados, cinco invitados, tamañosportrait y botones; tres integraciones compra/cocción/resultado/recuperaciónPASS. Ritmo/tacto humano físico pendientes; sin APK nueva.

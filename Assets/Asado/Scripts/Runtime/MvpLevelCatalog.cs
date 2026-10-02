@@ -73,7 +73,8 @@ namespace Asadito.Runtime
 
         public static GuestProfile[] CreateGuests(int levelNumber)
         {
-            int count = Get(levelNumber).GuestCount;
+            var order = Get(levelNumber);
+            int count = order.GuestCount;
             var result = new GuestProfile[count];
             var tuning = new GuestAmountTuning { AdultAgeBase = .24f, SeniorAgeBase = .21f, ChildAgeBase = .15f };
             for (int i = 0; i < count; i++)
@@ -86,7 +87,8 @@ namespace Asadito.Runtime
                     Age = source.Age,
                     Weight = source.Weight,
                     Appetite = source.Appetite,
-                    PreferredDoneness = source.PreferredDoneness
+                    PreferredDoneness = source.PreferredDoneness,
+                    RequestedFoodId = order.FoodIds[i]
                 };
                 guest.FavoriteFoods.AddRange(source.FavoriteFoods);
                 guest.LikedFoods.AddRange(source.LikedFoods);

@@ -18,10 +18,23 @@ namespace Asadito.Runtime
         public const int CurrentVersion = 5;
         public int Version = CurrentVersion;
         public int MaxUnlockedLevel = 1;
-        public int[] StarsByLevel = new int[MvpLevelCatalog.Count];
-        public int[] BestScoreByLevel = new int[MvpLevelCatalog.Count];
+        // Field initializers run during Unity serialization: defer Resource-backed sizing to Migrate/RecordLevelResult.
+        public int[] StarsByLevel = Array.Empty<int>();
+        public int[] BestScoreByLevel = Array.Empty<int>();
         public MvpSettings Settings = new MvpSettings();
         public ManagementState Management;
+
+        public bool IsLevelUnlocked(int levelNumber)
+        {
+            if (levelNumber < 1 || levelNumber > MvpLevelCatalog.Count || levelNumber > MaxUnlockedLevel)
+                return false;
+            // A legacy unlock ceiling is not proof that the preceding asados were completed.
+            // Keep its stored progress intact, but require a passing star for every prerequisite.
+            for (int index = 0; index < levelNumber - 1; index++)
+                if (StarsByLevel == null || index >= StarsByLevel.Length || StarsByLevel[index] < 1)
+                    return false;
+            return true;
+        }
 
         public void RecordLevelResult(int levelNumber, int score, int stars)
         {

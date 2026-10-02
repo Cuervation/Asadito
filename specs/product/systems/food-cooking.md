@@ -23,3 +23,6 @@ Las cinco bandas (`Jugoso` a `Bien cocido`) se balancean por perfil; por ejemplo
 ## Diez etapas runtime (2026-09-30)
 
 RAW → EARLY_WARMING → WARMING → EARLY_BROWNING → BROWNING → IDEAL → DRYING → OVERCOOKED → CHARRING → BURNT. Se conservan los seis dibujos originales; cuatro composiciones al 50% entre etapas adyacentes aportan transiciones visuales intermedias, sin alterar proporciones ni perfiles térmicos. Provoleta usa sus propios umbrales. Los diez estados no cambian las cinco bandas de punto solicitadas por los comensales.
+
+## Barra fina por pieza (2026-10-02)
+Cada corte sobre la parrilla lleva una mini barra horizontal debajo, del ancho de su arte y grosor8px (relleno6px) en Canvas1080. Relleno y color evolucionan rojo→amarillo→verde→amarillo→rojo por estado/profile individual, no tiempo fijo ni pieza seleccionada. Verde referencia banda A_Punto; queso usa etapa Ideal con dorado. Char/sequedad anticipan advertencia y quemado llena rojo. Ayuda de juego, no regla de puntuación ni indicador de inocuidad. Se oculta en crudos/tabla, acompaña drag, no toma eventos táctiles y reinicia/pausa con la comida.

@@ -6,6 +6,67 @@ namespace Asadito.Tests
     public sealed class HeatAndCookingTests
     {
         [Test]
+        public void CookingProgress_UsesEachFoodProfileAndHasRedYellowGreenYellowRedWindow()
+        {
+            Assert.AreEqual(Asadito.Runtime.FoodCookingProgress.Red,Asadito.Runtime.FoodCookingProgress.ColorAt(0));
+            Assert.AreEqual(Asadito.Runtime.FoodCookingProgress.Yellow,Asadito.Runtime.FoodCookingProgress.ColorAt(.25f));
+            Assert.AreEqual(Asadito.Runtime.FoodCookingProgress.Green,Asadito.Runtime.FoodCookingProgress.ColorAt(.52f));
+            Assert.AreEqual(Asadito.Runtime.FoodCookingProgress.Yellow,Asadito.Runtime.FoodCookingProgress.ColorAt(.78f));
+            Assert.AreEqual(Asadito.Runtime.FoodCookingProgress.Red,Asadito.Runtime.FoodCookingProgress.ColorAt(1));
+            foreach(var food in Asadito.Runtime.FoodCatalog.GetAll())
+            {
+                var profile=food.Profile;float min=54f,max=66f;
+                if(!profile.UsesCheeseStages)foreach(var band in profile.DonenessBands)
+                    if(band.Doneness==Asadito.Runtime.Doneness.A_Punto){min=band.MinimumCoreC;max=band.MaximumCoreC;}
+                var state=new Asadito.Runtime.FoodState{CoreTemperatureC=20f};
+                Assert.AreEqual(0,Asadito.Runtime.FoodCookingProgress.Value(state,profile),food.Id);
+                state.CoreTemperatureC=(min+max)*.5f;
+                state.SetCurrentFace(new Asadito.Runtime.FoodFaceState{SurfaceTemperatureC=150f,Maillard=.2f});
+                string before=JsonUtility.ToJson(state);
+                float progress=Asadito.Runtime.FoodCookingProgress.Value(state,profile);
+                Assert.That(progress,Is.InRange(Asadito.Runtime.FoodCookingProgress.GreenStart,Asadito.Runtime.FoodCookingProgress.GreenEnd),food.Id);
+                Assert.AreEqual(Asadito.Runtime.FoodCookingProgress.Green,Asadito.Runtime.FoodCookingProgress.ColorAt(progress),food.Id);
+                Assert.AreEqual(before,JsonUtility.ToJson(state),"Read-only gauge must not change thermal state");
+                state.CoreTemperatureC=max+10f;
+                Assert.Greater(Asadito.Runtime.FoodCookingProgress.Value(state,profile),Asadito.Runtime.FoodCookingProgress.GreenEnd,food.Id);
+                state.CoreTemperatureC=(min+max)*.5f;
+                state.SetCurrentFace(new Asadito.Runtime.FoodFaceState{Char=.8f,Maillard=.3f});
+                Assert.AreEqual(1f,Asadito.Runtime.FoodCookingProgress.Value(state,profile),"Burnt surface overrides green core: "+food.Id);
+            }
+            var tira=Asadito.Runtime.FoodCookingModel.CreateProfile("tira");
+            var chorizo=Asadito.Runtime.FoodCookingModel.CreateProfile("chorizo");
+            var sameCore=new Asadito.Runtime.FoodState{CoreTemperatureC=57f};
+            Assert.Greater(Asadito.Runtime.FoodCookingProgress.Value(sameCore,tira),Asadito.Runtime.FoodCookingProgress.Value(sameCore,chorizo));
+            var cheese=new Asadito.Runtime.FoodState{CoreTemperatureC=60f};
+            Assert.Less(Asadito.Runtime.FoodCookingProgress.Value(cheese,Asadito.Runtime.FoodCookingModel.CreateProfile("provoleta")),Asadito.Runtime.FoodCookingProgress.GreenStart,"Cheese must brown before green");
+            cheese.SetCurrentFace(new Asadito.Runtime.FoodFaceState{Maillard=.2f});cheese.CoreTemperatureC=66f;
+            float idealEnd=Asadito.Runtime.FoodCookingProgress.Value(cheese,Asadito.Runtime.FoodCookingModel.CreateProfile("provoleta"));
+            cheese.CoreTemperatureC=67f;
+            Assert.Greater(Asadito.Runtime.FoodCookingProgress.Value(cheese,Asadito.Runtime.FoodCookingModel.CreateProfile("provoleta")),idealEnd,"Cheese's post-ideal gap must warn, not jump back to undercooked");
+        }
+
+        [Test]
+        public void CookingProgress_FollowsRealThermalStepsMonotonicallyAndHandlesDrying()
+        {
+            foreach(var food in Asadito.Runtime.FoodCatalog.GetAll())
+            {
+                var profile=food.Profile;var state=new Asadito.Runtime.FoodState{CoreTemperatureC=20f};
+                state.SetCurrentFace(new Asadito.Runtime.FoodFaceState{SurfaceTemperatureC=20f});float previous=0;
+                for(int step=0;step<500;step++)
+                {
+                    Asadito.Runtime.FoodCookingModel.Step(state,profile,210f,.25f,true);
+                    float progress=Asadito.Runtime.FoodCookingProgress.Value(state,profile);
+                    Assert.That(progress,Is.InRange(0f,1f),food.Id);Assert.GreaterOrEqual(progress+.00001f,previous,food.Id);
+                    previous=progress;
+                }
+                Assert.Greater(previous,.95f,food.Id+" must eventually reach the red end");
+            }
+            var dry=new Asadito.Runtime.FoodState{CoreTemperatureC=57f,Moisture=.2f};
+            Assert.Greater(Asadito.Runtime.FoodCookingProgress.Value(dry,Asadito.Runtime.FoodCookingModel.CreateProfile("tira")),Asadito.Runtime.FoodCookingProgress.GreenEnd);
+            Assert.AreEqual(0f,Asadito.Runtime.FoodCookingProgress.Value(null,null));
+        }
+
+        [Test]
         public void CookingVisuals_HaveTenDistinctAtlasCompositions()
         {
             var compositions = new System.Collections.Generic.HashSet<string>();

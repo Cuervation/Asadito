@@ -11,4 +11,6 @@ El resultado por comensal se normaliza a 0–100; el total de nivel se normaliza
 - La UI de nivel 1 informa resultados individuales y total 0–200; retry reinicia estado, asignaciones y puntaje.
 
 ## Gestión desde nivel1
-ASADOR se agrega como media de estos componentes, general60/25/15 con economía/operación. Estrellas exigen mínimos independientes de cocina/saciedad/asador: ver [economía](../economy.md). Cocción cruda reduce CookingQuality según primer punto del perfil; daño sigue medido individualmente. El general alto no abre progreso si no cumplió esos mínimos.
+ASADOR se agrega como media de estos componentes, general60/25/15 con economía/operación. Estrellas exigen pedido completo por identidad/cantidad y mínimos independientes de cocina/saciedad/asador: ver [servicio](serving.md) y [economía](../economy.md). Cocción cruda reduce CookingQuality según primer punto del perfil; daño sigue medido individualmente. El mínimo de cocción considera todas las piezas servidas, incluso las no asignadas por no ser pedidas; un comensal sin su pedido no convierte una pieza bien cocida en cruda. El general alto no abre progreso si no cumplió el pedido o esos mínimos: dinero, cocción o gusto no compensan una sustitución.
+
+No cambia la fórmula de ingresos del asado pagado, incluso cuando falla el pedido, ni el multiplicador/tope de estrellas de recovery y su regla de ingreso cero si no aprueba. Compra/preparación libre y persistencia conservan el contrato existente; no se modifica saldo previo ni se requiere migración.

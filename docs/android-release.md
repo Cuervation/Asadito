@@ -1,6 +1,6 @@
 # Configuración y build Android
 
-> **Fuente vigente 100 % 2D (2026-10-02); evidencia Android histórica.** Ninguna APK/captura/install listada abajo demuestra la migración 2D nueva. La última instalación documentada sigue1.4.0/code6 de Gestión3D; push Git no actualiza el teléfono. No se presume build/install/touch/performance físico nuevo. Estado de fuente y QA 2D: [estado operativo](current-project-state.md).
+> **Build vigente100 %2D1.5.0/code7 (2026-10-02), instalada en Motorola.** APK local de validación compilada y metadata/ABI/firma verificadas; actualización `install -r` sin limpiar datos. Arranque de Activity Status ok; menú visual pendiente porque el teléfono estaba bloqueado y luego desconectó USB. Evidencia anterior a1.5.0 es histórica y no valida la migración2D. [QA de esta build](ai/android-2d-1.5.0-qa.md) · [estado operativo](current-project-state.md). **Cambio local posterior:** el bloqueo por completados se reforzó después de instalar1.5.0; esa APK aún no lo incluye ([QA](ai/sequential-level-lock-qa.md)).
 
 `Assets/Asado/Scripts/Editor/AndroidReleaseBuild.cs` contiene un ajuste y build repetibles. El método de configuración establece:
 
@@ -9,7 +9,7 @@
 | Company | `Cuervation` |
 | Product | `Asadito` |
 | Application ID | `com.cuervation.asadito` |
-| Version / versionCode | `1.4.0` / `6` |
+| Version / versionCode | `1.5.0` / `7` |
 | Orientación | Portrait; manifiesto empaquetado anuncia `screenOrientation=portrait` |
 | SDK | min 26, target/compile 36 (Android 16) |
 | Arquitectura / backend | ARM64 / IL2CPP |
@@ -54,3 +54,19 @@ Solo instalación/arranque verificados: no compras ni cambios de progreso, no na
 
 ## Cambios híbridos posteriores (2026-10-02, sin nueva APK)
 Carnicería/heladera2D con comida 3D de tamaño de parrilla, changuito drag, stock24/SKU y carteles comerciales existen en fuente y se incluyen en el commit/push autorizado. Unity PlayMode focal5/5PASS y capturasportrait reales para cierre de heladera; [QA](ai/hybrid-fridge-qa.md). No se pidió ni generó build/install Android en este cierre. Motorola sigue1.4.0/code6 anterior; push Git no actualiza automáticamente la APK. QA táctil/performance física de las vistas híbridas pendiente.
+
+## Cocina100 %2D — build e instalación1.5.0 (2026-10-02)
+Unity6000.6.3f1 ARM64/IL2CPP Succeeded434.221s,0errors/1warning de símbolos/Diagnostics Data. APK `build/Asadito-1.5.0-2d-20261002.apk`,73,590,830bytes (~70.18MiB), `com.cuervation.asadito`1.5.0/code7,min26,target/compile36,portrait,soloarm64-v8a,firma debugv2 igual a1.4.0. SHA256 `166fc8db7ac8183345cd4bd83a1e51d6564827bac9eab2bc89d48ba56e75aa73`. Incluye catálogo18/precios/stock libre/preparación corregida/resultados ilustrados/mini barras.
+
+Validator PASS, EditMode completo72/72PASS; barrido PlayMode inicial28/29PASS y recorridoL1–6 revalidado1/1PASS con tap nativo de SIGUIENTE y assertions de nivel/intro. Solo se fortaleció ese test; no cambio runtime por el fallo. No se afirma un único barrido29/29. [QA y límites](ai/android-2d-1.5.0-qa.md).
+
+Motorola Edge60Fusion ZY22MBNWRB Android16/API36: `adb install -r --no-streaming` **Success** sobre1.4.0/code6; dumpsys verifica1.5.0/code7. AppId10362 y firstInstallTime2026-10-01 11:39:10 sin cambios, sin desinstalar/limpiar datos. `am start -S -W` Status ok/PID23218; pantalla estabaOFF/keyguardshowing y capturas negras. USB volvió a desaparecer antes de confirmar menú visible: instalación confirmada, QA visual/touch/performance física pendiente. No compras ni partida con recursos del usuario, no publicación/firma productiva/commit/push. Editor Play/Simulator devuelto con presentación previa y prefs exactos de esta tarea.
+
+## Cambios locales posteriores a1.5.0 (2026-10-02)
+El bloqueo secuencial reforzado y el popup de presentación ilustrado existen en el proyecto Unity local, posteriores a la APK1.5.0/code7 ya instalada. No se generó ni instaló una nueva APK en estos pedidos. QA focal del [bloqueo](ai/sequential-level-lock-qa.md) y de la [presentación](ai/intro-illustrated-qa.md); no equivalen a validación Android de estas modificaciones. Próximo build/install sólo cuando se solicite.
+
+## Swipe de carnicería posterior a1.5.0 (2026-10-02)
+Deslizamiento horizontal y retiro de flechas inferiores verificados en Unity local, cuatro casos PlayMode únicos3+1. No APK/build/install/commit/push nuevo; Motorola1.5.0/code7 no incluye swipe, nuevo intro ni bloqueo secuencial posterior. [QA swipe](ai/shop-swipe-qa.md). Pruebas no alteran el celular.
+
+## Identidad del pedido posterior a1.5.0 (2026-10-02)
+Cada comensal debe recibir el corte solicitado; sustituciones, faltantes o piezas extra no aprueban ni desbloquean niveles. Compra/preparación siguen libres. Implementado en fuente Unity local, sin nueva APK/build/install/commit/push: Motorola1.5.0/code7 todavía no incluye esta regla, el swipe, el intro nuevo ni el refuerzo secuencial posteriores. [QA dirigida](ai/requested-food-qa.md); validación Android de estos cambios pendiente de una solicitud de release.

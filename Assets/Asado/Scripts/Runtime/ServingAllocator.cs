@@ -47,6 +47,9 @@ namespace Asadito.Runtime
                 {
                     GuestProfile guest = guests[guestIndex];
                     if (guest == null) continue;
+                    // Explicit diner requests are hard identities; soft likes cannot substitute another cut.
+                    if (!string.IsNullOrEmpty(guest.RequestedFoodId) &&
+                        !string.Equals(guest.RequestedFoodId,portion.FoodId,StringComparison.Ordinal)) continue;
                     float target = Mathf.Max(0f, guest.TargetFoodAmount);
                     float coverage = target <= 0f ? 0f : Mathf.Min(portion.Amount, Mathf.Max(0f, target - assigned[guestIndex]));
                     float satiety = target <= 0f ? 100f : Mathf.Clamp01(coverage / target) * 100f;
